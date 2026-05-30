@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0f1e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ward FU">
+<meta name="description" content="Surgical Ward Follow-Up Tool — LUMHS Jamshoro">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Ward Follow-Up — LUMHS Surgery</title>
+<style>
+/* ── DESIGN TOKENS ───────────────────────────────────────── */
+:root{
+  --bg:#060c1a;--bg2:#0d1628;--surface:#111d35;--surface2:#172240;--surface3:#1e2d52;
+  --border:rgba(100,160,255,0.1);--border2:rgba(100,160,255,0.2);--border3:rgba(100,160,255,0.35);
+  --text:#e8f0ff;--muted:#6a85b5;--dim:#3a5080;
+  --cyan:#38d9f5;--cyan-dim:rgba(56,217,245,0.1);--cyan-glow:rgba(56,217,245,0.25);
+  --green:#2dd480;--green-dim:rgba(45,212,128,0.1);--green-glow:rgba(45,212,128,0.2);
+  --amber:#f5a623;--amber-dim:rgba(245,166,35,0.1);
+  --red:#ff5c7a;--red-dim:rgba(255,92,122,0.1);--red-glow:rgba(255,92,122,0.25);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,0.1);
+  --orange:#ff8c42;--orange-dim:rgba(255,140,66,0.1);
+  --radius:12px;--radius-sm:8px;--radius-xs:5px;
+  --font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;overscroll-behavior:none;}
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;}
+
+/* ── GRID NOISE OVERLAY ──────────────────────────────────── */
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(56,217,245,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(56,217,245,0.015) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+/* ── TOPBAR ──────────────────────────────────────────────── */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border2);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:100;position:relative;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.topbar-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--cyan),#4f6ef7);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 0 12px var(--cyan-glow);}
+.topbar-title{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.3px;}
+.topbar-sub{font-size:10px;color:var(--muted);margin-top:1px;font-family:var(--mono);}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.clock-badge{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-xs);padding:4px 10px;font-size:11px;color:var(--cyan);font-family:var(--mono);white-space:nowrap;}
+.back-btn{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-xs);padding:6px 12px;font-size:12px;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:5px;font-family:var(--font);}
+.back-btn:active{opacity:.7;}
+
+/* ── DOCTOR BADGE ────────────────────────────────────────── */
+.doctor-badge{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:4px 10px 4px 6px;cursor:pointer;}
+.doc-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green-glow);flex-shrink:0;}
+.doc-name{font-size:11px;font-weight:600;color:var(--text);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ── SCREENS ─────────────────────────────────────────────── */
+.screen{display:none;flex:1;overflow:hidden;flex-direction:column;}
+.screen.active{display:flex;}
+.scroll-area{flex:1;overflow-y:auto;padding:14px 14px 100px;position:relative;z-index:1;}
+@media(min-width:700px){.scroll-area{max-width:740px;margin:0 auto;padding-left:20px;padding-right:20px;}}
+
+/* ── CARDS ───────────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px;position:relative;}
+.card::before{content:'';position:absolute;inset:0;border-radius:var(--radius);background:linear-gradient(135deg,rgba(56,217,245,0.03) 0%,transparent 60%);pointer-events:none;}
+.card-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;display:flex;align-items:center;gap:7px;font-family:var(--mono);}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dot-cyan{background:var(--cyan);box-shadow:0 0 6px var(--cyan-glow);}
+.dot-green{background:var(--green);box-shadow:0 0 6px var(--green-glow);}
+.dot-amber{background:var(--amber);}
+.dot-red{background:var(--red);box-shadow:0 0 6px var(--red-glow);}
+.dot-purple{background:var(--purple);}
+.dot-orange{background:var(--orange);}
+
+/* ── PATIENT LIST ────────────────────────────────────────── */
+.list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.list-header h2{font-size:17px;font-weight:700;letter-spacing:-0.3px;}
+.pt-count{font-size:11px;color:var(--muted);background:var(--surface2);border-radius:12px;padding:3px 9px;font-family:var(--mono);}
+.search-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:14px;padding:10px 13px;width:100%;outline:none;margin-bottom:12px;font-family:var(--font);transition:border-color .15s;}
+.search-box:focus{border-color:var(--cyan);}
+
+/* ── PATIENT CARDS ───────────────────────────────────────── */
+.pt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,background .15s;display:flex;align-items:center;gap:12px;}
+.pt-card:active{background:var(--surface2);}
+.pt-card.active-pt{border-color:var(--cyan);background:var(--cyan-dim);}
+.pt-avatar{width:42px;height:42px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--cyan);flex-shrink:0;border:1px solid var(--border2);}
+.pt-info{flex:1;min-width:0;}
+.pt-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pt-meta{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono);}
+.pt-flags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
+.flag-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;font-family:var(--mono);}
+.flag-red{background:var(--red-dim);color:var(--red);border:1px solid var(--red);}
+.flag-amber{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber);}
+.flag-green{background:var(--green-dim);color:var(--green);border:1px solid var(--green);}
+.flag-cyan{background:var(--cyan-dim);color:var(--cyan);border:1px solid var(--cyan);}
+.flag-purple{background:var(--purple-dim);color:var(--purple);border:1px solid var(--purple);}
+.pt-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.icon-btn{width:30px;height:30px;border-radius:var(--radius-xs);border:1px solid var(--border2);background:var(--surface2);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;}
+.icon-btn.del{color:var(--red);}
+.icon-btn:active{transform:scale(.92);}
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+.empty-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.fab{position:fixed;bottom:24px;right:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),#4f6ef7);border:none;color:#060c1a;font-size:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px var(--cyan-glow);z-index:200;transition:transform .15s;}
+.fab:active{transform:scale(.92);}
+
+/* ── FORMS ───────────────────────────────────────────────── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field.full{grid-column:1/-1;}
+label{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.05em;text-transform:uppercase;font-family:var(--mono);}
+input[type=text],input[type=number],input[type=date],select,textarea{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:9px 11px;width:100%;outline:none;font-family:var(--font);transition:border-color .15s;-webkit-appearance:none;}
+input:focus,select:focus,textarea:focus{border-color:var(--cyan);}
+textarea{resize:vertical;min-height:75px;line-height:1.55;}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236a85b5' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.5);}
+select option{background:var(--surface2);}
+
+/* ── VITALS ──────────────────────────────────────────────── */
+.vitals-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.vital-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;display:flex;flex-direction:column;gap:3px;transition:border-color .2s,background .2s;}
+.vital-box label{font-size:9px;}
+.vital-box input{background:transparent;border:none;padding:0;font-size:17px;font-weight:700;color:var(--text);width:100%;font-family:var(--mono);}
+.vital-box input:focus{outline:none;}
+.vital-box .vunit{font-size:9px;color:var(--muted);font-family:var(--mono);}
+.vital-box.warn{border-color:var(--amber);background:var(--amber-dim);}
+.vital-box.danger{border-color:var(--red);background:var(--red-dim);}
+
+/* ── NEWS2 SCORE ─────────────────────────────────────────── */
+.news2-bar{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px;margin-top:10px;}
+.news2-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.news2-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;font-family:var(--mono);text-transform:uppercase;}
+.news2-score{font-size:26px;font-weight:700;font-family:var(--mono);}
+.news2-risk{font-size:11px;font-weight:600;margin-top:2px;}
+.news2-track{height:6px;background:var(--border);border-radius:3px;margin-bottom:4px;overflow:hidden;}
+.news2-fill{height:100%;border-radius:3px;transition:width .4s,background .4s;}
+.news2-ticks{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);font-family:var(--mono);}
+
+/* ── PAIN ────────────────────────────────────────────────── */
+.pain-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-top:8px;}
+.pain-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.pain-label{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.05em;font-family:var(--mono);text-transform:uppercase;}
+.pain-score{font-size:24px;font-weight:700;font-family:var(--mono);transition:color .2s;}
+.pain-desc{font-size:11px;color:var(--muted);margin-top:4px;}
+input[type=range]{width:100%;height:6px;-webkit-appearance:none;appearance:none;background:var(--border2);border-radius:3px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg);}
+.pain-ticks{display:flex;justify-content:space-between;margin-top:4px;}
+.pain-ticks span{font-size:9px;color:var(--muted);font-family:var(--mono);}
+
+/* ── SHIFT TABS ──────────────────────────────────────────── */
+.shift-tabs{display:flex;gap:0;margin-bottom:12px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border2);}
+.shift-tab{flex:1;padding:9px 6px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--muted);background:var(--surface2);border:none;font-family:var(--font);}
+.shift-tab+.shift-tab{border-left:1px solid var(--border2);}
+.shift-tab.act-morning{background:var(--cyan-dim);color:var(--cyan);}
+.shift-tab.act-evening{background:var(--amber-dim);color:var(--amber);}
+.shift-tab.act-night{background:var(--purple-dim);color:var(--purple);}
+.shift-panel{display:none;}
+.shift-panel.active{display:block;}
+.soap-label{font-size:11px;font-weight:700;color:var(--cyan);margin-bottom:5px;margin-top:10px;font-family:var(--mono);letter-spacing:.05em;}
+
+/* ── TRANSCRIPT ──────────────────────────────────────────── */
+.transcript-area{background:#020810;border:1px solid var(--border2);border-radius:var(--radius);padding:14px;font-family:var(--mono);font-size:11.5px;line-height:1.75;color:#8ba0c8;white-space:pre-wrap;min-height:180px;max-height:50vh;overflow-y:auto;}
+.transcript-placeholder{color:var(--dim);font-style:italic;}
+
+/* ── BUTTONS ─────────────────────────────────────────────── */
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.btn{padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;font-family:var(--font);transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.btn:active{transform:scale(.96);}
+.btn-accent{background:var(--cyan);color:#060c1a;}
+.btn-green{background:var(--green-dim);border:1px solid var(--green);color:var(--green);}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text);}
+.btn-danger{background:var(--red-dim);border:1px solid var(--red);color:var(--red);}
+.btn-amber{background:var(--amber-dim);border:1px solid var(--amber);color:var(--amber);}
+.btn-purple{background:var(--purple-dim);border:1px solid var(--purple);color:var(--purple);}
+.copied-badge,.saved-badge{border-radius:var(--radius-sm);padding:6px 12px;font-size:12px;display:none;align-items:center;gap:5px;font-family:var(--mono);}
+.copied-badge{background:var(--green-dim);border:1px solid var(--green);color:var(--green);}
+.saved-badge{background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);}
+
+/* ── BOTTOM NAV ──────────────────────────────────────────── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border2);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.bnav-btn{flex:1;padding:10px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;color:var(--muted);cursor:pointer;border:none;background:transparent;transition:color .15s;-webkit-tap-highlight-color:transparent;font-family:var(--font);font-weight:600;letter-spacing:.02em;}
+.bnav-btn.active{color:var(--cyan);}
+.bnav-icon{font-size:18px;line-height:1;}
+
+/* ── SUBPAGE ─────────────────────────────────────────────── */
+.subpage{display:none;}
+.subpage.active{display:block;}
+hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
+
+/* ── PATIENT BANNER ──────────────────────────────────────── */
+.pt-banner{background:var(--cyan-dim);border:1px solid rgba(56,217,245,.25);border-radius:var(--radius-sm);padding:9px 12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.pt-banner-name{font-size:14px;font-weight:700;color:var(--cyan);}
+.pt-banner-meta{font-size:10px;color:var(--muted);margin-top:1px;font-family:var(--mono);}
+.banner-day-badge{font-size:11px;color:var(--text);background:var(--surface2);border:1px solid var(--border2);padding:3px 8px;border-radius:10px;font-family:var(--mono);}
+
+/* ── STATUS FLAGS ────────────────────────────────────────── */
+.status-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.status-btn{flex:1;min-width:0;padding:8px 6px;border-radius:var(--radius-sm);font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);text-align:center;transition:all .15s;font-family:var(--font);}
+.status-btn.sel-sick{background:var(--red-dim);border-color:var(--red);color:var(--red);}
+.status-btn.sel-watch{background:var(--amber-dim);border-color:var(--amber);color:var(--amber);}
+.status-btn.sel-stable{background:var(--green-dim);border-color:var(--green);color:var(--green);}
+.status-btn.sel-discharge{background:var(--cyan-dim);border-color:var(--cyan);color:var(--cyan);}
+
+/* ── TASKS ───────────────────────────────────────────────── */
+.task-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:7px;display:flex;align-items:flex-start;gap:10px;transition:all .2s;}
+.task-item.done{opacity:.55;border-color:var(--border);}
+.task-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s;margin-top:1px;}
+.task-item.done .task-check{background:var(--green);border-color:var(--green);}
+.task-body{flex:1;}
+.task-text{font-size:13px;font-weight:500;color:var(--text);transition:color .2s;}
+.task-item.done .task-text{text-decoration:line-through;color:var(--muted);}
+.task-meta{font-size:10px;color:var(--muted);margin-top:3px;font-family:var(--mono);}
+.task-del{color:var(--red);cursor:pointer;font-size:14px;padding:4px;opacity:.6;}
+.task-del:hover{opacity:1;}
+.task-input-row{display:flex;gap:8px;margin-bottom:10px;}
+.task-input{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:9px 11px;outline:none;font-family:var(--font);}
+.task-input:focus{border-color:var(--cyan);}
+.task-add-btn{background:var(--cyan);color:#060c1a;border:none;border-radius:var(--radius-sm);padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);}
+
+/* ── FLUID BALANCE ───────────────────────────────────────── */
+.fluid-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.fluid-label{font-size:12px;color:var(--muted);width:90px;flex-shrink:0;}
+.fluid-input{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:8px 10px;outline:none;font-family:var(--mono);text-align:right;}
+.fluid-input:focus{border-color:var(--cyan);}
+.fluid-unit{font-size:10px;color:var(--muted);width:28px;font-family:var(--mono);}
+.fluid-balance-display{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;}
+.fb-label{font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;}
+.fb-value{font-size:22px;font-weight:700;font-family:var(--mono);}
+.fb-positive{color:var(--green);}
+.fb-negative{color:var(--red);}
+
+/* ── HANDOVER ────────────────────────────────────────────── */
+.handover-card{background:#020810;border:1px solid var(--border2);border-radius:var(--radius);padding:14px;font-family:var(--mono);font-size:11px;line-height:1.75;color:#8ba0c8;white-space:pre-wrap;max-height:60vh;overflow-y:auto;}
+
+/* ── NEWS2 LEGEND ────────────────────────────────────────── */
+.news2-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.n2-seg{flex:1;padding:4px 6px;border-radius:4px;text-align:center;font-size:9px;font-weight:700;font-family:var(--mono);}
+
+/* ── ONLINE USERS ────────────────────────────────────────── */
+.online-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.online-label{font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;}
+.online-avatars{display:flex;gap:5px;flex-wrap:wrap;}
+.online-av{background:var(--surface2);border:1px solid var(--green);border-radius:12px;padding:3px 9px;font-size:10px;font-weight:600;color:var(--green);font-family:var(--mono);}
+
+/* ── SYNC STATUS BAR ─────────────────────────────────────── */
+.sync-bar{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;margin-bottom:10px;font-size:11px;font-family:var(--mono);}
+.sync-bar-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sync-bar-dot.online{background:var(--green);box-shadow:0 0 6px var(--green-glow);animation:pulse 2s infinite;}
+.sync-bar-dot.offline{background:var(--red);}
+.sync-bar-dot.syncing{background:var(--amber);animation:pulse .6s infinite;}
+.sync-bar-text{color:var(--muted);}
+.sync-bar-ward{color:var(--cyan);font-weight:600;margin-left:auto;}
+
+/* ── ACTIVITY FEED ───────────────────────────────────────── */
+.activity-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;margin-bottom:7px;display:flex;gap:10px;align-items:flex-start;}
+.act-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.act-body{flex:1;}
+.act-text{font-size:12px;color:var(--text);line-height:1.4;}
+.act-meta{font-size:10px;color:var(--muted);margin-top:3px;font-family:var(--mono);}
+.act-dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);flex-shrink:0;margin-top:5px;}
+
+/* ── MODALS ──────────────────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(6,12,26,.85);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:20px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:4px;}
+.modal p{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+.modal-btns{display:flex;gap:8px;margin-top:16px;}
+.modal-btns .btn{flex:1;justify-content:center;}
+.modal-setup-steps{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;font-size:11px;color:var(--muted);line-height:2;font-family:var(--mono);}
+.modal-setup-steps a{color:var(--cyan);text-decoration:none;}
+.setup-step{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;}
+.setup-num{background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;}
+.config-textarea{background:#020810;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--cyan);font-size:10px;padding:10px;width:100%;font-family:var(--mono);min-height:140px;outline:none;resize:vertical;}
+.config-textarea:focus{border-color:var(--cyan);}
+
+/* ── SECTION HEADING ─────────────────────────────────────── */
+.sec-heading{font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;margin-top:4px;display:flex;align-items:center;gap:7px;}
+
+/* ── DISCHARGE SUMMARY ───────────────────────────────────── */
+.discharge-out{background:#020810;border:1px solid var(--border2);border-radius:var(--radius);padding:14px;font-family:var(--mono);font-size:11px;line-height:1.75;color:#8ba0c8;white-space:pre-wrap;max-height:50vh;overflow-y:auto;margin-top:10px;}
+
+/* ── DRUG CALCULATOR ─────────────────────────────────────── */
+.drug-row{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;}
+.drug-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.drug-result{font-size:12px;color:var(--cyan);font-family:var(--mono);margin-top:4px;min-height:16px;}
+.drug-info{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* ── SNIPPETS ────────────────────────────────────────────── */
+.snippet-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;}
+.snippet-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;font-size:11px;color:var(--muted);cursor:pointer;text-align:left;font-family:var(--font);line-height:1.4;transition:all .15s;}
+.snippet-btn:active{background:var(--surface3);color:var(--text);}
+
+/* ── COMPLICATION TRACKER ────────────────────────────────── */
+.comp-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.comp-body{flex:1;}
+.comp-name{font-size:12px;font-weight:600;color:var(--text);}
+.comp-grade{font-size:10px;color:var(--amber);font-family:var(--mono);margin-top:2px;}
+.comp-del{color:var(--red);cursor:pointer;opacity:.6;font-size:14px;}
+
+/* ── SYNC INDICATOR (topbar dot) ─────────────────────────── */
+.doc-dot{transition:background .3s;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── ORDERS FEED ─────────────────────────────────────────── */
+.order-item{background:var(--surface2);border-left:3px solid var(--cyan);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:9px 12px;margin-bottom:7px;}
+.order-item.done-order{border-left-color:var(--green);opacity:.6;}
+.order-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.order-text{font-size:13px;font-weight:500;color:var(--text);flex:1;}
+.order-item.done-order .order-text{text-decoration:line-through;color:var(--muted);}
+.order-meta{font-size:10px;color:var(--muted);margin-top:4px;font-family:var(--mono);}
+.order-done-info{font-size:10px;color:var(--green);margin-top:3px;font-family:var(--mono);}
+.order-actions{display:flex;gap:5px;flex-shrink:0;}
+.order-btn{background:transparent;border:1px solid var(--border2);border-radius:var(--radius-xs);color:var(--muted);font-size:11px;padding:4px 8px;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+.order-btn.done-btn{border-color:var(--green);color:var(--green);}
+.order-btn.del-btn{border-color:var(--red-dim);color:var(--red);}
+.order-priority{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;font-family:var(--mono);}
+.priority-urgent{background:var(--red-dim);color:var(--red);border:1px solid var(--red);}
+.priority-routine{background:var(--cyan-dim);color:var(--cyan);border:1px solid var(--cyan);}
+.priority-prn{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber);}
+
+/* ── TOAST ───────────────────────────────────────────────── */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:9px 16px;font-size:12px;color:var(--text);z-index:999;white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none;font-family:var(--mono);}
+.toast.show{opacity:1;}
+
+/* ── FIREBASE NOT CONFIGURED BANNER ─────────────────────── */
+.firebase-banner{background:var(--amber-dim);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.firebase-banner-text{font-size:12px;color:var(--amber);flex:1;line-height:1.4;}
+.firebase-banner-btn{background:var(--amber);color:#060c1a;border:none;border-radius:var(--radius-xs);padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-icon">🏥</div>
+    <div>
+      <div class="topbar-title" id="topbar-title">Ward Follow-Up</div>
+      <div class="topbar-sub">LUMHS Jamshoro · Surgery</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="back-btn" id="back-btn" onclick="goToList()" style="display:none">← List</button>
+    <div class="doctor-badge" onclick="showDoctorModal()">
+      <div class="doc-dot" id="sync-dot"></div>
+      <div class="doc-name" id="doc-name-badge">Set Name</div>
+    </div>
+    <div class="clock-badge" id="live-clock">--:--</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: PATIENT LIST
+═══════════════════════════════════════════════════════════ -->
+<div class="screen active" id="screen-list">
+  <div class="scroll-area">
+
+    <!-- Firebase not configured warning -->
+    <div class="firebase-banner" id="firebase-banner" style="display:none" onclick="showFirebaseSetup()">
+      <span style="font-size:18px">⚠️</span>
+      <div class="firebase-banner-text"><strong>Real-time sync not configured.</strong> App works offline only. Tap to connect your team.</div>
+      <button class="firebase-banner-btn">Setup →</button>
+    </div>
+
+    <!-- Sync status bar -->
+    <div class="sync-bar" id="sync-bar">
+      <div class="sync-bar-dot offline" id="sync-bar-dot"></div>
+      <span class="sync-bar-text" id="sync-bar-text">Offline mode</span>
+      <span class="sync-bar-ward" id="sync-bar-ward"></span>
+    </div>
+
+    <!-- Online users -->
+    <div class="online-bar" id="online-bar">
+      <span class="online-label">🟢 Online now</span>
+      <div class="online-avatars" id="online-avatars"><span class="online-av" style="color:var(--muted);border-color:var(--border)">—</span></div>
+    </div>
+
+    <div class="list-header">
+      <h2>Ward Patients <span class="pt-count" id="pt-count">0</span></h2>
+      <button class="btn btn-outline" style="font-size:12px;padding:7px 12px" onclick="showHandover()">📋 Handover</button>
+    </div>
+    <input class="search-box" type="text" placeholder="🔍  Search name, CR, diagnosis..." id="search-input" oninput="renderList()">
+    <div id="pt-list-container"></div>
+  </div>
+  <button class="fab" onclick="newPatient()" title="Add patient">＋</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: PATIENT DETAIL
+═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-detail">
+  <div class="scroll-area" id="detail-scroll">
+
+    <div class="pt-banner" id="pt-banner">
+      <div>
+        <div class="pt-banner-name" id="banner-name">—</div>
+        <div class="pt-banner-meta" id="banner-meta">—</div>
+      </div>
+      <div class="banner-day-badge" id="banner-day"></div>
+    </div>
+
+    <!-- ── SUB: PATIENT ── -->
+    <div class="subpage active" id="sub-patient">
+      <div class="card">
+        <div class="card-title"><span class="dot dot-cyan"></span>Patient Details</div>
+        <div class="status-row" id="status-row">
+          <button class="status-btn" onclick="setStatus('sick',this)">🔴 Sick</button>
+          <button class="status-btn" onclick="setStatus('watch',this)">🟡 Watch</button>
+          <button class="status-btn" onclick="setStatus('stable',this)">🟢 Stable</button>
+          <button class="status-btn" onclick="setStatus('discharge',this)">✅ Discharge</button>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Patient Name</label><input type="text" id="pt-name" placeholder="Full name" oninput="updateBanner()"></div>
+          <div class="field"><label>Age / Sex</label><input type="text" id="pt-age" placeholder="35y / M" oninput="updateBanner()"></div>
+          <div class="field"><label>CR / MR No.</label><input type="text" id="pt-cr" placeholder="CR number" oninput="updateBanner()"></div>
+          <div class="field"><label>Ward / Bed</label><input type="text" id="pt-bed" placeholder="Male Surgical / Bed 7"></div>
+          <div class="field"><label>Admission Date</label><input type="date" id="pt-admdate"></div>
+          <div class="field"><label>Consultant</label><input type="text" id="pt-consult" placeholder="Prof. Dr. ..."></div>
+          <div class="field full"><label>Diagnosis / Working Dx</label><input type="text" id="pt-diag" placeholder="e.g. Perforated appendix, post-lap appy D1" oninput="updateBanner()"></div>
+          <div class="field full"><label>Procedure Done</label><input type="text" id="pt-proc" placeholder="e.g. Laparoscopic appendectomy"></div>
+          <div class="field"><label>Weight (kg)</label><input type="number" id="pt-weight" placeholder="70" oninput="calcDrugDoses()"></div>
+          <div class="field"><label>Allergies</label><input type="text" id="pt-allergy" placeholder="NKDA / list allergies"></div>
+        </div>
+      </div>
+
+      <!-- ── SHARED ORDERS / TASKS (real-time) ── -->
+      <div class="card">
+        <div class="card-title">
+          <span class="dot dot-orange"></span>Shared Orders &amp; Tasks
+          <span style="font-size:9px;color:var(--green);margin-left:auto;font-family:var(--mono);">🔴 LIVE SHARED</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Orders visible to all team members. Mark done when completed.</div>
+
+        <!-- Add order row -->
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+          <div class="task-input-row" style="flex-wrap:wrap;gap:8px">
+            <input class="task-input" id="task-input" type="text" placeholder="e.g. Give 1 unit packed RBCs" style="flex:1;min-width:160px" onkeydown="if(event.key==='Enter')addTask()">
+            <select id="task-priority" style="width:auto;padding:9px 28px 9px 10px;font-size:12px;flex-shrink:0">
+              <option value="routine">Routine</option>
+              <option value="urgent">🚨 Urgent</option>
+              <option value="prn">PRN</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <button class="snippet-btn" style="font-size:10px;padding:5px 9px" onclick="quickOrder('IV access check + flush')">🩺 IV Check</button>
+            <button class="snippet-btn" style="font-size:10px;padding:5px 9px" onclick="quickOrder('Blood transfusion — 1 unit packed RBCs')">🩸 Blood Transfusion</button>
+            <button class="snippet-btn" style="font-size:10px;padding:5px 9px" onclick="quickOrder('Check urine output hourly')">💧 UO Monitoring</button>
+            <button class="snippet-btn" style="font-size:10px;padding:5px 9px" onclick="quickOrder('Repeat CBC, LFTs, RFTs')">🧪 Repeat Labs</button>
+            <button class="snippet-btn" style="font-size:10px;padding:5px 9px" onclick="quickOrder('Wound dressing change')">🩹 Dressing</button>
+            <button class="snippet-btn" style="font-size:10px;padding:5px 9px" onclick="quickOrder('NBM — inform anaesthesia')">⛔ NBM</button>
+            <button class="snippet-btn" style="font-size:10px;padding:5px 9px" onclick="quickOrder('Post-op CXR requested')">📸 CXR</button>
+            <button class="snippet-btn" style="font-size:10px;padding:5px 9px" onclick="quickOrder('Patient consent required — call senior')">📝 Consent</button>
+          </div>
+          <button class="task-add-btn" style="align-self:flex-start;padding:9px 18px" onclick="addTask()">＋ Add Order</button>
+        </div>
+
+        <div id="task-list"></div>
+      </div>
+
+      <!-- Complications -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-red"></span>Complications / Events</div>
+        <div class="grid2" style="gap:8px;margin-bottom:10px">
+          <div class="field"><label>Complication</label><input type="text" id="comp-name" placeholder="e.g. Wound infection"></div>
+          <div class="field"><label>Clavien-Dindo Grade</label>
+            <select id="comp-grade">
+              <option value="">— Grade —</option>
+              <option>Grade I</option><option>Grade II</option><option>Grade IIIa</option>
+              <option>Grade IIIb</option><option>Grade IVa</option><option>Grade IVb</option><option>Grade V</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-outline" style="font-size:12px;padding:7px 12px" onclick="addComplication()">＋ Log Complication</button>
+        <div id="comp-list" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <!-- ── SUB: VITALS ── -->
+    <div class="subpage" id="sub-vitals">
+      <div class="card">
+        <div class="card-title"><span class="dot dot-red"></span>Vitals</div>
+        <div class="vitals-grid">
+          <div class="vital-box" id="vb-bp"><label>BP</label><input type="text" id="v-bp" placeholder="120/80"><span class="vunit">mmHg</span></div>
+          <div class="vital-box" id="vb-hr"><label>Heart Rate</label><input type="number" id="v-hr" placeholder="72" oninput="checkVital('hr',this.value);calcNEWS2()"><span class="vunit">bpm</span></div>
+          <div class="vital-box" id="vb-rr"><label>RR</label><input type="number" id="v-rr" placeholder="16" oninput="checkVital('rr',this.value);calcNEWS2()"><span class="vunit">/min</span></div>
+          <div class="vital-box" id="vb-temp"><label>Temp</label><input type="number" id="v-temp" placeholder="37.0" step="0.1" oninput="checkVital('temp',this.value);calcNEWS2()"><span class="vunit">°C</span></div>
+          <div class="vital-box" id="vb-spo2"><label>SpO₂</label><input type="number" id="v-spo2" placeholder="98" oninput="checkVital('spo2',this.value);calcNEWS2()"><span class="vunit">%</span></div>
+          <div class="vital-box"><label>GCS</label><input type="number" id="v-gcs" placeholder="15" oninput="calcNEWS2()"><span class="vunit">/ 15</span></div>
+          <div class="vital-box"><label>BSG</label><input type="number" id="v-bsg" placeholder="90"><span class="vunit">mg/dL</span></div>
+          <div class="vital-box"><label>Urine Out</label><input type="number" id="v-uo" placeholder="50"><span class="vunit">mL/hr</span></div>
+          <div class="vital-box"><label>Drain Out</label><input type="number" id="v-drain" placeholder="0"><span class="vunit">mL/shift</span></div>
+        </div>
+        <!-- NEWS2 -->
+        <div class="news2-bar">
+          <div class="news2-header">
+            <div>
+              <div class="news2-label">NEWS2 Score</div>
+              <div class="news2-risk" id="news2-risk">Enter vitals to calculate</div>
+            </div>
+            <div class="news2-score" id="news2-score">—</div>
+          </div>
+          <div class="news2-track"><div class="news2-fill" id="news2-fill" style="width:0%;background:var(--green)"></div></div>
+          <div class="news2-ticks"><span>0</span><span>4</span><span>7</span><span>12+</span></div>
+          <div class="news2-legend" style="margin-top:8px">
+            <div class="n2-seg" style="background:var(--green-dim);color:var(--green);border:1px solid var(--green)">0–4 Low</div>
+            <div class="n2-seg" style="background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber)">5–6 Medium</div>
+            <div class="n2-seg" style="background:var(--red-dim);color:var(--red);border:1px solid var(--red)">7+ HIGH</div>
+          </div>
+        </div>
+        <!-- Pain -->
+        <div class="pain-wrap">
+          <div class="pain-header"><span class="pain-label">Pain Score (NRS)</span><span class="pain-score" id="pain-disp">0</span></div>
+          <input type="range" min="0" max="10" value="0" id="v-pain" step="1" oninput="updatePain(this.value)">
+          <div class="pain-ticks"><span>0 None</span><span>5 Moderate</span><span>10 Worst</span></div>
+          <div class="pain-desc" id="pain-desc">No pain</div>
+        </div>
+      </div>
+
+      <!-- Fluid Balance -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-cyan"></span>Fluid Balance</div>
+        <div class="sec-heading">📥 Input</div>
+        <div class="fluid-row"><span class="fluid-label">IVF (total)</span><input class="fluid-input" type="number" id="fl-ivf" placeholder="0" oninput="calcFluid()"><span class="fluid-unit">mL</span></div>
+        <div class="fluid-row"><span class="fluid-label">Oral intake</span><input class="fluid-input" type="number" id="fl-oral" placeholder="0" oninput="calcFluid()"><span class="fluid-unit">mL</span></div>
+        <div class="fluid-row"><span class="fluid-label">Blood / FFP</span><input class="fluid-input" type="number" id="fl-blood" placeholder="0" oninput="calcFluid()"><span class="fluid-unit">mL</span></div>
+        <div class="sec-heading" style="margin-top:12px">📤 Output</div>
+        <div class="fluid-row"><span class="fluid-label">Urine (24h)</span><input class="fluid-input" type="number" id="fl-urine" placeholder="0" oninput="calcFluid()"><span class="fluid-unit">mL</span></div>
+        <div class="fluid-row"><span class="fluid-label">Drain (24h)</span><input class="fluid-input" type="number" id="fl-drainout" placeholder="0" oninput="calcFluid()"><span class="fluid-unit">mL</span></div>
+        <div class="fluid-row"><span class="fluid-label">NG / Vomit</span><input class="fluid-input" type="number" id="fl-ng" placeholder="0" oninput="calcFluid()"><span class="fluid-unit">mL</span></div>
+        <div class="fluid-row"><span class="fluid-label">Insensible</span><input class="fluid-input" type="number" id="fl-insensible" placeholder="800" oninput="calcFluid()"><span class="fluid-unit">mL</span></div>
+        <div class="fluid-balance-display">
+          <div><div class="fb-label">24h Balance</div><div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--mono)">+ve = fluid overload</div></div>
+          <div class="fb-value" id="fluid-balance">+0 mL</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SUB: FOLLOWUP ── -->
+    <div class="subpage" id="sub-followup">
+      <div class="card">
+        <div class="card-title"><span class="dot dot-green"></span>Follow-Up Note (SOAP)</div>
+        <div class="shift-tabs">
+          <button class="shift-tab act-morning" onclick="switchShift('morning')" id="stab-morning">☀️ Morning</button>
+          <button class="shift-tab" onclick="switchShift('evening')" id="stab-evening">🌤 Evening</button>
+          <button class="shift-tab" onclick="switchShift('night')" id="stab-night">🌙 Night</button>
+        </div>
+
+        <!-- Snippets -->
+        <div style="margin-bottom:10px">
+          <div class="card-title" style="margin-bottom:7px"><span class="dot dot-purple"></span>Quick Snippets — tap to insert</div>
+          <div class="snippet-grid">
+            <button class="snippet-btn" onclick="insertSnippet('exam','Abdomen soft, non-tender, bowel sounds present, no guarding or rigidity.')">🫁 Soft abdomen</button>
+            <button class="snippet-btn" onclick="insertSnippet('exam','Wound clean and dry, no erythema, no discharge, sutures/staples intact.')">🩹 Clean wound</button>
+            <button class="snippet-btn" onclick="insertSnippet('exam','Patient conscious, oriented to time, place and person, comfortable in bed.')">🧠 Conscious & oriented</button>
+            <button class="snippet-btn" onclick="insertSnippet('exam','Chest clear bilaterally, no wheeze, no crepitations on auscultation.')">🫀 Clear chest</button>
+            <button class="snippet-btn" onclick="insertSnippet('comp','Patient passing flatus, tolerating oral fluids well, no nausea or vomiting.')">🍵 Tolerating orals</button>
+            <button class="snippet-btn" onclick="insertSnippet('comp','Fever resolved, afebrile for last 24 hours, vitals stable.')">🌡️ Afebrile</button>
+          </div>
+        </div>
+
+        <!-- Morning shift -->
+        <div class="shift-panel active" id="spanel-morning">
+          <div class="grid2" style="gap:10px;margin-bottom:10px">
+            <div class="field"><label>Date</label><input type="date" id="m-date"></div>
+            <div class="field"><label>Admission / Post-op Day</label><input type="text" id="m-day" placeholder="D2 / POD1" oninput="updateBanner()"></div>
+          </div>
+          <div class="soap-label">S — SUBJECTIVE</div>
+          <div class="field"><textarea id="m-comp" placeholder="Complaints: pain, fever, nausea, passing flatus, oral intake..."></textarea></div>
+          <div class="soap-label">O — OBJECTIVE / EXAMINATION</div>
+          <div class="field"><textarea id="m-exam" placeholder="General: conscious, oriented...&#10;Abdomen: soft/rigid, tenderness, wound, drain..."></textarea></div>
+          <div class="soap-label">A — ASSESSMENT</div>
+          <div class="field"><textarea id="m-assess" placeholder="e.g. Post-op day 1, recovering well..."></textarea></div>
+          <div class="soap-label">P — PLAN / ORDERS</div>
+          <div class="field"><textarea id="m-plan" placeholder="IVF, antibiotics, diet, dressing, labs, imaging..."></textarea></div>
+        </div>
+
+        <!-- Evening shift -->
+        <div class="shift-panel" id="spanel-evening">
+          <div class="soap-label" style="margin-top:0">EVENING REVIEW</div>
+          <div class="field" style="margin-bottom:10px"><textarea id="e-comp" placeholder="Evening complaints, new events, fever spikes..."></textarea></div>
+          <div class="soap-label">EXAMINATION</div>
+          <div class="field" style="margin-bottom:10px"><textarea id="e-exam" placeholder="Re-examination findings..."></textarea></div>
+          <div class="soap-label">UPDATED ORDERS</div>
+          <div class="field"><textarea id="e-plan" placeholder="Changes in medications, fluids, escalation..."></textarea></div>
+        </div>
+
+        <!-- Night shift -->
+        <div class="shift-panel" id="spanel-night">
+          <div class="soap-label" style="margin-top:0">NIGHT EVENTS</div>
+          <div class="field" style="margin-bottom:10px"><textarea id="n-comp" placeholder="Overnight events, calls, acute changes..."></textarea></div>
+          <div class="soap-label">NIGHT EXAMINATION</div>
+          <div class="field" style="margin-bottom:10px"><textarea id="n-exam" placeholder="Findings if patient reviewed at night..."></textarea></div>
+          <div class="soap-label">NIGHT ORDERS</div>
+          <div class="field"><textarea id="n-plan" placeholder="Medications given, orders changed..."></textarea></div>
+        </div>
+      </div>
+
+      <!-- Multi-day history -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-amber"></span>Previous Notes History</div>
+        <div id="history-list"><div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Save a note to build history</div></div>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn btn-outline" style="font-size:12px" onclick="saveNoteToHistory()">📅 Save Today's Note to History</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SUB: LABS/MEDS ── -->
+    <div class="subpage" id="sub-inv">
+      <div class="card">
+        <div class="card-title"><span class="dot dot-amber"></span>Investigations</div>
+        <div class="field" style="margin-bottom:10px"><label>Labs (latest results)</label><textarea id="inv-labs" placeholder="CBC: Hb 10.2, TLC 14.5, Plt 320&#10;LFTs: Bili 0.8, ALT 32, AST 28&#10;RFTs: Urea 28, Cr 0.9&#10;Electrolytes: Na 138, K 4.1"></textarea></div>
+        <div class="field" style="margin-bottom:10px"><label>Imaging / Reports</label><textarea id="inv-img" placeholder="USG: No free fluid, drain in situ...&#10;CXR: No pneumonia, no effusion..."></textarea></div>
+        <div class="field"><label>Pending / Requested</label><textarea id="inv-pending" placeholder="Awaiting TLC, CRP at 24h..." style="min-height:55px"></textarea></div>
+      </div>
+
+      <!-- Lab Trends -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-cyan"></span>Lab Trend Tracker</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Add values over multiple days to see trends</div>
+        <div class="grid2" style="gap:8px;margin-bottom:8px">
+          <div class="field"><label>Parameter</label>
+            <select id="trend-param">
+              <option>Hb (g/dL)</option><option>TLC (×10³)</option><option>CRP (mg/L)</option>
+              <option>Creatinine</option><option>Bilirubin</option><option>Na (mEq/L)</option><option>K (mEq/L)</option>
+            </select>
+          </div>
+          <div class="field"><label>Value</label><input type="number" step="0.1" id="trend-val" placeholder="e.g. 10.2"></div>
+          <div class="field"><label>Day</label><input type="text" id="trend-day" placeholder="D1, POD2..."></div>
+          <div class="field" style="justify-content:flex-end"><label>&nbsp;</label><button class="btn btn-outline" style="padding:9px" onclick="addTrend()">＋ Add</button></div>
+        </div>
+        <div id="trend-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot dot-purple"></span>Medications Running</div>
+        <div class="field"><textarea id="meds" style="min-height:120px" placeholder="IVF: NS 1L 8-hourly&#10;Inj. Cefuroxime 750mg TDS IV&#10;Inj. Metronidazole 500mg TDS IV&#10;Tab. Paracetamol 500mg TDS PO&#10;Enoxaparin 40mg OD SC"></textarea></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot dot-red"></span>Wound / Drain Status</div>
+        <div class="grid2" style="gap:10px">
+          <div class="field"><label>Wound Condition</label>
+            <select id="wound-status">
+              <option value="">— Select —</option>
+              <option>Clean and dry</option><option>Healthy granulation</option>
+              <option>Mild erythema, no discharge</option><option>Erythema with serous discharge</option>
+              <option>Purulent discharge — SSI suspected</option><option>Wound dehiscence</option>
+              <option>Dressing intact, not changed today</option>
+            </select>
+          </div>
+          <div class="field"><label>Drain Character</label>
+            <select id="drain-char">
+              <option value="">— None / N/A —</option>
+              <option>Serous</option><option>Serosanguinous</option><option>Sanguinous</option>
+              <option>Bile-stained</option><option>Purulent</option><option>Drain removed today</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Drug Dose Calculator -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-green"></span>Drug Dose Calculator</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Based on weight entered in Patient Details tab</div>
+        <div id="drug-calc-list">
+          <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">Enter patient weight to see doses</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SUB: TRANSCRIPT ── -->
+    <div class="subpage" id="sub-transcript">
+      <div class="card">
+        <div class="card-title"><span class="dot dot-cyan"></span>Ward Round Transcript</div>
+        <div class="transcript-area" id="transcript-box"><span class="transcript-placeholder">Press "Generate" to create a formatted transcript for this patient's current shift...</span></div>
+        <div class="btn-row">
+          <button class="btn btn-accent" onclick="generateTranscript()">⚡ Generate</button>
+          <button class="btn btn-green" onclick="copyTranscript()">📋 Copy</button>
+          <div class="copied-badge" id="copied-badge">✓ Copied!</div>
+        </div>
+      </div>
+
+      <!-- Discharge Summary -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-purple"></span>Discharge Summary Generator</div>
+        <div class="grid2" style="gap:10px;margin-bottom:10px">
+          <div class="field"><label>Discharge Date</label><input type="date" id="disc-date"></div>
+          <div class="field"><label>Condition at Discharge</label>
+            <select id="disc-condition">
+              <option value="">— Select —</option>
+              <option>Improved, stable</option><option>Recovered well</option>
+              <option>Discharged against medical advice</option><option>Referred to higher centre</option>
+            </select>
+          </div>
+          <div class="field full"><label>Hospital Course (brief)</label><textarea id="disc-course" placeholder="Patient underwent... recovered uneventfully..." style="min-height:65px"></textarea></div>
+          <div class="field full"><label>Discharge Medications</label><textarea id="disc-meds" placeholder="Tab. Augmentin 625mg TDS x 5 days&#10;Tab. Paracetamol 500mg TDS PRN&#10;..." style="min-height:65px"></textarea></div>
+          <div class="field full"><label>Follow-Up Instructions</label><textarea id="disc-followup" placeholder="Follow up in OPD after 7 days&#10;Stitch removal on day 10&#10;Return if fever / wound discharge..."></textarea></div>
+        </div>
+        <button class="btn btn-purple" onclick="generateDischarge()">📄 Generate Discharge Summary</button>
+        <div class="discharge-out" id="discharge-out" style="display:none"></div>
+        <div class="btn-row" id="disc-copy-row" style="display:none">
+          <button class="btn btn-green" onclick="copyDischarge()">📋 Copy</button>
+          <div class="copied-badge" id="disc-copied"></div>
+        </div>
+      </div>
+
+      <!-- Escalation Templates -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-red"></span>Escalation Templates</div>
+        <div id="escalation-btns" style="display:flex;flex-direction:column;gap:7px">
+          <button class="btn btn-danger" onclick="generateEscalation('deteriorating')">🚨 Deteriorating Patient</button>
+          <button class="btn btn-amber" onclick="generateEscalation('fever')">🌡️ Fever Spike</button>
+          <button class="btn btn-amber" onclick="generateEscalation('bleeding')">🩸 Post-op Bleeding</button>
+          <button class="btn btn-outline" onclick="generateEscalation('consent')">📝 Consent for Procedure</button>
+        </div>
+        <div class="transcript-area" id="escalation-out" style="margin-top:10px;display:none;font-size:11px"></div>
+        <div class="btn-row" id="esc-copy-row" style="display:none">
+          <button class="btn btn-green" onclick="copyEscalation()">📋 Copy / WhatsApp</button>
+          <div class="copied-badge" id="esc-copied"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SAVE ROW ── -->
+    <div style="position:sticky;bottom:70px;z-index:50;padding:0 0 6px">
+      <div class="btn-row" style="justify-content:flex-end">
+        <span class="saved-badge" id="saved-badge">✓ Saved</span>
+        <button class="btn btn-green" onclick="saveCurrentPatient()">💾 Save</button>
+      </div>
+    </div>
+
+  </div><!-- end detail-scroll -->
+
+  <!-- BOTTOM NAV (patient detail) -->
+  <nav class="bottom-nav" id="detail-nav">
+    <button class="bnav-btn active" onclick="goSub('patient',this)" id="bnav-patient"><span class="bnav-icon">👤</span>Patient</button>
+    <button class="bnav-btn" onclick="goSub('vitals',this)" id="bnav-vitals"><span class="bnav-icon">💓</span>Vitals</button>
+    <button class="bnav-btn" onclick="goSub('followup',this)" id="bnav-followup"><span class="bnav-icon">📝</span>Notes</button>
+    <button class="bnav-btn" onclick="goSub('inv',this)" id="bnav-inv"><span class="bnav-icon">🧪</span>Labs</button>
+    <button class="bnav-btn" onclick="goSub('transcript',this)" id="bnav-transcript"><span class="bnav-icon">📄</span>Reports</button>
+  </nav>
+</div><!-- end screen-detail -->
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: ACTIVITY FEED
+═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-activity">
+  <div class="scroll-area">
+    <div class="list-header" style="margin-bottom:8px">
+      <h2>Live Activity Feed</h2>
+      <button class="btn btn-outline" style="font-size:12px;padding:7px 12px" onclick="clearActivityLocal()">Clear</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;font-family:var(--mono)">Real-time log of all actions by all connected doctors</div>
+    <div id="activity-feed">
+      <div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-title">No activity yet</div><p style="font-size:12px">Actions from all doctors will appear here in real-time</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: HANDOVER
+═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-handover">
+  <div class="scroll-area">
+    <div class="list-header">
+      <h2>Handover Sheet</h2>
+      <button class="back-btn" onclick="hideHandover()">← Back</button>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot dot-amber"></span>All Active Patients</div>
+      <div class="handover-card" id="handover-content">Generating...</div>
+      <div class="btn-row" style="margin-top:10px">
+        <button class="btn btn-accent" onclick="generateHandover()">🔄 Refresh</button>
+        <button class="btn btn-green" onclick="copyHandover()">📋 Copy All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV (global — list + activity) -->
+<nav class="bottom-nav" id="global-nav" style="display:none">
+  <button class="bnav-btn active" onclick="switchGlobalTab('list',this)" id="gnav-list"><span class="bnav-icon">🏥</span>Ward</button>
+  <button class="bnav-btn" onclick="switchGlobalTab('activity',this)" id="gnav-activity"><span class="bnav-icon">⚡</span>Activity</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════════════════ -->
+
+<!-- Doctor Setup Modal -->
+<div class="modal-overlay" id="modal-doctor">
+  <div class="modal">
+    <h3>👋 Who are you?</h3>
+    <p>Enter your name so your team can see who made changes in real-time.</p>
+    <div class="field" style="margin-bottom:12px">
+      <label>Your Name</label>
+      <input type="text" id="doctor-name-input" placeholder="e.g. Dr. Noorullah" style="margin-top:4px">
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Role</label>
+      <select id="doctor-role-input">
+        <option>House Officer</option>
+        <option>PG Resident (Year 1)</option>
+        <option>PG Resident (Year 2)</option>
+        <option>PG Resident (Year 3)</option>
+        <option>Senior Registrar</option>
+        <option>Consultant</option>
+      </select>
+    </div>
+    <div class="field" style="margin-bottom:4px">
+      <label>Ward Code (shared with team)</label>
+      <input type="text" id="ward-code-input" placeholder="e.g. LUMHS-SURGERY-A" style="margin-top:4px">
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:14px;font-family:var(--mono)">All team members using the same ward code share one patient list in real-time.</div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="$m('modal-doctor').classList.remove('show')" style="justify-content:center">Cancel</button>
+      <button class="btn btn-accent" onclick="saveDoctorProfile()" style="justify-content:center">✓ Save &amp; Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase Setup Modal -->
+<div class="modal-overlay" id="modal-firebase">
+  <div class="modal">
+    <h3>🔥 Connect Real-Time Sync</h3>
+    <p>This app uses <strong>Google Firebase</strong> (free) for real-time sync between all team members. Follow these steps once — takes ~5 minutes.</p>
+
+    <div style="margin-bottom:12px">
+      <div class="setup-step">
+        <div class="setup-num">1</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6">Go to <a href="https://console.firebase.google.com" target="_blank" style="color:var(--cyan)">console.firebase.google.com</a> → <strong style="color:var(--text)">Create a project</strong> (name it e.g. "lumhs-ward")</div>
+      </div>
+      <div class="setup-step">
+        <div class="setup-num">2</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6">In your project → <strong style="color:var(--text)">Build → Firestore Database</strong> → Create database → Start in <strong style="color:var(--amber)">Test mode</strong></div>
+      </div>
+      <div class="setup-step">
+        <div class="setup-num">3</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6">Go to <strong style="color:var(--text)">Project Settings → Your apps → Add app → Web (&lt;/&gt;)</strong> → Register app → Copy the <code style="color:var(--cyan)">firebaseConfig</code> object</div>
+      </div>
+      <div class="setup-step">
+        <div class="setup-num">4</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6">Paste the config JSON below and tap <strong style="color:var(--green)">Save &amp; Connect</strong></div>
+      </div>
+    </div>
+
+    <label style="display:block;margin-bottom:6px">Firebase Config (paste the JSON object)</label>
+    <textarea class="config-textarea" id="firebase-config-input" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "your-project.firebaseapp.com",
+  "projectId": "your-project-id",
+  "storageBucket": "your-project.appspot.com",
+  "messagingSenderId": "1234567890",
+  "appId": "1:1234567890:web:abcdef"
+}'></textarea>
+
+    <div style="font-size:10px;color:var(--muted);margin-top:6px;margin-bottom:4px;font-family:var(--mono)">This config is stored in your browser only — never sent anywhere except Firebase.</div>
+
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="$m('modal-firebase').classList.remove('show')" style="justify-content:center">Later</button>
+      <button class="btn btn-accent" onclick="saveFirebaseConfig()" style="justify-content:center">🔥 Save &amp; Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script type="module">
+// ══════════════════════════════════════════════════════════════
+//  WARD FOLLOW-UP — LUMHS SURGERY
+//  Real-time team coordination via Firebase Firestore
+//  Falls back to localStorage if Firebase not configured
+// ══════════════════════════════════════════════════════════════
+
+// ─── CONSTANTS ───────────────────────────────────────────────
+const STORE_KEY    = 'ward_patients_v4';
+const DOCTOR_KEY   = 'ward_doctor_v2';
+const FB_KEY       = 'ward_firebase_config_v1';
+const ACTIVITY_KEY = 'ward_activity_local_v1';
+
+// ─── STATE ───────────────────────────────────────────────────
+let patients = [];
+let currentId = null;
+let curShift  = 'morning';
+let doctorProfile = { name:'', role:'House Officer', wardCode:'' };
+let db        = null;
+let wardRef   = null;
+let isOnline  = false;
+let unsubFns  = [];
+
+// ─── DOM HELPERS ─────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const $m = id => document.getElementById(id);
+const val = id => $(id) ? $(id).value.trim() : '';
+
+// ─── TOAST ───────────────────────────────────────────────────
+function showToast(msg, duration=2500){
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), duration);
+}
+
+// ─── CLOCK ───────────────────────────────────────────────────
+function updateClock(){
+  const n=new Date(), p=x=>String(x).padStart(2,'0');
+  $('live-clock').textContent=`${p(n.getDate())}/${p(n.getMonth()+1)} ${p(n.getHours())}:${p(n.getMinutes())}`;
+}
+updateClock(); setInterval(updateClock,1000);
+
+// ─── FIREBASE SETUP ──────────────────────────────────────────
+function getSavedFirebaseConfig(){
+  try { return JSON.parse(localStorage.getItem(FB_KEY)); } catch { return null; }
+}
+
+window.showFirebaseSetup = function(){
+  const saved = getSavedFirebaseConfig();
+  if(saved) $('firebase-config-input').value = JSON.stringify(saved, null, 2);
+  $m('modal-firebase').classList.add('show');
+};
+
+window.saveFirebaseConfig = async function(){
+  const raw = $('firebase-config-input').value.trim();
+  if(!raw){ showToast('⚠️ Paste your Firebase config'); return; }
+  let cfg;
+  try {
+    // Accept both raw object and JSON
+    cfg = JSON.parse(raw);
+  } catch {
+    showToast('❌ Invalid JSON — check your config'); return;
+  }
+  if(!cfg.apiKey || !cfg.projectId){ showToast('❌ Missing apiKey or projectId'); return; }
+  localStorage.setItem(FB_KEY, JSON.stringify(cfg));
+  $m('modal-firebase').classList.remove('show');
+  showToast('🔥 Config saved — connecting...');
+  await initFirebase(cfg);
+};
+
+async function initFirebase(cfg){
+  try {
+    const { initializeApp, getApps, getApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+    const {
+      getFirestore, doc, setDoc, getDoc, onSnapshot,
+      collection, addDoc, query, orderBy, limit, serverTimestamp
+    } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+
+    // Store refs globally for reuse
+    window._fb = { doc, setDoc, getDoc, onSnapshot, collection, addDoc, query, orderBy, limit, serverTimestamp };
+
+    const app = getApps().length ? getApp() : initializeApp(cfg);
+    db = getFirestore(app);
+    window._db = db;
+    connectToWard();
+  } catch(e){
+    console.warn('Firebase load error:', e);
+    setSyncStatus('offline', 'Firebase error — offline mode');
+    showToast('❌ Firebase error: '+e.message);
+  }
+}
+
+// ─── CONNECT TO WARD ─────────────────────────────────────────
+async function connectToWard(){
+  if(!db || !doctorProfile.wardCode){ loadLocalPatients(); renderList(); return; }
+  const { doc, setDoc, getDoc, onSnapshot, collection, addDoc, query, orderBy, limit, serverTimestamp } = window._fb;
+  const code = doctorProfile.wardCode;
+  wardRef = doc(db, 'wards', code);
+  setSyncStatus('syncing', `Syncing ${code}...`);
+
+  try {
+    // Announce presence
+    const presRef = doc(db,'wards',code,'presence',sanitizeId(doctorProfile.name));
+    await setDoc(presRef, {
+      name:doctorProfile.name, role:doctorProfile.role,
+      online:true, lastSeen:serverTimestamp()
+    }, {merge:true});
+
+    // Load patients from Firebase or push local
+    const snap = await getDoc(wardRef);
+    if(snap.exists() && snap.data().patients){
+      patients = snap.data().patients;
+      saveStore();
+    } else {
+      loadLocalPatients();
+      if(patients.length>0) await setDoc(wardRef,{patients},{merge:true});
+    }
+
+    // Real-time patient listener
+    const u1 = onSnapshot(wardRef, s => {
+      if(s.exists() && s.data().patients){
+        patients = s.data().patients;
+        saveStore();
+        renderList();
+        if(currentId) loadPatientIntoForm(currentId);
+      }
+      setSyncStatus('online', `Live · ${code}`);
+    }, e => {
+      setSyncStatus('offline','Sync error');
+      console.warn('Firestore error:',e);
+    });
+    unsubFns.push(u1);
+
+    // Activity listener
+    const actRef = collection(db,'wards',code,'activity');
+    const actQ   = query(actRef, orderBy('ts_local','desc'), limit(60));
+    const u2 = onSnapshot(actQ, s => {
+      renderActivity(s.docs.map(d=>({id:d.id,...d.data()})));
+    });
+    unsubFns.push(u2);
+
+    // Presence listener
+    const presColRef = collection(db,'wards',code,'presence');
+    const u3 = onSnapshot(presColRef, s => {
+      renderOnlineUsers(s.docs.map(d=>d.data()).filter(d=>d.online));
+    });
+    unsubFns.push(u3);
+
+    isOnline = true;
+    renderList();
+    $('firebase-banner').style.display = 'none';
+
+  } catch(e){
+    console.warn('Ward connect error:',e);
+    loadLocalPatients();
+    setSyncStatus('offline','Offline mode');
+    renderList();
+  }
+}
+
+// ─── PUSH TO FIREBASE ─────────────────────────────────────────
+async function pushToFirebase(action, detail){
+  saveStore();
+  if(!db || !wardRef || !window._fb) return;
+  const { setDoc, collection, addDoc, serverTimestamp } = window._fb;
+  try {
+    await setDoc(wardRef, {patients}, {merge:true});
+    const actRef = collection(db,'wards',doctorProfile.wardCode,'activity');
+    await addDoc(actRef, {
+      doctor:doctorProfile.name, role:doctorProfile.role,
+      action, detail,
+      timestamp:serverTimestamp(),
+      ts_local:Date.now()
+    });
+  } catch(e){ console.warn('Push failed:',e); }
+  // Also save to local activity for offline viewing
+  saveActivityLocal(action, detail);
+}
+
+function saveActivityLocal(action, detail){
+  try {
+    const items = JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]');
+    items.unshift({ doctor:doctorProfile.name, role:doctorProfile.role, action, detail, ts_local:Date.now() });
+    if(items.length>80) items.length=80;
+    localStorage.setItem(ACTIVITY_KEY, JSON.stringify(items));
+    if(!isOnline) renderActivity(items);
+  } catch{}
+}
+
+// ─── SYNC STATUS ─────────────────────────────────────────────
+function setSyncStatus(state, msg){
+  const dot=$('sync-dot'); const bDot=$('sync-bar-dot'); const bTxt=$('sync-bar-text');
+  dot.style.cssText='';
+  bDot.className='sync-bar-dot';
+  if(state==='offline'){
+    dot.style.background='var(--red)';
+    bDot.classList.add('offline');
+    bTxt.textContent = msg||'Offline mode';
+    $('firebase-banner').style.display = getSavedFirebaseConfig() ? 'none' : 'flex';
+  } else if(state==='syncing'){
+    dot.style.background='var(--amber)';
+    bDot.classList.add('syncing');
+    bTxt.textContent = msg||'Syncing...';
+  } else {
+    dot.style.background='var(--green)';
+    dot.style.boxShadow='0 0 6px var(--green-glow)';
+    bDot.classList.add('online');
+    bTxt.textContent = msg||'Live sync';
+    $('sync-bar-ward').textContent = doctorProfile.wardCode||'';
+  }
+}
+
+// ─── LOCAL STORE ─────────────────────────────────────────────
+function loadLocalPatients(){
+  try { const r=localStorage.getItem(STORE_KEY); patients=r?JSON.parse(r):[]; } catch { patients=[]; }
+}
+function saveStore(){ localStorage.setItem(STORE_KEY,JSON.stringify(patients)); }
+
+function sanitizeId(str){ return str.replace(/[^a-zA-Z0-9_-]/g,'_').substring(0,50); }
+
+// ─── ONLINE USERS ─────────────────────────────────────────────
+function renderOnlineUsers(users){
+  const el=$('online-avatars');
+  if(!users.length){ el.innerHTML='<span class="online-av" style="color:var(--muted);border-color:var(--border)">—</span>'; return; }
+  el.innerHTML=users.map(u=>`<span class="online-av">${u.name.replace('Dr.','Dr.').trim().substring(0,12)}</span>`).join('');
+}
+
+// ─── ACTIVITY FEED ────────────────────────────────────────────
+function renderActivity(items){
+  const el=$('activity-feed');
+  if(!items||!items.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-title">No activity yet</div><p style="font-size:12px">Actions from all doctors will appear here</p></div>';
+    return;
+  }
+  const icons={ task_add:'✅', task_done:'✔️', task_undo:'↩️', order_done:'✔️', patient_add:'👤', patient_save:'💾', patient_delete:'🗑️', note:'📝', status:'🏷️', default:'🔔' };
+  el.innerHTML=items.map(a=>{
+    const ts=a.ts_local ? new Date(a.ts_local).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '—';
+    const icon=icons[a.action]||icons.default;
+    return `<div class="activity-item">
+      <div class="act-dot"></div>
+      <div class="act-body">
+        <div class="act-text"><strong>${a.doctor||'Unknown'}</strong> ${a.detail||a.action}</div>
+        <div class="act-meta">${a.role||''} · ${ts}</div>
+      </div>
+      <div class="act-icon">${icon}</div>
+    </div>`;
+  }).join('');
+}
+
+window.clearActivityLocal = function(){
+  $('activity-feed').innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Feed cleared locally</div>';
+};
+
+// ─── DOCTOR PROFILE ──────────────────────────────────────────
+function loadDoctorProfile(){
+  try { doctorProfile=JSON.parse(localStorage.getItem(DOCTOR_KEY))||{name:'',role:'House Officer',wardCode:''}; } catch { doctorProfile={name:'',role:'House Officer',wardCode:''}; }
+  if(!doctorProfile.name){
+    setTimeout(()=>$m('modal-doctor').classList.add('show'), 600);
+  } else {
+    $('doc-name-badge').textContent=doctorProfile.name.substring(0,12);
+    const fbCfg=getSavedFirebaseConfig();
+    if(fbCfg) initFirebase(fbCfg);
+    else { loadLocalPatients(); renderList(); setSyncStatus('offline'); }
+  }
+}
+
+window.showDoctorModal = function(){
+  $('doctor-name-input').value=doctorProfile.name||'';
+  $('doctor-role-input').value=doctorProfile.role||'House Officer';
+  $('ward-code-input').value=doctorProfile.wardCode||'';
+  $m('modal-doctor').classList.add('show');
+};
+
+window.saveDoctorProfile = function(){
+  const name=$('doctor-name-input').value.trim();
+  const role=$('doctor-role-input').value;
+  const wardCode=$('ward-code-input').value.trim().toUpperCase()||'LUMHS-SURGERY';
+  if(!name){ showToast('⚠️ Please enter your name'); return; }
+  doctorProfile={name,role,wardCode};
+  localStorage.setItem(DOCTOR_KEY,JSON.stringify(doctorProfile));
+  $('doc-name-badge').textContent=name.substring(0,12);
+  $m('modal-doctor').classList.remove('show');
+  // Unsubscribe previous listeners
+  unsubFns.forEach(fn=>{ try{fn();}catch{} }); unsubFns=[];
+  isOnline=false;
+  const fbCfg=getSavedFirebaseConfig();
+  if(fbCfg) initFirebase(fbCfg);
+  else { loadLocalPatients(); renderList(); setSyncStatus('offline'); showFirebaseSetup(); }
+  showToast(`✅ Set as ${name} · ${role}`);
+};
+
+// ─── NAVIGATION ──────────────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+  const isDetail=id==='screen-detail';
+  const isActivity=id==='screen-activity';
+  const isList=id==='screen-list';
+  $('back-btn').style.display=isDetail?'flex':'none';
+  $('topbar-title').textContent=isDetail?'Patient Record':isActivity?'Activity Feed':'Ward Follow-Up';
+  $('detail-nav').style.display=isDetail?'flex':'none';
+  $('global-nav').style.display=(isList||isActivity)?'flex':'none';
+  if(isList){ $('gnav-list').classList.add('active'); $('gnav-activity').classList.remove('active'); }
+  if(isActivity){ $('gnav-activity').classList.add('active'); $('gnav-list').classList.remove('active'); }
+}
+
+window.goToList = function(){ showScreen('screen-list'); renderList(); };
+
+window.goSub = function(name,btn){
+  document.querySelectorAll('.subpage').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('#detail-nav .bnav-btn').forEach(b=>b.classList.remove('active'));
+  $('sub-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  $('detail-scroll').scrollTop=0;
+};
+
+window.switchGlobalTab = function(tab,btn){
+  document.querySelectorAll('#global-nav .bnav-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(tab==='list') showScreen('screen-list');
+  else if(tab==='activity'){
+    showScreen('screen-activity');
+    // load local activity if offline
+    if(!isOnline){ try{ const a=JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]'); renderActivity(a); }catch{} }
+  }
+};
+
+// ─── PATIENT LIST ─────────────────────────────────────────────
+function initials(name){
+  if(!name) return '?';
+  const w=name.trim().split(' ');
+  return w.length>=2?(w[0][0]+w[w.length-1][0]).toUpperCase():name.substring(0,2).toUpperCase();
+}
+
+const statusMeta={
+  sick:   {label:'🔴 Sick',   cls:'flag-red'},
+  watch:  {label:'🟡 Watch',  cls:'flag-amber'},
+  stable: {label:'🟢 Stable', cls:'flag-green'},
+  discharge:{label:'✅ DC',   cls:'flag-cyan'}
+};
+
+window.renderList = function(){
+  const q=(val('search-input')||'').toLowerCase();
+  const filtered=patients.filter(p=>{
+    if(!q) return true;
+    return (p.name||'').toLowerCase().includes(q)||(p.cr||'').toLowerCase().includes(q)||(p.diag||'').toLowerCase().includes(q);
+  });
+  $('pt-count').textContent=patients.length;
+  const c=$('pt-list-container');
+  if(patients.length===0){
+    c.innerHTML=`<div class="empty-state"><div class="empty-icon">🏥</div><div class="empty-title">No patients yet</div><p style="font-size:13px;margin-bottom:16px">Tap + to add your first patient</p></div>`;
+    return;
+  }
+  if(filtered.length===0){ c.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No results</div></div>`; return; }
+
+  // Sort: sick first, then watch, stable, discharge, then by update time
+  const order={sick:0,watch:1,stable:2,discharge:3,'':4};
+  const sorted=[...filtered].sort((a,b)=>((order[a.status||'']||4)-(order[b.status||'']||4))||b.updatedAt-a.updatedAt);
+
+  c.innerHTML=sorted.map(p=>{
+    const sm=statusMeta[p.status]||{};
+    const statusBadge=sm.label?`<span class="flag-badge ${sm.cls}">${sm.label}</span>`:'';
+    const pending=(p.tasks||[]).filter(t=>!t.done).length;
+    const urgentPending=(p.tasks||[]).filter(t=>!t.done&&t.priority==='urgent').length;
+    const taskBadge=urgentPending>0
+      ?`<span class="flag-badge flag-red">🚨 ${urgentPending} urgent</span>`
+      :pending>0?`<span class="flag-badge" style="background:var(--orange-dim);color:var(--orange);border:1px solid var(--orange)">${pending} task${pending>1?'s':''}</span>`:'';
+    const news2=p.news2!==undefined?`<span class="flag-badge ${p.news2>=7?'flag-red':p.news2>=5?'flag-amber':'flag-green'}">NEWS2:${p.news2}</span>`:'';
+    const dt=p.updatedAt?new Date(p.updatedAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):'';
+    return `<div class="pt-card${p.id===currentId?' active-pt':''}" onclick="openPatient('${p.id}')">
+      <div class="pt-avatar">${initials(p.name)}</div>
+      <div class="pt-info">
+        <div class="pt-name">${p.name||'Unnamed Patient'}</div>
+        <div class="pt-meta">${[p.cr?'CR:'+p.cr:'',p.age||'',p.diag||'No diagnosis'].filter(Boolean).join(' · ')}</div>
+        <div class="pt-flags">${statusBadge}${news2}${taskBadge}</div>
+      </div>
+      <div class="pt-right">
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono)">${dt}</div>
+        <button class="icon-btn del" onclick="event.stopPropagation();deletePatient('${p.id}')" title="Delete">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+// ─── NEW PATIENT ──────────────────────────────────────────────
+window.newPatient = function(){
+  const id='pt_'+Date.now();
+  const today=new Date().toISOString().split('T')[0];
+  patients.push({id,name:'',age:'',cr:'',diag:'',status:'',news2:undefined,tasks:[],complications:[],trends:[],noteHistory:[],updatedAt:Date.now(),data:{'pt-admdate':today,'m-date':today}});
+  saveStore();
+  openPatient(id);
+  pushToFirebase('patient_add','added a new patient');
+};
+
+// ─── FIELDS LIST ─────────────────────────────────────────────
+const FIELDS=['pt-name','pt-age','pt-cr','pt-bed','pt-admdate','pt-consult','pt-diag','pt-proc','pt-weight','pt-allergy',
+  'v-bp','v-hr','v-rr','v-temp','v-spo2','v-gcs','v-bsg','v-uo','v-drain','v-pain',
+  'm-date','m-day','m-comp','m-exam','m-assess','m-plan','e-comp','e-exam','e-plan','n-comp','n-exam','n-plan',
+  'inv-labs','inv-img','inv-pending','meds','wound-status','drain-char',
+  'fl-ivf','fl-oral','fl-blood','fl-urine','fl-drainout','fl-ng','fl-insensible',
+  'disc-date','disc-condition','disc-course','disc-meds','disc-followup'];
+
+// ─── OPEN PATIENT ─────────────────────────────────────────────
+window.openPatient = function(id){
+  currentId=id;
+  loadPatientIntoForm(id);
+  switchShift('morning');
+  goSub('patient',$('bnav-patient'));
+  showScreen('screen-detail');
+};
+
+function loadPatientIntoForm(id){
+  const pt=patients.find(p=>p.id===id); if(!pt) return;
+  const data=pt.data||{};
+  FIELDS.forEach(f=>{ const el=$(f); if(!el) return; el.value=data[f]!==undefined?data[f]:(f==='v-pain'?'0':''); });
+  updatePain(data['v-pain']||0);
+  ['hr','rr','temp','spo2'].forEach(k=>checkVital(k,data['v-'+k]||''));
+  calcNEWS2(); calcFluid(); calcDrugDoses(); updateBanner();
+  document.querySelectorAll('.status-btn').forEach(b=>b.className='status-btn');
+  if(pt.status){
+    const btn=document.querySelector(`.status-btn[onclick*="${pt.status}"]`);
+    if(btn) btn.className=`status-btn sel-${pt.status}`;
+  }
+  renderTasks(pt); renderComplications(pt); renderTrends(pt); renderNoteHistory(pt);
+}
+
+// ─── SAVE PATIENT ─────────────────────────────────────────────
+window.saveCurrentPatient = function(){
+  if(!currentId) return;
+  const pt=patients.find(p=>p.id===currentId); if(!pt) return;
+  const data={};
+  FIELDS.forEach(f=>{ const el=$(f); if(el) data[f]=el.value; });
+  pt.data=data;
+  pt.name=(val('pt-name'))||'Unnamed';
+  pt.age=val('pt-age'); pt.cr=val('pt-cr'); pt.diag=val('pt-diag');
+  pt.updatedAt=Date.now();
+  const n2=calcNEWS2(); if(n2!==null) pt.news2=n2;
+  pushToFirebase('patient_save',`updated record for ${pt.name}`);
+  const badge=$('saved-badge'); badge.style.display='inline-flex';
+  setTimeout(()=>badge.style.display='none',1800);
+};
+
+// ─── DELETE PATIENT ───────────────────────────────────────────
+window.deletePatient = function(id){
+  const pt=patients.find(p=>p.id===id);
+  const name=pt?(pt.name||'this patient'):'this patient';
+  if(!confirm(`Delete ${name}?\nThis cannot be undone.`)) return;
+  patients=patients.filter(p=>p.id!==id);
+  if(currentId===id){ currentId=null; showScreen('screen-list'); }
+  pushToFirebase('patient_delete',`deleted patient ${name}`);
+  renderList();
+};
+
+// ─── STATUS ───────────────────────────────────────────────────
+window.setStatus = function(status,btn){
+  document.querySelectorAll('.status-btn').forEach(b=>b.className='status-btn');
+  const pt=patients.find(p=>p.id===currentId); if(!pt) return;
+  if(pt.status===status){ pt.status=''; }
+  else { pt.status=status; btn.className=`status-btn sel-${status}`; }
+  pt.updatedAt=Date.now();
+  pushToFirebase('status',`marked ${pt.name||'patient'} as ${pt.status||'(cleared)'}`);
+  renderList();
+};
+
+// ─── TASKS / ORDERS (REAL-TIME SHARED) ───────────────────────
+window.quickOrder = function(text){
+  $('task-input').value=text;
+  $('task-priority').value='urgent';
+  addTask();
+};
+
+window.addTask = function(){
+  const input=$('task-input');
+  const text=input.value.trim(); if(!text) return;
+  const priority=$('task-priority').value||'routine';
+  const pt=patients.find(p=>p.id===currentId); if(!pt) return;
+  const task={
+    id:'task_'+Date.now(), text, done:false, priority,
+    addedBy:doctorProfile.name, addedRole:doctorProfile.role, addedAt:Date.now()
+  };
+  if(!pt.tasks) pt.tasks=[];
+  pt.tasks.unshift(task);
+  input.value='';
+  renderTasks(pt);
+  pushToFirebase('task_add',`[${priority.toUpperCase()}] "${text}" for ${pt.name||'patient'}`);
+  renderList();
+};
+
+window.toggleTask = function(taskId){
+  const pt=patients.find(p=>p.id===currentId); if(!pt||!pt.tasks) return;
+  const task=pt.tasks.find(t=>t.id===taskId); if(!task) return;
+  task.done=!task.done;
+  if(task.done){ task.doneBy=doctorProfile.name; task.doneRole=doctorProfile.role; task.doneAt=Date.now(); }
+  else { delete task.doneBy; delete task.doneRole; delete task.doneAt; }
+  renderTasks(pt);
+  const verb=task.done?`marked "${task.text}" DONE`:`reopened task "${task.text}"`;
+  pushToFirebase(task.done?'order_done':'task_undo',`${verb} for ${pt.name||'patient'}`);
+  showToast(task.done?`✅ Done by ${doctorProfile.name}`:`↩️ Task reopened`);
+  renderList();
+};
+
+window.deleteTask = function(taskId){
+  const pt=patients.find(p=>p.id===currentId); if(!pt||!pt.tasks) return;
+  const task=pt.tasks.find(t=>t.id===taskId);
+  pt.tasks=pt.tasks.filter(t=>t.id!==taskId);
+  renderTasks(pt);
+  pushToFirebase('task_add',`removed order "${task?.text||''}" for ${pt.name||'patient'}`);
+  renderList();
+};
+
+function renderTasks(pt){
+  const el=$('task-list');
+  const tasks=pt.tasks||[];
+  if(!tasks.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">No orders yet. Add one above.</div>';
+    return;
+  }
+  // Pending first, then done
+  const sorted=[...tasks].sort((a,b)=>{
+    if(a.done!==b.done) return a.done?1:-1;
+    if((a.priority==='urgent')!==(b.priority==='urgent')) return a.priority==='urgent'?-1:1;
+    return b.addedAt-a.addedAt;
+  });
+  el.innerHTML=sorted.map(t=>{
+    const priorityCls={urgent:'priority-urgent',routine:'priority-routine',prn:'priority-prn'}[t.priority||'routine'];
+    const priorityLabel={urgent:'🚨 URGENT',routine:'Routine',prn:'PRN'}[t.priority||'routine'];
+    const addedInfo=`by ${t.addedBy||'—'}${t.addedRole?' ('+t.addedRole+')':''}`;
+    const doneInfo=t.done&&t.doneBy?`<div class="order-done-info">✅ Done by ${t.doneBy}${t.doneRole?' ('+t.doneRole+')':''} · ${new Date(t.doneAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</div>`:'';
+    return `<div class="order-item${t.done?' done-order':''}">
+      <div class="order-header">
+        <div>
+          <span class="order-priority ${priorityCls}">${priorityLabel}</span>
+          <div class="order-text" style="margin-top:4px">${t.text}</div>
+        </div>
+        <div class="order-actions">
+          <button class="order-btn${t.done?' done-btn':''}" onclick="toggleTask('${t.id}')">${t.done?'↩ Undo':'✓ Done'}</button>
+          <button class="order-btn del-btn" onclick="deleteTask('${t.id}')">✕</button>
+        </div>
+      </div>
+      <div class="order-meta">${addedInfo} · ${new Date(t.addedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</div>
+      ${doneInfo}
+    </div>`;
+  }).join('');
+}
+
+// ─── COMPLICATIONS ────────────────────────────────────────────
+window.addComplication = function(){
+  const name=val('comp-name'); const grade=val('comp-grade');
+  if(!name){ showToast('⚠️ Enter complication name'); return; }
+  const pt=patients.find(p=>p.id===currentId); if(!pt) return;
+  if(!pt.complications) pt.complications=[];
+  pt.complications.push({id:'comp_'+Date.now(),name,grade,addedBy:doctorProfile.name,addedAt:Date.now()});
+  $('comp-name').value=''; $('comp-grade').value='';
+  renderComplications(pt);
+  pushToFirebase('note',`logged complication "${name}" (${grade||'ungraded'}) for ${pt.name||'patient'}`);
+};
+
+function renderComplications(pt){
+  const el=$('comp-list');
+  const comps=pt.complications||[];
+  if(!comps.length){ el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0">No complications logged.</div>'; return; }
+  el.innerHTML=comps.map(c=>`<div class="comp-item">
+    <div class="comp-body"><div class="comp-name">${c.name}</div><div class="comp-grade">${c.grade||'No grade'} · By ${c.addedBy||'—'}</div></div>
+    <span class="comp-del" onclick="deleteComp('${c.id}')">✕</span>
+  </div>`).join('');
+}
+
+window.deleteComp = function(id){
+  const pt=patients.find(p=>p.id===currentId); if(!pt) return;
+  pt.complications=(pt.complications||[]).filter(c=>c.id!==id);
+  renderComplications(pt); pushToFirebase('note',`removed complication for ${pt.name||'patient'}`);
+};
+
+// ─── TRENDS ───────────────────────────────────────────────────
+window.addTrend = function(){
+  const param=val('trend-param'); const v=val('trend-val'); const day=val('trend-day');
+  if(!v){ showToast('⚠️ Enter a value'); return; }
+  const pt=patients.find(p=>p.id===currentId); if(!pt) return;
+  if(!pt.trends) pt.trends=[];
+  pt.trends.push({id:'tr_'+Date.now(),param,value:parseFloat(v),day,addedAt:Date.now()});
+  $('trend-val').value=''; $('trend-day').value='';
+  renderTrends(pt); pushToFirebase('note',`added ${param} trend for ${pt.name||'patient'}`);
+};
+
+function renderTrends(pt){
+  const el=$('trend-list');
+  const trends=pt.trends||[];
+  if(!trends.length){ el.innerHTML='<div style="font-size:11px;color:var(--muted);text-align:center;padding:12px">No trends logged yet</div>'; return; }
+  const grouped={};
+  trends.forEach(t=>{ if(!grouped[t.param]) grouped[t.param]=[]; grouped[t.param].push(t); });
+  el.innerHTML=Object.entries(grouped).map(([param,vals])=>{
+    const sorted=[...vals].sort((a,b)=>a.addedAt-b.addedAt);
+    const last=sorted[sorted.length-1]; const prev=sorted[sorted.length-2];
+    let trend=''; if(prev){ trend=last.value>prev.value?'↑':last.value<prev.value?'↓':'→'; }
+    const dots=sorted.map(v=>`<span style="background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:2px 6px;font-size:10px;font-family:var(--mono)">${v.day||'—'}: <strong>${v.value}</strong></span>`).join(' ');
+    return `<div style="margin-bottom:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:11px;font-weight:600">${param}</span><span style="font-size:14px;font-weight:700;font-family:var(--mono);color:${trend==='↑'?'var(--amber)':trend==='↓'?'var(--cyan)':'var(--muted)'}">${trend}</span></div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">${dots}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── NOTE HISTORY ─────────────────────────────────────────────
+window.saveNoteToHistory = function(){
+  const pt=patients.find(p=>p.id===currentId); if(!pt) return;
+  if(!pt.noteHistory) pt.noteHistory=[];
+  const snap={
+    date:new Date().toLocaleDateString('en-GB'), day:val('m-day'),
+    subjective:val('m-comp'), objective:val('m-exam'),
+    assessment:val('m-assess'), plan:val('m-plan'),
+    savedBy:doctorProfile.name, savedAt:Date.now()
+  };
+  pt.noteHistory.unshift(snap);
+  if(pt.noteHistory.length>14) pt.noteHistory=pt.noteHistory.slice(0,14);
+  renderNoteHistory(pt);
+  showToast('📅 Note saved to history');
+  pushToFirebase('note',`saved daily note for ${pt.name||'patient'} (${snap.day||snap.date})`);
+};
+
+function renderNoteHistory(pt){
+  const el=$('history-list');
+  const hist=pt.noteHistory||[];
+  if(!hist.length){ el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Save a note to build history</div>'; return; }
+  el.innerHTML=hist.map(h=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:12px;font-weight:700;color:var(--text)">${h.date} ${h.day?'· '+h.day:''}</span>
+      <span style="font-size:10px;color:var(--muted);font-family:var(--mono)">By ${h.savedBy||'—'}</span>
+    </div>
+    ${h.subjective?`<div style="font-size:11px;color:var(--muted);margin-bottom:3px"><strong style="color:var(--cyan)">S:</strong> ${h.subjective.substring(0,100)}${h.subjective.length>100?'…':''}</div>`:''}
+    ${h.assessment?`<div style="font-size:11px;color:var(--muted);margin-bottom:3px"><strong style="color:var(--green)">A:</strong> ${h.assessment.substring(0,80)}${h.assessment.length>80?'…':''}</div>`:''}
+    ${h.plan?`<div style="font-size:11px;color:var(--muted)"><strong style="color:var(--amber)">P:</strong> ${h.plan.substring(0,80)}${h.plan.length>80?'…':''}</div>`:''}
+  </div>`).join('');
+}
+
+// ─── BANNER ───────────────────────────────────────────────────
+window.updateBanner = function(){
+  const name=val('pt-name')||'Unnamed Patient';
+  const cr=val('pt-cr')||'';
+  const age=val('pt-age')||'';
+  const diag=val('pt-diag')||'';
+  const day=val('m-day')||'';
+  $('banner-name').textContent=name;
+  $('banner-meta').textContent=[cr?'CR:'+cr:'',age,diag].filter(Boolean).join(' · ')||'Fill in patient details';
+  $('banner-day').textContent=day;
+};
+
+// ─── SHIFT TABS ───────────────────────────────────────────────
+window.switchShift = function(s){
+  ['morning','evening','night'].forEach(x=>{ $('spanel-'+x).classList.remove('active'); $('stab-'+x).className='shift-tab'; });
+  $('spanel-'+s).classList.add('active');
+  $('stab-'+s).className=`shift-tab act-${s}`;
+  curShift=s;
+};
+
+// ─── PAIN ─────────────────────────────────────────────────────
+const painLabels=['No pain','Minimal','Mild','Mild-moderate','Moderate','Moderate','Moderate-severe','Severe','Severe','Very severe','Worst possible pain'];
+window.updatePain = function(v){
+  v=parseInt(v);
+  const el=$('pain-disp');
+  el.textContent=v;
+  el.style.color=v<=3?'var(--green)':v<=6?'var(--amber)':'var(--red)';
+  $('pain-desc').textContent=painLabels[v]||'';
+};
+
+// ─── VITAL CHECKS ─────────────────────────────────────────────
+const vRanges={hr:{min:50,max:110},rr:{min:10,max:25},temp:{min:36.0,max:37.9},spo2:{min:94,max:100}};
+window.checkVital = function(k,v){
+  const box=$('vb-'+k); if(!box||!v) return;
+  const r=vRanges[k]; if(!r){box.className='vital-box';return;}
+  const n=parseFloat(v);
+  if(n<r.min||n>r.max){
+    const severe=(k==='hr'&&(n<40||n>140))||(k==='spo2'&&n<90)||(k==='temp'&&n>39.5);
+    box.className='vital-box '+(severe?'danger':'warn');
+  } else { box.className='vital-box'; }
+};
+
+// ─── NEWS2 ────────────────────────────────────────────────────
+window.calcNEWS2 = function(){
+  const rr=parseFloat(val('v-rr')), spo2=parseFloat(val('v-spo2')),
+        hr=parseFloat(val('v-hr')), temp=parseFloat(val('v-temp')),
+        gcs=parseFloat(val('v-gcs')), bp=val('v-bp');
+  const sbp=bp?parseFloat(bp.split('/')[0]):NaN;
+  let score=0; let hasAny=false;
+  if(!isNaN(rr)){hasAny=true;if(rr<=8||rr>=25)score+=3;else if(rr>=21)score+=2;else if(rr>=9&&rr<=11)score+=1;}
+  if(!isNaN(spo2)){hasAny=true;if(spo2<=91)score+=3;else if(spo2<=93)score+=2;else if(spo2<=95)score+=1;}
+  if(!isNaN(hr)){hasAny=true;if(hr<=40||hr>=131)score+=3;else if(hr>=111)score+=2;else if(hr<=50||hr>=91)score+=1;}
+  if(!isNaN(temp)){hasAny=true;if(temp<=35.0)score+=3;else if(temp>=39.1)score+=2;else if(temp<=36.0)score+=1;else if(temp>=38.1)score+=1;}
+  if(!isNaN(gcs)){hasAny=true;if(gcs<15)score+=3;}
+  if(!isNaN(sbp)){hasAny=true;if(sbp<=90||sbp>=220)score+=3;else if(sbp<=100)score+=2;else if(sbp<=110)score+=1;}
+  if(!hasAny){$('news2-score').textContent='—';$('news2-risk').textContent='Enter vitals to calculate';$('news2-fill').style.width='0%';return null;}
+  const pct=Math.min((score/12)*100,100);
+  const color=score>=7?'var(--red)':score>=5?'var(--amber)':'var(--green)';
+  const risk=score>=7?'🚨 HIGH RISK — Urgent review required':score>=5?'⚠️ MEDIUM RISK — Increased monitoring':'✅ LOW RISK — Routine monitoring';
+  $('news2-score').textContent=score; $('news2-score').style.color=color;
+  $('news2-risk').textContent=risk; $('news2-risk').style.color=color;
+  $('news2-fill').style.width=pct+'%'; $('news2-fill').style.background=color;
+  return score;
+};
+
+// ─── FLUID BALANCE ────────────────────────────────────────────
+window.calcFluid = function(){
+  const ivf=parseFloat(val('fl-ivf'))||0, oral=parseFloat(val('fl-oral'))||0, blood=parseFloat(val('fl-blood'))||0;
+  const urine=parseFloat(val('fl-urine'))||0, drain=parseFloat(val('fl-drainout'))||0;
+  const ng=parseFloat(val('fl-ng'))||0, insensible=parseFloat(val('fl-insensible'))||800;
+  const balance=(ivf+oral+blood)-(urine+drain+ng+insensible);
+  const el=$('fluid-balance');
+  el.textContent=(balance>=0?'+':'')+Math.round(balance)+' mL';
+  el.className='fb-value '+(balance>=0?'fb-positive':'fb-negative');
+};
+
+// ─── DRUG DOSE CALCULATOR ─────────────────────────────────────
+const drugs=[
+  {name:'Paracetamol IV',dose:15,unit:'mg/kg',max:1000,freq:'6-8 hourly',route:'IV/PO',note:'Max 4g/day'},
+  {name:'Enoxaparin (DVT prophylaxis)',dose:40,unit:'mg FIXED',max:null,freq:'Once daily',route:'SC',note:'Reduce if CrCl <30'},
+  {name:'Metronidazole',dose:7.5,unit:'mg/kg',max:500,freq:'8 hourly',route:'IV/PO',note:'Max 500mg/dose'},
+  {name:'Cefuroxime',dose:15,unit:'mg/kg',max:750,freq:'8 hourly',route:'IV',note:'Max 750mg/dose'},
+  {name:'Morphine (acute pain)',dose:0.1,unit:'mg/kg',max:10,freq:'PRN 4 hourly',route:'IV',note:'Titrate carefully'},
+  {name:'Ondansetron',dose:0.15,unit:'mg/kg',max:8,freq:'8 hourly PRN',route:'IV/PO',note:'Max 8mg/dose'},
+  {name:'Tramadol',dose:1,unit:'mg/kg',max:100,freq:'8 hourly',route:'IV/PO',note:'Max 400mg/day'},
+  {name:'Amoxiclav PO (discharge)',dose:20,unit:'mg/kg',max:625,freq:'8 hourly',route:'PO',note:'625mg tab = standard adult dose'},
+];
+window.calcDrugDoses = function(){
+  const wt=parseFloat(val('pt-weight')); const el=$('drug-calc-list');
+  if(!wt||wt<1){ el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">Enter patient weight to see doses</div>'; return; }
+  el.innerHTML=drugs.map(d=>{
+    let dose; if(d.unit==='mg FIXED'){dose=d.dose;}else{dose=d.dose*wt;if(d.max)dose=Math.min(dose,d.max);}
+    return `<div class="drug-row"><div class="drug-name">${d.name}</div><div class="drug-result">→ ${Math.round(dose*10)/10} mg ${d.route} ${d.freq}</div><div class="drug-info">${d.note}</div></div>`;
+  }).join('');
+};
+
+// ─── SNIPPETS ─────────────────────────────────────────────────
+window.insertSnippet = function(field,text){
+  const fields={exam:curShift==='morning'?'m-exam':curShift==='evening'?'e-exam':'n-exam', comp:curShift==='morning'?'m-comp':curShift==='evening'?'e-comp':'n-comp'};
+  const id=fields[field]||'m-exam'; const el=$(id); if(!el) return;
+  el.value=el.value?el.value+'\n'+text:text;
+  showToast('📝 Snippet inserted');
+};
+
+// ─── TRANSCRIPT ───────────────────────────────────────────────
+const valLine=id=>$(id)?$(id).value.trim():'';
+function vitalsLine(){
+  const parts=[];
+  const bp=valLine('v-bp');if(bp)parts.push(`BP: ${bp} mmHg`);
+  const hr=valLine('v-hr');if(hr)parts.push(`HR: ${hr} bpm`);
+  const rr=valLine('v-rr');if(rr)parts.push(`RR: ${rr}/min`);
+  const t=valLine('v-temp');if(t)parts.push(`Temp: ${t}°C`);
+  const s=valLine('v-spo2');if(s)parts.push(`SpO₂: ${s}%`);
+  const g=valLine('v-gcs');if(g)parts.push(`GCS: ${g}`);
+  const b=valLine('v-bsg');if(b)parts.push(`BSG: ${b} mg/dL`);
+  const u=valLine('v-uo');if(u)parts.push(`UO: ${u} mL/hr`);
+  const dr=valLine('v-drain');if(dr)parts.push(`Drain: ${dr} mL/shift`);
+  parts.push(`Pain (NRS): ${$('v-pain')?$('v-pain').value:0}/10`);
+  return parts.join('  |  ');
+}
+
+window.generateTranscript = function(){
+  const now=new Date(),p=x=>String(x).padStart(2,'0');
+  const dateStr=`${p(now.getDate())}/${p(now.getMonth()+1)}/${now.getFullYear()}`;
+  const timeStr=`${p(now.getHours())}:${p(now.getMinutes())}`;
+  const shiftLabel=curShift==='morning'?'☀️  MORNING ROUND':curShift==='evening'?'🌤  EVENING REVIEW':'🌙  NIGHT REVIEW';
+  const n2=$('news2-score')?$('news2-score').textContent:'—';
+  let t='';
+  t+='═══════════════════════════════════════════\n';
+  t+=`  ${shiftLabel}\n`;
+  t+=`  Date: ${dateStr}    Time: ${timeStr}\n`;
+  t+='═══════════════════════════════════════════\n\n';
+  t+='[ PATIENT ]\n';
+  const name=valLine('pt-name');if(name)t+=`Name        : ${name}\n`;
+  const age=valLine('pt-age');if(age)t+=`Age / Sex   : ${age}\n`;
+  const cr=valLine('pt-cr');if(cr)t+=`CR / MR No. : ${cr}\n`;
+  const bed=valLine('pt-bed');if(bed)t+=`Ward / Bed  : ${bed}\n`;
+  const adm=valLine('pt-admdate');if(adm)t+=`Admitted    : ${adm}\n`;
+  const cons=valLine('pt-consult');if(cons)t+=`Consultant  : ${cons}\n`;
+  const diag=valLine('pt-diag');if(diag)t+=`Diagnosis   : ${diag}\n`;
+  const proc=valLine('pt-proc');if(proc)t+=`Procedure   : ${proc}\n`;
+  const mday=valLine('m-day');if(mday)t+=`Day         : ${mday}\n`;
+  t+='\n';
+  const vLine=vitalsLine();
+  if(vLine){t+='[ VITALS ]\n';t+=vLine+'\n';t+=`NEWS2 Score : ${n2}\n\n`;}
+  if(curShift==='morning'){
+    const c=valLine('m-comp'),e=valLine('m-exam'),a=valLine('m-assess'),pl=valLine('m-plan');
+    if(c)t+='[ S — SUBJECTIVE ]\n'+c+'\n\n';
+    if(e)t+='[ O — OBJECTIVE / EXAMINATION ]\n'+e+'\n\n';
+    if(a)t+='[ A — ASSESSMENT ]\n'+a+'\n\n';
+    if(pl)t+='[ P — PLAN / ORDERS ]\n'+pl+'\n\n';
+  }else if(curShift==='evening'){
+    const c=valLine('e-comp'),e=valLine('e-exam'),pl=valLine('e-plan');
+    if(c)t+='[ EVENING REVIEW ]\n'+c+'\n\n';
+    if(e)t+='[ EXAMINATION ]\n'+e+'\n\n';
+    if(pl)t+='[ UPDATED ORDERS ]\n'+pl+'\n\n';
+  }else{
+    const c=valLine('n-comp'),e=valLine('n-exam'),pl=valLine('n-plan');
+    if(c)t+='[ NIGHT EVENTS ]\n'+c+'\n\n';
+    if(e)t+='[ NIGHT EXAMINATION ]\n'+e+'\n\n';
+    if(pl)t+='[ NIGHT ORDERS ]\n'+pl+'\n\n';
+  }
+  const labs=valLine('inv-labs'),img=valLine('inv-img'),pend=valLine('inv-pending');
+  if(labs||img||pend){t+='[ INVESTIGATIONS ]\n';if(labs)t+=`Labs    : ${labs}\n`;if(img)t+=`Imaging : ${img}\n`;if(pend)t+=`Pending : ${pend}\n`;t+='\n';}
+  const meds=valLine('meds');if(meds)t+='[ MEDICATIONS ]\n'+meds+'\n\n';
+  const wound=valLine('wound-status'),drain=valLine('drain-char');
+  if(wound||drain){t+='[ WOUND / DRAIN ]\n';if(wound)t+=`Wound : ${wound}\n`;if(drain)t+=`Drain : ${drain}\n`;t+='\n';}
+  const pt=patients.find(p=>p.id===currentId);
+  if(pt&&pt.tasks&&pt.tasks.length){
+    t+='[ ORDERS / TASKS ]\n';
+    pt.tasks.forEach(task=>{
+      t+=`[${task.done?'✓':'○'}] [${(task.priority||'routine').toUpperCase()}] ${task.text}`;
+      if(task.done&&task.doneBy) t+=` — done by ${task.doneBy}`;
+      t+='\n';
+    });
+    t+='\n';
+  }
+  t+='───────────────────────────────────────────\n';
+  t+=`Documented by : ${doctorProfile.name||'House Officer'} (${doctorProfile.role||'Surgery'})\n`;
+  t+=`LUMHS Jamshoro\n`;
+  t+=`Entry time    : ${dateStr}  ${timeStr}\n`;
+  t+='═══════════════════════════════════════════';
+  $('transcript-box').textContent=t;
+  $('transcript-box').style.color='#cbd5e1';
+  pushToFirebase('note',`generated transcript for ${pt?.name||'patient'}`);
+};
+
+window.copyTranscript = function(){
+  const text=$('transcript-box').textContent;
+  if(text.includes('Press "Generate"')) return;
+  navigator.clipboard.writeText(text).then(()=>{
+    const b=$('copied-badge');b.style.display='inline-flex';setTimeout(()=>b.style.display='none',2000);
+  });
+};
+
+// ─── DISCHARGE SUMMARY ────────────────────────────────────────
+window.generateDischarge = function(){
+  const now=new Date();
+  const admDate=valLine('pt-admdate'); const discDate=valLine('disc-date');
+  let los='';
+  if(admDate&&discDate){ const days=Math.round((new Date(discDate)-new Date(admDate))/(1000*60*60*24)); los=`Length of stay: ${days} day${days!==1?'s':''}`; }
+  let t='';
+  t+='══════════════════════════════════════════════════\n';
+  t+='           DISCHARGE SUMMARY\n';
+  t+='       LUMHS Jamshoro — Surgery Department\n';
+  t+='══════════════════════════════════════════════════\n\n';
+  t+=`Patient Name  : ${valLine('pt-name')||'—'}\n`;
+  t+=`Age / Sex     : ${valLine('pt-age')||'—'}\n`;
+  t+=`CR / MR No.   : ${valLine('pt-cr')||'—'}\n`;
+  t+=`Consultant    : ${valLine('pt-consult')||'—'}\n`;
+  t+=`Admitted      : ${admDate||'—'}\nDischarged    : ${discDate||'—'}\n`;
+  if(los) t+=`${los}\n`;
+  t+=`Condition     : ${valLine('disc-condition')||'—'}\n\n`;
+  t+=`DIAGNOSIS:\n${valLine('pt-diag')||'—'}\n\n`;
+  const proc=valLine('pt-proc');if(proc)t+=`PROCEDURE DONE:\n${proc}\n\n`;
+  const course=valLine('disc-course');if(course)t+=`HOSPITAL COURSE:\n${course}\n\n`;
+  const labs=valLine('inv-labs');if(labs)t+=`RELEVANT INVESTIGATIONS:\n${labs}\n\n`;
+  const discMeds=valLine('disc-meds');if(discMeds)t+=`DISCHARGE MEDICATIONS:\n${discMeds}\n\n`;
+  const fu=valLine('disc-followup');if(fu)t+=`FOLLOW-UP INSTRUCTIONS:\n${fu}\n\n`;
+  const pt=patients.find(p=>p.id===currentId);
+  if(pt&&pt.complications&&pt.complications.length){
+    t+='COMPLICATIONS:\n';
+    pt.complications.forEach(c=>{t+=`- ${c.name} (${c.grade||'ungraded'})\n`;});
+    t+='\n';
+  }
+  t+='──────────────────────────────────────────────────\n';
+  t+=`Prepared by   : ${doctorProfile.name||'House Officer'}\n`;
+  t+=`Date          : ${now.toLocaleDateString('en-GB')}\n`;
+  t+='══════════════════════════════════════════════════';
+  const el=$('discharge-out');el.textContent=t;el.style.display='block';
+  $('disc-copy-row').style.display='flex';
+  pushToFirebase('note',`generated discharge summary for ${valLine('pt-name')||'patient'}`);
+};
+
+window.copyDischarge = function(){
+  navigator.clipboard.writeText($('discharge-out').textContent).then(()=>{
+    const b=$('disc-copied');b.style.display='inline-flex';b.textContent='✓ Copied!';
+    b.style.cssText+='background:var(--green-dim);border:1px solid var(--green);color:var(--green);padding:6px 12px;border-radius:var(--radius-sm);font-size:12px;';
+    setTimeout(()=>b.style.display='none',2000);
+  });
+};
+
+// ─── ESCALATION TEMPLATES ─────────────────────────────────────
+window.generateEscalation = function(type){
+  const name=valLine('pt-name')||'Patient';
+  const cr=valLine('pt-cr');const bed=valLine('pt-bed');
+  const hr=valLine('v-hr'),bp=valLine('v-bp'),spo2=valLine('v-spo2'),temp=valLine('v-temp');
+  const diag=valLine('pt-diag');const day=valLine('m-day');
+  const now=new Date();const p=x=>String(x).padStart(2,'0');
+  const time=`${p(now.getHours())}:${p(now.getMinutes())}`;
+  let t='';
+  if(type==='deteriorating'){
+    t=`🚨 URGENT — PATIENT DETERIORATING\n\nTime: ${time}\nPatient: ${name}${cr?' · CR: '+cr:''}${bed?' · '+bed:''}\nDiagnosis: ${diag||'—'}\nDay: ${day||'—'}\n\nCurrent Vitals:\n• BP: ${bp||'—'} mmHg\n• HR: ${hr||'—'} bpm\n• SpO₂: ${spo2||'—'}%\n• Temp: ${temp||'—'}°C\n\nPatient is deteriorating and requires urgent review. Please come to ward immediately.\n\n— ${doctorProfile.name||'HO'} (${doctorProfile.role||'Surgery'})`;
+  }else if(type==='fever'){
+    t=`🌡️ FEVER SPIKE — Please Review\n\nTime: ${time}\nPatient: ${name}${cr?' · CR: '+cr:''}${bed?' · '+bed:''}\nDiagnosis: ${diag||'—'}\nDay: ${day||'—'}\n\nTemp: ${temp||'—'}°C | BP: ${bp||'—'} | HR: ${hr||'—'} | SpO₂: ${spo2||'—'}%\n\nPatient has developed fever spike. Blood cultures sent / pending. Awaiting instructions.\n\n— ${doctorProfile.name||'HO'} (${doctorProfile.role||'Surgery'})`;
+  }else if(type==='bleeding'){
+    t=`🩸 POST-OP BLEEDING CONCERN\n\nTime: ${time}\nPatient: ${name}${cr?' · CR: '+cr:''}${bed?' · '+bed:''}\nProcedure: ${valLine('pt-proc')||'—'}\nDay: ${day||'—'}\n\nBP: ${bp||'—'} | HR: ${hr||'—'} | Drain output: ${valLine('v-drain')||'—'} mL\n\nConcerned about post-operative bleeding. Drain output increasing / wound oozing. Please review urgently.\n\n— ${doctorProfile.name||'HO'}`;
+  }else if(type==='consent'){
+    t=`📝 CONSENT REQUIRED\n\nPatient: ${name}${cr?' · CR: '+cr:''}\nDiagnosis: ${diag||'—'}\nPlanned Procedure: ${valLine('pt-proc')||'— please specify'}\n\nPatient/family available for consent. Please come to ward when convenient.\n\nTime: ${time}\n— ${doctorProfile.name||'HO'} (${doctorProfile.role||'Surgery'})`;
+  }
+  const el=$('escalation-out');el.textContent=t;el.style.display='block';
+  $('esc-copy-row').style.display='flex';
+  pushToFirebase('note',`generated ${type} escalation for ${name}`);
+};
+
+window.copyEscalation = function(){
+  navigator.clipboard.writeText($('escalation-out').textContent).then(()=>{
+    const b=$('esc-copied');b.style.display='inline-flex';b.textContent='✓ Copied!';
+    b.style.cssText+='background:var(--green-dim);border:1px solid var(--green);color:var(--green);padding:6px 12px;border-radius:var(--radius-sm);font-size:12px;';
+    setTimeout(()=>b.style.display='none',2000);
+  });
+};
+
+// ─── HANDOVER ─────────────────────────────────────────────────
+window.showHandover = function(){ showScreen('screen-handover'); generateHandover(); };
+window.hideHandover = function(){ showScreen('screen-list'); };
+
+window.generateHandover = function(){
+  const now=new Date(); const p=x=>String(x).padStart(2,'0');
+  const dt=`${p(now.getDate())}/${p(now.getMonth()+1)}/${now.getFullYear()} ${p(now.getHours())}:${p(now.getMinutes())}`;
+  let t='';
+  t+='═══════════════════════════════════════════════\n';
+  t+=`  WARD HANDOVER — LUMHS JAMSHORO SURGERY\n`;
+  t+=`  Generated: ${dt}\n`;
+  t+=`  By: ${doctorProfile.name||'—'} (${doctorProfile.role||'—'})\n`;
+  if(doctorProfile.wardCode) t+=`  Ward: ${doctorProfile.wardCode}\n`;
+  t+='═══════════════════════════════════════════════\n\n';
+  if(!patients.length){t+='No patients on ward list.\n';$('handover-content').textContent=t;return;}
+  const statusOrder={sick:0,watch:1,stable:2,discharge:3,'':4};
+  const sorted=[...patients].sort((a,b)=>(statusOrder[a.status||'']||4)-(statusOrder[b.status||'']||4));
+  sorted.forEach((pt,i)=>{
+    const data=pt.data||{};
+    const statusEmoji={sick:'🔴',watch:'🟡',stable:'🟢',discharge:'✅'}[pt.status]||'⚪';
+    t+=`${i+1}. ${statusEmoji} ${pt.name||'Unnamed'}\n`;
+    if(pt.cr)t+=`   CR: ${pt.cr}`;
+    if(data['pt-bed'])t+=` · ${data['pt-bed']}`;
+    if(data['m-day'])t+=` · ${data['m-day']}`;
+    t+='\n';
+    if(pt.diag)t+=`   Dx: ${pt.diag}\n`;
+    if(pt.news2!==undefined)t+=`   NEWS2: ${pt.news2}${pt.news2>=7?' ⚠️':''}\n`;
+    const pending=(pt.tasks||[]).filter(task=>!task.done);
+    const urgent=pending.filter(t=>t.priority==='urgent');
+    if(urgent.length){t+=`   🚨 URGENT (${urgent.length}):\n`;urgent.forEach(task=>t+=`   · ${task.text} [by ${task.addedBy||'—'}]\n`);}
+    const routinePending=pending.filter(t=>t.priority!=='urgent');
+    if(routinePending.length){t+=`   PENDING (${routinePending.length}):\n`;routinePending.forEach(task=>t+=`   · ${task.text}\n`);}
+    if(data['m-assess'])t+=`   Assessment: ${data['m-assess'].substring(0,80)}${data['m-assess'].length>80?'…':''}\n`;
+    if(data['m-plan'])t+=`   Plan: ${data['m-plan'].substring(0,80)}${data['m-plan'].length>80?'…':''}\n`;
+    t+='\n';
+  });
+  t+='───────────────────────────────────────────────\n';
+  t+=`Total: ${patients.length} patient${patients.length!==1?'s':''} · Sick: ${patients.filter(p=>p.status==='sick').length} · Watch: ${patients.filter(p=>p.status==='watch').length} · Discharge ready: ${patients.filter(p=>p.status==='discharge').length}\n`;
+  $('handover-content').textContent=t;
+};
+
+window.copyHandover = function(){ navigator.clipboard.writeText($('handover-content').textContent).then(()=>showToast('📋 Handover copied!')); };
+
+// ─── INIT ─────────────────────────────────────────────────────
+loadDoctorProfile();
+// Load local activity for offline view
+try{ const a=JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]'); if(a.length) renderActivity(a); }catch{}
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+</script>
+</body>
+</html>
