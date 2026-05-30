@@ -968,7 +968,8 @@ async function connectToWard(){
       await sb.from('wards').upsert({ code: currentWard, patients, updated_at: new Date().toISOString() });
     }
 
-    const doctorId = sanitizeId(doctorProfile.name) || 'anon_'+Math.random().toString(36).slice(2,8);
+    const { data: sess } = await sb.auth.getSession();
+    const doctorId = sess?.session?.user?.id || (sanitizeId(doctorProfile.name) || 'anon_'+Math.random().toString(36).slice(2,8));
     window._doctorId = doctorId;
     await sb.from('ward_presence').upsert({
       ward_code: currentWard, doctor_id: doctorId,
