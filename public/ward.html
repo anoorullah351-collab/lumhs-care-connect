@@ -327,6 +327,33 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 </style>
 </head>
 <body>
+
+<!-- AUTH GATE OVERLAY -->
+<div id="auth-overlay" style="position:fixed;inset:0;z-index:9999;background:#060c1a;display:none;align-items:center;justify-content:center;padding:20px;font-family:system-ui,-apple-system,sans-serif;color:#e6f1ff">
+  <div style="width:100%;max-width:380px;background:#0a1426;border:1px solid #1c2a45;border-radius:16px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:28px">🏥</div>
+      <div style="font-size:18px;font-weight:700;margin-top:6px">Ward Follow-Up</div>
+      <div style="font-size:12px;color:#7b8aa8">LUMHS Jamshoro · Surgery</div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <button id="auth-tab-signin" type="button" style="flex:1;padding:8px;border:none;border-radius:8px;background:#1e3a5f;color:#fff;font-weight:600;cursor:pointer">Sign in</button>
+      <button id="auth-tab-signup" type="button" style="flex:1;padding:8px;border:none;border-radius:8px;background:transparent;color:#7b8aa8;font-weight:600;cursor:pointer">Sign up</button>
+    </div>
+    <form id="auth-form" autocomplete="on">
+      <label style="display:block;font-size:12px;color:#7b8aa8;margin-bottom:4px">Email</label>
+      <input id="auth-email" type="email" required autocomplete="email" style="width:100%;padding:10px;border-radius:8px;border:1px solid #1c2a45;background:#060c1a;color:#fff;margin-bottom:12px;font-size:14px"/>
+      <label style="display:block;font-size:12px;color:#7b8aa8;margin-bottom:4px">Password</label>
+      <input id="auth-password" type="password" required autocomplete="current-password" minlength="6" style="width:100%;padding:10px;border-radius:8px;border:1px solid #1c2a45;background:#060c1a;color:#fff;margin-bottom:14px;font-size:14px"/>
+      <button id="auth-submit" type="submit" style="width:100%;padding:11px;border:none;border-radius:8px;background:#38d9f5;color:#021018;font-weight:700;cursor:pointer;font-size:14px">Sign in</button>
+      <div id="auth-error" style="color:#ff6b6b;font-size:12px;margin-top:10px;min-height:16px;text-align:center"></div>
+    </form>
+    <div style="font-size:11px;color:#5a6a8a;text-align:center;margin-top:12px;line-height:1.5">
+      Authorized staff only. Patient data is protected and only visible to signed-in clinicians.
+    </div>
+  </div>
+</div>
+
 <div class="app">
 
 <!-- TOPBAR -->
@@ -941,7 +968,8 @@ async function connectToWard(){
       await sb.from('wards').upsert({ code: currentWard, patients, updated_at: new Date().toISOString() });
     }
 
-    const doctorId = sanitizeId(doctorProfile.name) || 'anon_'+Math.random().toString(36).slice(2,8);
+    const { data: sess } = await sb.auth.getSession();
+    const doctorId = sess?.session?.user?.id || (sanitizeId(doctorProfile.name) || 'anon_'+Math.random().toString(36).slice(2,8));
     window._doctorId = doctorId;
     await sb.from('ward_presence').upsert({
       ward_code: currentWard, doctor_id: doctorId,
@@ -1826,8 +1854,59 @@ window.generateHandover = function(){
 
 window.copyHandover = function(){ navigator.clipboard.writeText($('handover-content').textContent).then(()=>showToast('📋 Handover copied!')); };
 
-// ─── INIT ─────────────────────────────────────────────────────
-loadDoctorProfile();
+// ─── AUTH GATE ───────────────────────────────────────────────
+let authMode = 'signin';
+function showAuthOverlay(show){
+  const ov = document.getElementById('auth-overlay');
+  if(ov) ov.style.display = show ? 'flex' : 'none';
+}
+function setAuthMode(mode){
+  authMode = mode;
+  const si = document.getElementById('auth-tab-signin');
+  const su = document.getElementById('auth-tab-signup');
+  const sub = document.getElementById('auth-submit');
+  const pw = document.getElementById('auth-password');
+  const isSI = mode === 'signin';
+  si.style.background = isSI ? '#1e3a5f' : 'transparent';
+  si.style.color = isSI ? '#fff' : '#7b8aa8';
+  su.style.background = !isSI ? '#1e3a5f' : 'transparent';
+  su.style.color = !isSI ? '#fff' : '#7b8aa8';
+  sub.textContent = isSI ? 'Sign in' : 'Create account';
+  pw.autocomplete = isSI ? 'current-password' : 'new-password';
+  document.getElementById('auth-error').textContent = '';
+}
+document.getElementById('auth-tab-signin').addEventListener('click', () => setAuthMode('signin'));
+document.getElementById('auth-tab-signup').addEventListener('click', () => setAuthMode('signup'));
+document.getElementById('auth-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const err = document.getElementById('auth-error');
+  const btn = document.getElementById('auth-submit');
+  err.textContent = ''; btn.disabled = true;
+  try {
+    const fn = authMode === 'signin' ? sb.auth.signInWithPassword({email,password}) : sb.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin}});
+    const { data, error } = await fn;
+    if(error) throw error;
+    if(!data.session){ err.textContent = 'Check your email to confirm, then sign in.'; setAuthMode('signin'); return; }
+    showAuthOverlay(false);
+    loadDoctorProfile();
+  } catch(ex){
+    err.textContent = ex.message || 'Authentication failed';
+  } finally { btn.disabled = false; }
+});
+window.signOutDoctor = async function(){
+  try { await sb.auth.signOut(); } catch{}
+  location.reload();
+};
+
+// Boot: only run app once authenticated
+(async () => {
+  const { data } = await sb.auth.getSession();
+  if(!data.session){ showAuthOverlay(true); setAuthMode('signin'); return; }
+  loadDoctorProfile();
+})();
+
 // Load local activity for offline view
 try{ const a=JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]'); if(a.length) renderActivity(a); }catch{}
 
