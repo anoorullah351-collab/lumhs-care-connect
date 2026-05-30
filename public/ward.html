@@ -869,14 +869,19 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 <script type="module">
 // ══════════════════════════════════════════════════════════════
 //  WARD FOLLOW-UP — LUMHS SURGERY
-//  Real-time team coordination via Firebase Firestore
-//  Falls back to localStorage if Firebase not configured
+//  Real-time team coordination via Lovable Cloud (Supabase)
+//  Falls back to localStorage if offline
 // ══════════════════════════════════════════════════════════════
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL  = 'https://xhbdplryguddjbgmlrom.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmRwbHJ5Z3VkZGpiZ21scm9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjA4NjEsImV4cCI6MjA5NTczNjg2MX0.9AxIafun8QAQgUIqKsUfoNxdmdmSTLusE6eWYdaesDI';
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON, { realtime: { params: { eventsPerSecond: 10 } } });
 
 // ─── CONSTANTS ───────────────────────────────────────────────
 const STORE_KEY    = 'ward_patients_v4';
 const DOCTOR_KEY   = 'ward_doctor_v2';
-const FB_KEY       = 'ward_firebase_config_v1';
 const ACTIVITY_KEY = 'ward_activity_local_v1';
 
 // ─── STATE ───────────────────────────────────────────────────
@@ -884,10 +889,11 @@ let patients = [];
 let currentId = null;
 let curShift  = 'morning';
 let doctorProfile = { name:'', role:'House Officer', wardCode:'' };
-let db        = null;
-let wardRef   = null;
-let isOnline  = false;
-let unsubFns  = [];
+let currentWard = null;
+let isOnline    = false;
+let channels    = [];
+let pushTimer   = null;
+let suppressNextRemote = false;
 
 // ─── DOM HELPERS ─────────────────────────────────────────────
 const $  = id => document.getElementById(id);
@@ -907,141 +913,146 @@ function updateClock(){
 }
 updateClock(); setInterval(updateClock,1000);
 
-// ─── FIREBASE SETUP ──────────────────────────────────────────
-function getSavedFirebaseConfig(){
-  try { return JSON.parse(localStorage.getItem(FB_KEY)); } catch { return null; }
-}
-
-window.showFirebaseSetup = function(){
-  const saved = getSavedFirebaseConfig();
-  if(saved) $('firebase-config-input').value = JSON.stringify(saved, null, 2);
-  $m('modal-firebase').classList.add('show');
-};
-
-window.saveFirebaseConfig = async function(){
-  const raw = $('firebase-config-input').value.trim();
-  if(!raw){ showToast('⚠️ Paste your Firebase config'); return; }
-  let cfg;
-  try {
-    // Accept both raw object and JSON
-    cfg = JSON.parse(raw);
-  } catch {
-    showToast('❌ Invalid JSON — check your config'); return;
-  }
-  if(!cfg.apiKey || !cfg.projectId){ showToast('❌ Missing apiKey or projectId'); return; }
-  localStorage.setItem(FB_KEY, JSON.stringify(cfg));
-  $m('modal-firebase').classList.remove('show');
-  showToast('🔥 Config saved — connecting...');
-  await initFirebase(cfg);
-};
-
-async function initFirebase(cfg){
-  try {
-    const { initializeApp, getApps, getApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
-    const {
-      getFirestore, doc, setDoc, getDoc, onSnapshot,
-      collection, addDoc, query, orderBy, limit, serverTimestamp
-    } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-
-    // Store refs globally for reuse
-    window._fb = { doc, setDoc, getDoc, onSnapshot, collection, addDoc, query, orderBy, limit, serverTimestamp };
-
-    const app = getApps().length ? getApp() : initializeApp(cfg);
-    db = getFirestore(app);
-    window._db = db;
-    connectToWard();
-  } catch(e){
-    console.warn('Firebase load error:', e);
-    setSyncStatus('offline', 'Firebase error — offline mode');
-    showToast('❌ Firebase error: '+e.message);
-  }
-}
+// ─── Firebase setup modal is no longer needed (no-op stubs) ──
+window.showFirebaseSetup = function(){ /* Cloud auto-connects via ward code */ };
+window.saveFirebaseConfig = function(){};
+function getSavedFirebaseConfig(){ return doctorProfile.wardCode ? {} : null; }
 
 // ─── CONNECT TO WARD ─────────────────────────────────────────
 async function connectToWard(){
-  if(!db || !doctorProfile.wardCode){ loadLocalPatients(); renderList(); return; }
-  const { doc, setDoc, getDoc, onSnapshot, collection, addDoc, query, orderBy, limit, serverTimestamp } = window._fb;
-  const code = doctorProfile.wardCode;
-  wardRef = doc(db, 'wards', code);
-  setSyncStatus('syncing', `Syncing ${code}...`);
+  if(!doctorProfile.wardCode){ loadLocalPatients(); renderList(); setSyncStatus('offline'); return; }
+  for(const ch of channels){ try{ await sb.removeChannel(ch); }catch{} }
+  channels = [];
+  isOnline = false;
+
+  currentWard = doctorProfile.wardCode;
+  setSyncStatus('syncing', `Syncing ${currentWard}...`);
 
   try {
-    // Announce presence
-    const presRef = doc(db,'wards',code,'presence',sanitizeId(doctorProfile.name));
-    await setDoc(presRef, {
-      name:doctorProfile.name, role:doctorProfile.role,
-      online:true, lastSeen:serverTimestamp()
-    }, {merge:true});
+    const { data: row, error: selErr } = await sb
+      .from('wards').select('patients').eq('code', currentWard).maybeSingle();
+    if(selErr) throw selErr;
 
-    // Load patients from Firebase or push local
-    const snap = await getDoc(wardRef);
-    if(snap.exists() && snap.data().patients){
-      patients = snap.data().patients;
+    if(row && Array.isArray(row.patients) && row.patients.length){
+      patients = row.patients;
       saveStore();
     } else {
       loadLocalPatients();
-      if(patients.length>0) await setDoc(wardRef,{patients},{merge:true});
+      await sb.from('wards').upsert({ code: currentWard, patients, updated_at: new Date().toISOString() });
     }
 
-    // Real-time patient listener
-    const u1 = onSnapshot(wardRef, s => {
-      if(s.exists() && s.data().patients){
-        patients = s.data().patients;
-        saveStore();
-        renderList();
-        if(currentId) loadPatientIntoForm(currentId);
-      }
-      setSyncStatus('online', `Live · ${code}`);
-    }, e => {
-      setSyncStatus('offline','Sync error');
-      console.warn('Firestore error:',e);
+    const doctorId = sanitizeId(doctorProfile.name) || 'anon_'+Math.random().toString(36).slice(2,8);
+    window._doctorId = doctorId;
+    await sb.from('ward_presence').upsert({
+      ward_code: currentWard, doctor_id: doctorId,
+      name: doctorProfile.name, role: doctorProfile.role,
+      online: true, last_seen: new Date().toISOString(),
     });
-    unsubFns.push(u1);
 
-    // Activity listener
-    const actRef = collection(db,'wards',code,'activity');
-    const actQ   = query(actRef, orderBy('ts_local','desc'), limit(60));
-    const u2 = onSnapshot(actQ, s => {
-      renderActivity(s.docs.map(d=>({id:d.id,...d.data()})));
-    });
-    unsubFns.push(u2);
+    const wardCh = sb.channel(`ward:${currentWard}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'wards', filter: `code=eq.${currentWard}` },
+        payload => {
+          const next = payload.new && payload.new.patients;
+          if(!Array.isArray(next)) return;
+          if(suppressNextRemote){ suppressNextRemote = false; return; }
+          patients = next;
+          saveStore();
+          renderList();
+          if(currentId) loadPatientIntoForm(currentId);
+        })
+      .subscribe(status => {
+        if(status === 'SUBSCRIBED'){
+          isOnline = true;
+          setSyncStatus('online', `Live · ${currentWard}`);
+        }
+      });
+    channels.push(wardCh);
 
-    // Presence listener
-    const presColRef = collection(db,'wards',code,'presence');
-    const u3 = onSnapshot(presColRef, s => {
-      renderOnlineUsers(s.docs.map(d=>d.data()).filter(d=>d.online));
-    });
-    unsubFns.push(u3);
+    const actCh = sb.channel(`ward_act:${currentWard}`)
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'ward_activity', filter: `ward_code=eq.${currentWard}` },
+        () => refreshActivity())
+      .subscribe();
+    channels.push(actCh);
+    refreshActivity();
 
-    isOnline = true;
+    const presCh = sb.channel(`ward_pres:${currentWard}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'ward_presence', filter: `ward_code=eq.${currentWard}` },
+        () => refreshPresence())
+      .subscribe();
+    channels.push(presCh);
+    refreshPresence();
+
     renderList();
-    $('firebase-banner').style.display = 'none';
+    const banner = $('firebase-banner'); if(banner) banner.style.display = 'none';
+
+    window.addEventListener('beforeunload', () => {
+      try {
+        const url = `${SUPABASE_URL}/rest/v1/ward_presence?ward_code=eq.${currentWard}&doctor_id=eq.${doctorId}`;
+        const body = new Blob([JSON.stringify({ online:false, last_seen:new Date().toISOString() })],
+          { type:'application/json' });
+        navigator.sendBeacon && navigator.sendBeacon(url, body);
+      } catch{}
+    });
 
   } catch(e){
-    console.warn('Ward connect error:',e);
+    console.warn('Ward connect error:', e);
     loadLocalPatients();
     setSyncStatus('offline','Offline mode');
     renderList();
   }
 }
 
-// ─── PUSH TO FIREBASE ─────────────────────────────────────────
+async function refreshActivity(){
+  if(!currentWard) return;
+  const { data } = await sb.from('ward_activity')
+    .select('*').eq('ward_code', currentWard)
+    .order('ts_local', { ascending:false }).limit(60);
+  if(data) renderActivity(data);
+}
+async function refreshPresence(){
+  if(!currentWard) return;
+  const { data } = await sb.from('ward_presence')
+    .select('*').eq('ward_code', currentWard).eq('online', true);
+  if(data) renderOnlineUsers(data);
+}
+
+// Back-compat with previous init path
+async function initFirebase(){ await connectToWard(); }
+
+// ─── PUSH TO CLOUD ───────────────────────────────────────────
 async function pushToFirebase(action, detail){
   saveStore();
-  if(!db || !wardRef || !window._fb) return;
-  const { setDoc, collection, addDoc, serverTimestamp } = window._fb;
-  try {
-    await setDoc(wardRef, {patients}, {merge:true});
-    const actRef = collection(db,'wards',doctorProfile.wardCode,'activity');
-    await addDoc(actRef, {
-      doctor:doctorProfile.name, role:doctorProfile.role,
-      action, detail,
-      timestamp:serverTimestamp(),
-      ts_local:Date.now()
-    });
-  } catch(e){ console.warn('Push failed:',e); }
-  // Also save to local activity for offline viewing
   saveActivityLocal(action, detail);
+  if(!currentWard || !isOnline) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(async () => {
+    try {
+      suppressNextRemote = true;
+      await sb.from('wards').upsert({
+        code: currentWard, patients, updated_at: new Date().toISOString()
+      });
+    } catch(e){ suppressNextRemote = false; console.warn('Push failed:', e); }
+  }, 250);
+  try {
+    await sb.from('ward_activity').insert({
+      ward_code: currentWard,
+      doctor: doctorProfile.name, role: doctorProfile.role,
+      action, detail, ts_local: Date.now()
+    });
+  } catch(e){ console.warn('Activity push failed:', e); }
+}
+
+function saveActivityLocal(action, detail){
+  try {
+    const items = JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]');
+    items.unshift({ doctor:doctorProfile.name, role:doctorProfile.role, action, detail, ts_local:Date.now() });
+    if(items.length>80) items.length=80;
+    localStorage.setItem(ACTIVITY_KEY, JSON.stringify(items));
+    if(!isOnline) renderActivity(items);
+  } catch{}
 }
 
 function saveActivityLocal(action, detail){
