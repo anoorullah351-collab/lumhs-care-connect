@@ -1,0 +1,14 @@
+{
+  "name": "Ward Follow-Up — LUMHS Surgery",
+  "short_name": "Ward FU",
+  "description": "Surgical Ward Follow-Up Tool for LUMHS Jamshoro — real-time team coordination",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#060c1a",
+  "theme_color": "#0a0f1e",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
