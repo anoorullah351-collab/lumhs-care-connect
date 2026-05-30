@@ -1083,15 +1083,6 @@ function saveActivityLocal(action, detail){
   } catch{}
 }
 
-function saveActivityLocal(action, detail){
-  try {
-    const items = JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]');
-    items.unshift({ doctor:doctorProfile.name, role:doctorProfile.role, action, detail, ts_local:Date.now() });
-    if(items.length>80) items.length=80;
-    localStorage.setItem(ACTIVITY_KEY, JSON.stringify(items));
-    if(!isOnline) renderActivity(items);
-  } catch{}
-}
 
 // ─── SYNC STATUS ─────────────────────────────────────────────
 function setSyncStatus(state, msg){
