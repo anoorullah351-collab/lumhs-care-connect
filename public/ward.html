@@ -894,7 +894,57 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
       </div>
     </div>
 
-    <!-- ── SAVE ROW ── -->
+    <!-- ── SUB: CLINICAL GUIDE (decision support) ── -->
+    <div class="subpage" id="sub-guide">
+      <div class="card" style="border-color:#3a2a52;background:linear-gradient(180deg,rgba(180,120,255,0.08),rgba(180,120,255,0.02))">
+        <div class="card-title"><span class="dot dot-purple"></span>Clinical Guidance — Decision Support</div>
+        <div style="background:rgba(255,170,60,0.10);border:1px solid rgba(255,170,60,0.35);border-radius:8px;padding:10px;font-size:11px;color:#ffd089;line-height:1.5;margin-bottom:12px">
+          <strong>⚠️ Recommendations only.</strong> This tool suggests a possible plan based on common surgical protocols (NICE / SAGES / Sanford / Tokyo / IDSA). The <strong>final decision rests entirely with the treating clinician</strong>. Always correlate clinically, confirm with your senior, and follow local hospital policy.
+        </div>
+        <div class="grid2" style="gap:10px">
+          <div class="field full"><label>Pick a condition / scenario</label>
+            <select id="guide-condition" onchange="runGuidance()">
+              <option value="">— Select a clinical scenario —</option>
+              <optgroup label="Sepsis / Infection">
+                <option value="sbp">Spontaneous Bacterial Peritonitis (SBP)</option>
+                <option value="sepsis">Surgical Sepsis / Septic Shock</option>
+                <option value="ssi">Surgical Site Infection (SSI)</option>
+                <option value="cholangitis">Acute Cholangitis (Tokyo Guidelines)</option>
+              </optgroup>
+              <optgroup label="Acute Abdomen">
+                <option value="appendicitis">Acute Appendicitis</option>
+                <option value="cholecystitis">Acute Cholecystitis</option>
+                <option value="pancreatitis">Acute Pancreatitis</option>
+                <option value="sbo">Small Bowel Obstruction</option>
+                <option value="perforation">Perforated Viscus / Peritonitis</option>
+                <option value="mesenteric">Acute Mesenteric Ischaemia</option>
+              </optgroup>
+              <optgroup label="Post-operative">
+                <option value="postopfever">Post-op Fever</option>
+                <option value="postopbleed">Post-op Bleeding</option>
+                <option value="anastleak">Anastomotic Leak (suspected)</option>
+                <option value="ileus">Post-op Ileus</option>
+                <option value="aki">Post-op AKI / Oliguria</option>
+                <option value="dvt">Suspected DVT / PE</option>
+              </optgroup>
+              <optgroup label="Other surgical">
+                <option value="gibleed">Upper GI Bleed</option>
+                <option value="dka">DKA in surgical patient</option>
+                <option value="hypokal">Hypokalaemia</option>
+                <option value="hyponatr">Hyponatraemia</option>
+                <option value="afib">New-onset Atrial Fibrillation</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="field full"><label>Or auto-suggest from this patient's diagnosis</label>
+            <button class="btn btn-outline" style="width:100%" onclick="autoSuggestGuidance()">🔍 Suggest from current diagnosis &amp; vitals</button>
+          </div>
+        </div>
+        <div id="guide-output" style="margin-top:14px"></div>
+      </div>
+    </div>
+
+
     <div style="position:sticky;bottom:70px;z-index:50;padding:0 0 6px">
       <div class="btn-row" style="justify-content:flex-end">
         <span class="saved-badge" id="saved-badge">✓ Saved</span>
