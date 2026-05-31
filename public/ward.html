@@ -449,6 +449,86 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         </div>
       </div>
 
+      <!-- ── PATIENT HISTORY ── -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-purple"></span>Patient History (PMH / Social)</div>
+        <div class="grid2" style="gap:10px">
+          <div class="field full"><label>Past Medical History</label><textarea id="hx-pmh" placeholder="DM type 2 (10y, on Metformin)&#10;Hypertension (5y, on Amlodipine)&#10;Asthma (childhood, well-controlled)"></textarea></div>
+          <div class="field full"><label>Past Surgical History</label><textarea id="hx-surgical" placeholder="Open cholecystectomy 2018&#10;Inguinal hernia repair 2010" style="min-height:55px"></textarea></div>
+          <div class="field full"><label>Comorbidities (quick tags)</label><input type="text" id="hx-comorbid" placeholder="DM, HTN, IHD, COPD, CKD..."></div>
+          <div class="field"><label>Smoking</label>
+            <select id="hx-smoking">
+              <option value="">— Select —</option>
+              <option>Never smoker</option>
+              <option>Ex-smoker (&lt;1y)</option>
+              <option>Ex-smoker (&gt;1y)</option>
+              <option>Current — light (&lt;10/day)</option>
+              <option>Current — heavy (10–20/day)</option>
+              <option>Current — very heavy (&gt;20/day)</option>
+            </select>
+          </div>
+          <div class="field"><label>Alcohol</label>
+            <select id="hx-alcohol">
+              <option value="">— Select —</option>
+              <option>None</option>
+              <option>Occasional / social</option>
+              <option>Regular moderate</option>
+              <option>Heavy / dependent</option>
+              <option>Ex-drinker</option>
+            </select>
+          </div>
+          <div class="field"><label>Pack-Years (if smoker)</label><input type="number" id="hx-packyears" placeholder="e.g. 15"></div>
+          <div class="field"><label>Recreational Drugs</label><input type="text" id="hx-drugs" placeholder="None / specify"></div>
+          <div class="field full"><label>Drug History (regular meds at home)</label><textarea id="hx-meds" placeholder="Tab Metformin 500mg BD&#10;Tab Amlodipine 5mg OD" style="min-height:55px"></textarea></div>
+          <div class="field full"><label>Family History</label><input type="text" id="hx-family" placeholder="Father — IHD at 55, Mother — DM"></div>
+          <div class="field full"><label>Functional Baseline</label>
+            <select id="hx-functional">
+              <option value="">— Select —</option>
+              <option>Independent, fully ambulant</option>
+              <option>Independent with aid</option>
+              <option>Partially dependent</option>
+              <option>Fully dependent / bed-bound</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OPERATIVE NOTE ── -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-red"></span>Operative Note</div>
+        <div class="grid2" style="gap:10px">
+          <div class="field"><label>Date of Surgery</label><input type="date" id="op-date"></div>
+          <div class="field"><label>Start / End Time</label><input type="text" id="op-time" placeholder="09:30 – 11:45"></div>
+          <div class="field full"><label>Procedure</label><input type="text" id="op-procedure" placeholder="e.g. Emergency laparoscopic appendectomy"></div>
+          <div class="field full"><label>Pre-op Diagnosis → Post-op Diagnosis</label><input type="text" id="op-diag" placeholder="Acute appendicitis → Perforated appendicitis with localised peritonitis"></div>
+          <div class="field"><label>Surgeon</label><input type="text" id="op-surgeon" placeholder="Prof. Dr. ..."></div>
+          <div class="field"><label>Assistants</label><input type="text" id="op-assist" placeholder="Dr. X, Dr. Y"></div>
+          <div class="field"><label>Anaesthetist</label><input type="text" id="op-anaesth" placeholder="Dr. ..."></div>
+          <div class="field"><label>Anaesthesia Type</label>
+            <select id="op-anaesth-type">
+              <option value="">— Select —</option>
+              <option>General anaesthesia (GA)</option>
+              <option>Spinal</option>
+              <option>Epidural</option>
+              <option>Combined spinal-epidural</option>
+              <option>Regional block</option>
+              <option>Local infiltration</option>
+              <option>MAC / sedation</option>
+            </select>
+          </div>
+          <div class="field"><label>Incision / Approach</label><input type="text" id="op-incision" placeholder="3-port laparoscopic / Lanz / Midline"></div>
+          <div class="field"><label>Position</label><input type="text" id="op-position" placeholder="Supine, head down"></div>
+          <div class="field full"><label>Intraoperative Findings</label><textarea id="op-findings" placeholder="Inflamed perforated appendix at base, ~200mL purulent fluid in pelvis, no other pathology" style="min-height:65px"></textarea></div>
+          <div class="field full"><label>Procedure Steps (brief)</label><textarea id="op-steps" placeholder="1. GA, supine, parts prepared and draped&#10;2. Pneumoperitoneum via Veress at umbilicus&#10;3. 10mm umbilical + 5mm suprapubic + 5mm LIF ports&#10;4. Appendix identified, mesoappendix divided with harmonic&#10;5. Base secured with 2 endoloops, appendix retrieved&#10;6. Lavage and suction, drain placed in pelvis&#10;7. Ports closed in layers" style="min-height:90px"></textarea></div>
+          <div class="field"><label>Estimated Blood Loss (mL)</label><input type="number" id="op-bloodloss" placeholder="50"></div>
+          <div class="field"><label>Fluids Given</label><input type="text" id="op-fluids" placeholder="NS 1L, RL 500mL"></div>
+          <div class="field"><label>Drains Placed</label><input type="text" id="op-drains" placeholder="Pelvic drain x1 (Romovac)"></div>
+          <div class="field"><label>Specimens Sent</label><input type="text" id="op-specimens" placeholder="Appendix → histopath"></div>
+          <div class="field full"><label>Intra-op Complications</label><textarea id="op-complications" placeholder="None / specify" style="min-height:45px"></textarea></div>
+          <div class="field full"><label>Immediate Post-op Orders</label><textarea id="op-postop" placeholder="NBM 6h, IVF NS 100mL/hr, Inj Cefuroxime 750mg TDS + Metronidazole 500mg TDS x 5d, Inj Paracetamol 1g TDS, Inj Tramadol 50mg TDS PRN, monitor vitals 2-hourly, drain output 4-hourly" style="min-height:65px"></textarea></div>
+        </div>
+      </div>
+
       <!-- ── SHARED ORDERS / TASKS (real-time) ── -->
       <div class="card">
         <div class="card-title">
