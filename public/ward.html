@@ -753,9 +753,60 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         <div id="trend-list"></div>
       </div>
 
+      <!-- ── ANTIBIOTIC TRACKER ── -->
       <div class="card">
-        <div class="card-title"><span class="dot dot-purple"></span>Medications Running</div>
-        <div class="field"><textarea id="meds" style="min-height:120px" placeholder="IVF: NS 1L 8-hourly&#10;Inj. Cefuroxime 750mg TDS IV&#10;Inj. Metronidazole 500mg TDS IV&#10;Tab. Paracetamol 500mg TDS PO&#10;Enoxaparin 40mg OD SC"></textarea></div>
+        <div class="card-title">
+          <span class="dot dot-red"></span>Antibiotic Tracker
+          <span style="font-size:9px;color:var(--amber);margin-left:auto;font-family:var(--mono);">🦠 STEWARDSHIP</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Track every antibiotic with start date, planned duration and indication. App will flag courses approaching review.</div>
+        <div class="grid2" style="gap:8px;margin-bottom:8px">
+          <div class="field"><label>Antibiotic</label><input type="text" id="abx-name" placeholder="Ceftriaxone"></div>
+          <div class="field"><label>Dose</label><input type="text" id="abx-dose" placeholder="2g"></div>
+          <div class="field"><label>Route</label>
+            <select id="abx-route"><option>IV</option><option>IM</option><option>PO</option><option>PR</option><option>Topical</option></select>
+          </div>
+          <div class="field"><label>Frequency</label>
+            <select id="abx-freq"><option>OD</option><option>BD</option><option>TDS</option><option>QID</option><option>Q6H</option><option>Q8H</option><option>Q12H</option><option>STAT</option></select>
+          </div>
+          <div class="field"><label>Start Date</label><input type="date" id="abx-start"></div>
+          <div class="field"><label>Planned Duration (days)</label><input type="number" id="abx-duration" placeholder="5"></div>
+          <div class="field full"><label>Indication</label><input type="text" id="abx-indic" placeholder="Empirical for perforated appendix / culture-directed for E. coli UTI"></div>
+        </div>
+        <button class="btn btn-accent" style="width:100%" onclick="addAntibiotic()">＋ Add Antibiotic</button>
+        <div id="abx-list" style="margin-top:12px"></div>
+      </div>
+
+      <!-- ── STRUCTURED DRUG CHART ── -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-purple"></span>Drug Chart (non-antibiotic)</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">IVF, analgesia, PPI, prophylaxis, regular meds. Add structured entries.</div>
+        <div class="grid2" style="gap:8px;margin-bottom:8px">
+          <div class="field"><label>Drug</label><input type="text" id="dr-name" placeholder="Paracetamol"></div>
+          <div class="field"><label>Dose</label><input type="text" id="dr-dose" placeholder="1g"></div>
+          <div class="field"><label>Route</label>
+            <select id="dr-route"><option>IV</option><option>PO</option><option>IM</option><option>SC</option><option>PR</option><option>SL</option><option>Inhaled</option></select>
+          </div>
+          <div class="field"><label>Frequency</label>
+            <select id="dr-freq"><option>OD</option><option>BD</option><option>TDS</option><option>QID</option><option>Q4H PRN</option><option>Q6H</option><option>Q8H</option><option>HS</option><option>STAT</option><option>PRN</option></select>
+          </div>
+          <div class="field"><label>Start Date</label><input type="date" id="dr-start"></div>
+          <div class="field"><label>Category</label>
+            <select id="dr-cat">
+              <option>Analgesia</option><option>IV Fluid</option><option>PPI / Antacid</option>
+              <option>Antiemetic</option><option>DVT prophylaxis</option><option>Insulin / Glycaemic</option>
+              <option>Cardiac</option><option>Respiratory</option><option>Steroid</option>
+              <option>Regular home med</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field full"><label>Notes / Indication</label><input type="text" id="dr-notes" placeholder="Post-op pain / DVT prophylaxis"></div>
+        </div>
+        <button class="btn btn-accent" style="width:100%" onclick="addDrug()">＋ Add Drug</button>
+        <div id="drug-list" style="margin-top:12px"></div>
+        <div style="margin-top:14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Free-text notes (optional fallback)</div>
+          <textarea id="meds" style="min-height:60px" placeholder="Anything not captured above..."></textarea>
+        </div>
       </div>
 
       <div class="card">
