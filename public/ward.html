@@ -1518,6 +1518,7 @@ function loadPatientIntoForm(id){
     if(btn) btn.className=`status-btn sel-${pt.status}`;
   }
   renderTasks(pt); renderComplications(pt); renderTrends(pt); renderNoteHistory(pt);
+  renderVitalsHistory(pt); renderAntibiotics(pt); renderDrugChart(pt);
 }
 
 // ─── SAVE PATIENT ─────────────────────────────────────────────
