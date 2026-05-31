@@ -639,6 +639,21 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
           <div class="fb-value" id="fluid-balance">+0 mL</div>
         </div>
       </div>
+
+      <!-- ── VITALS HISTORY (timestamped snapshots) ── -->
+      <div class="card">
+        <div class="card-title">
+          <span class="dot dot-cyan"></span>Vitals History
+          <span style="font-size:9px;color:var(--green);margin-left:auto;font-family:var(--mono);">📈 TIMESTAMPED</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+          Tap <strong>Take Snapshot</strong> to save the current vitals above as a timestamped reading. Build a true trend over hours/days.
+        </div>
+        <div class="btn-row" style="margin-bottom:10px">
+          <button class="btn btn-accent" style="flex:1" onclick="takeVitalsSnapshot()">📸 Take Snapshot Now</button>
+        </div>
+        <div id="vitals-history-list"><div style="font-size:12px;color:var(--muted);text-align:center;padding:14px">No snapshots saved yet</div></div>
+      </div>
     </div>
 
     <!-- ── SUB: FOLLOWUP ── -->
