@@ -449,6 +449,86 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         </div>
       </div>
 
+      <!-- ── PATIENT HISTORY ── -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-purple"></span>Patient History (PMH / Social)</div>
+        <div class="grid2" style="gap:10px">
+          <div class="field full"><label>Past Medical History</label><textarea id="hx-pmh" placeholder="DM type 2 (10y, on Metformin)&#10;Hypertension (5y, on Amlodipine)&#10;Asthma (childhood, well-controlled)"></textarea></div>
+          <div class="field full"><label>Past Surgical History</label><textarea id="hx-surgical" placeholder="Open cholecystectomy 2018&#10;Inguinal hernia repair 2010" style="min-height:55px"></textarea></div>
+          <div class="field full"><label>Comorbidities (quick tags)</label><input type="text" id="hx-comorbid" placeholder="DM, HTN, IHD, COPD, CKD..."></div>
+          <div class="field"><label>Smoking</label>
+            <select id="hx-smoking">
+              <option value="">— Select —</option>
+              <option>Never smoker</option>
+              <option>Ex-smoker (&lt;1y)</option>
+              <option>Ex-smoker (&gt;1y)</option>
+              <option>Current — light (&lt;10/day)</option>
+              <option>Current — heavy (10–20/day)</option>
+              <option>Current — very heavy (&gt;20/day)</option>
+            </select>
+          </div>
+          <div class="field"><label>Alcohol</label>
+            <select id="hx-alcohol">
+              <option value="">— Select —</option>
+              <option>None</option>
+              <option>Occasional / social</option>
+              <option>Regular moderate</option>
+              <option>Heavy / dependent</option>
+              <option>Ex-drinker</option>
+            </select>
+          </div>
+          <div class="field"><label>Pack-Years (if smoker)</label><input type="number" id="hx-packyears" placeholder="e.g. 15"></div>
+          <div class="field"><label>Recreational Drugs</label><input type="text" id="hx-drugs" placeholder="None / specify"></div>
+          <div class="field full"><label>Drug History (regular meds at home)</label><textarea id="hx-meds" placeholder="Tab Metformin 500mg BD&#10;Tab Amlodipine 5mg OD" style="min-height:55px"></textarea></div>
+          <div class="field full"><label>Family History</label><input type="text" id="hx-family" placeholder="Father — IHD at 55, Mother — DM"></div>
+          <div class="field full"><label>Functional Baseline</label>
+            <select id="hx-functional">
+              <option value="">— Select —</option>
+              <option>Independent, fully ambulant</option>
+              <option>Independent with aid</option>
+              <option>Partially dependent</option>
+              <option>Fully dependent / bed-bound</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OPERATIVE NOTE ── -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-red"></span>Operative Note</div>
+        <div class="grid2" style="gap:10px">
+          <div class="field"><label>Date of Surgery</label><input type="date" id="op-date"></div>
+          <div class="field"><label>Start / End Time</label><input type="text" id="op-time" placeholder="09:30 – 11:45"></div>
+          <div class="field full"><label>Procedure</label><input type="text" id="op-procedure" placeholder="e.g. Emergency laparoscopic appendectomy"></div>
+          <div class="field full"><label>Pre-op Diagnosis → Post-op Diagnosis</label><input type="text" id="op-diag" placeholder="Acute appendicitis → Perforated appendicitis with localised peritonitis"></div>
+          <div class="field"><label>Surgeon</label><input type="text" id="op-surgeon" placeholder="Prof. Dr. ..."></div>
+          <div class="field"><label>Assistants</label><input type="text" id="op-assist" placeholder="Dr. X, Dr. Y"></div>
+          <div class="field"><label>Anaesthetist</label><input type="text" id="op-anaesth" placeholder="Dr. ..."></div>
+          <div class="field"><label>Anaesthesia Type</label>
+            <select id="op-anaesth-type">
+              <option value="">— Select —</option>
+              <option>General anaesthesia (GA)</option>
+              <option>Spinal</option>
+              <option>Epidural</option>
+              <option>Combined spinal-epidural</option>
+              <option>Regional block</option>
+              <option>Local infiltration</option>
+              <option>MAC / sedation</option>
+            </select>
+          </div>
+          <div class="field"><label>Incision / Approach</label><input type="text" id="op-incision" placeholder="3-port laparoscopic / Lanz / Midline"></div>
+          <div class="field"><label>Position</label><input type="text" id="op-position" placeholder="Supine, head down"></div>
+          <div class="field full"><label>Intraoperative Findings</label><textarea id="op-findings" placeholder="Inflamed perforated appendix at base, ~200mL purulent fluid in pelvis, no other pathology" style="min-height:65px"></textarea></div>
+          <div class="field full"><label>Procedure Steps (brief)</label><textarea id="op-steps" placeholder="1. GA, supine, parts prepared and draped&#10;2. Pneumoperitoneum via Veress at umbilicus&#10;3. 10mm umbilical + 5mm suprapubic + 5mm LIF ports&#10;4. Appendix identified, mesoappendix divided with harmonic&#10;5. Base secured with 2 endoloops, appendix retrieved&#10;6. Lavage and suction, drain placed in pelvis&#10;7. Ports closed in layers" style="min-height:90px"></textarea></div>
+          <div class="field"><label>Estimated Blood Loss (mL)</label><input type="number" id="op-bloodloss" placeholder="50"></div>
+          <div class="field"><label>Fluids Given</label><input type="text" id="op-fluids" placeholder="NS 1L, RL 500mL"></div>
+          <div class="field"><label>Drains Placed</label><input type="text" id="op-drains" placeholder="Pelvic drain x1 (Romovac)"></div>
+          <div class="field"><label>Specimens Sent</label><input type="text" id="op-specimens" placeholder="Appendix → histopath"></div>
+          <div class="field full"><label>Intra-op Complications</label><textarea id="op-complications" placeholder="None / specify" style="min-height:45px"></textarea></div>
+          <div class="field full"><label>Immediate Post-op Orders</label><textarea id="op-postop" placeholder="NBM 6h, IVF NS 100mL/hr, Inj Cefuroxime 750mg TDS + Metronidazole 500mg TDS x 5d, Inj Paracetamol 1g TDS, Inj Tramadol 50mg TDS PRN, monitor vitals 2-hourly, drain output 4-hourly" style="min-height:65px"></textarea></div>
+        </div>
+      </div>
+
       <!-- ── SHARED ORDERS / TASKS (real-time) ── -->
       <div class="card">
         <div class="card-title">
@@ -559,6 +639,21 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
           <div class="fb-value" id="fluid-balance">+0 mL</div>
         </div>
       </div>
+
+      <!-- ── VITALS HISTORY (timestamped snapshots) ── -->
+      <div class="card">
+        <div class="card-title">
+          <span class="dot dot-cyan"></span>Vitals History
+          <span style="font-size:9px;color:var(--green);margin-left:auto;font-family:var(--mono);">📈 TIMESTAMPED</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+          Tap <strong>Take Snapshot</strong> to save the current vitals above as a timestamped reading. Build a true trend over hours/days.
+        </div>
+        <div class="btn-row" style="margin-bottom:10px">
+          <button class="btn btn-accent" style="flex:1" onclick="takeVitalsSnapshot()">📸 Take Snapshot Now</button>
+        </div>
+        <div id="vitals-history-list"><div style="font-size:12px;color:var(--muted);text-align:center;padding:14px">No snapshots saved yet</div></div>
+      </div>
     </div>
 
     <!-- ── SUB: FOLLOWUP ── -->
@@ -658,9 +753,60 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         <div id="trend-list"></div>
       </div>
 
+      <!-- ── ANTIBIOTIC TRACKER ── -->
       <div class="card">
-        <div class="card-title"><span class="dot dot-purple"></span>Medications Running</div>
-        <div class="field"><textarea id="meds" style="min-height:120px" placeholder="IVF: NS 1L 8-hourly&#10;Inj. Cefuroxime 750mg TDS IV&#10;Inj. Metronidazole 500mg TDS IV&#10;Tab. Paracetamol 500mg TDS PO&#10;Enoxaparin 40mg OD SC"></textarea></div>
+        <div class="card-title">
+          <span class="dot dot-red"></span>Antibiotic Tracker
+          <span style="font-size:9px;color:var(--amber);margin-left:auto;font-family:var(--mono);">🦠 STEWARDSHIP</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Track every antibiotic with start date, planned duration and indication. App will flag courses approaching review.</div>
+        <div class="grid2" style="gap:8px;margin-bottom:8px">
+          <div class="field"><label>Antibiotic</label><input type="text" id="abx-name" placeholder="Ceftriaxone"></div>
+          <div class="field"><label>Dose</label><input type="text" id="abx-dose" placeholder="2g"></div>
+          <div class="field"><label>Route</label>
+            <select id="abx-route"><option>IV</option><option>IM</option><option>PO</option><option>PR</option><option>Topical</option></select>
+          </div>
+          <div class="field"><label>Frequency</label>
+            <select id="abx-freq"><option>OD</option><option>BD</option><option>TDS</option><option>QID</option><option>Q6H</option><option>Q8H</option><option>Q12H</option><option>STAT</option></select>
+          </div>
+          <div class="field"><label>Start Date</label><input type="date" id="abx-start"></div>
+          <div class="field"><label>Planned Duration (days)</label><input type="number" id="abx-duration" placeholder="5"></div>
+          <div class="field full"><label>Indication</label><input type="text" id="abx-indic" placeholder="Empirical for perforated appendix / culture-directed for E. coli UTI"></div>
+        </div>
+        <button class="btn btn-accent" style="width:100%" onclick="addAntibiotic()">＋ Add Antibiotic</button>
+        <div id="abx-list" style="margin-top:12px"></div>
+      </div>
+
+      <!-- ── STRUCTURED DRUG CHART ── -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-purple"></span>Drug Chart (non-antibiotic)</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">IVF, analgesia, PPI, prophylaxis, regular meds. Add structured entries.</div>
+        <div class="grid2" style="gap:8px;margin-bottom:8px">
+          <div class="field"><label>Drug</label><input type="text" id="dr-name" placeholder="Paracetamol"></div>
+          <div class="field"><label>Dose</label><input type="text" id="dr-dose" placeholder="1g"></div>
+          <div class="field"><label>Route</label>
+            <select id="dr-route"><option>IV</option><option>PO</option><option>IM</option><option>SC</option><option>PR</option><option>SL</option><option>Inhaled</option></select>
+          </div>
+          <div class="field"><label>Frequency</label>
+            <select id="dr-freq"><option>OD</option><option>BD</option><option>TDS</option><option>QID</option><option>Q4H PRN</option><option>Q6H</option><option>Q8H</option><option>HS</option><option>STAT</option><option>PRN</option></select>
+          </div>
+          <div class="field"><label>Start Date</label><input type="date" id="dr-start"></div>
+          <div class="field"><label>Category</label>
+            <select id="dr-cat">
+              <option>Analgesia</option><option>IV Fluid</option><option>PPI / Antacid</option>
+              <option>Antiemetic</option><option>DVT prophylaxis</option><option>Insulin / Glycaemic</option>
+              <option>Cardiac</option><option>Respiratory</option><option>Steroid</option>
+              <option>Regular home med</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field full"><label>Notes / Indication</label><input type="text" id="dr-notes" placeholder="Post-op pain / DVT prophylaxis"></div>
+        </div>
+        <button class="btn btn-accent" style="width:100%" onclick="addDrug()">＋ Add Drug</button>
+        <div id="drug-list" style="margin-top:12px"></div>
+        <div style="margin-top:14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Free-text notes (optional fallback)</div>
+          <textarea id="meds" style="min-height:60px" placeholder="Anything not captured above..."></textarea>
+        </div>
       </div>
 
       <div class="card">
@@ -748,7 +894,57 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
       </div>
     </div>
 
-    <!-- ── SAVE ROW ── -->
+    <!-- ── SUB: CLINICAL GUIDE (decision support) ── -->
+    <div class="subpage" id="sub-guide">
+      <div class="card" style="border-color:#3a2a52;background:linear-gradient(180deg,rgba(180,120,255,0.08),rgba(180,120,255,0.02))">
+        <div class="card-title"><span class="dot dot-purple"></span>Clinical Guidance — Decision Support</div>
+        <div style="background:rgba(255,170,60,0.10);border:1px solid rgba(255,170,60,0.35);border-radius:8px;padding:10px;font-size:11px;color:#ffd089;line-height:1.5;margin-bottom:12px">
+          <strong>⚠️ Recommendations only.</strong> This tool suggests a possible plan based on common surgical protocols (NICE / SAGES / Sanford / Tokyo / IDSA). The <strong>final decision rests entirely with the treating clinician</strong>. Always correlate clinically, confirm with your senior, and follow local hospital policy.
+        </div>
+        <div class="grid2" style="gap:10px">
+          <div class="field full"><label>Pick a condition / scenario</label>
+            <select id="guide-condition" onchange="runGuidance()">
+              <option value="">— Select a clinical scenario —</option>
+              <optgroup label="Sepsis / Infection">
+                <option value="sbp">Spontaneous Bacterial Peritonitis (SBP)</option>
+                <option value="sepsis">Surgical Sepsis / Septic Shock</option>
+                <option value="ssi">Surgical Site Infection (SSI)</option>
+                <option value="cholangitis">Acute Cholangitis (Tokyo Guidelines)</option>
+              </optgroup>
+              <optgroup label="Acute Abdomen">
+                <option value="appendicitis">Acute Appendicitis</option>
+                <option value="cholecystitis">Acute Cholecystitis</option>
+                <option value="pancreatitis">Acute Pancreatitis</option>
+                <option value="sbo">Small Bowel Obstruction</option>
+                <option value="perforation">Perforated Viscus / Peritonitis</option>
+                <option value="mesenteric">Acute Mesenteric Ischaemia</option>
+              </optgroup>
+              <optgroup label="Post-operative">
+                <option value="postopfever">Post-op Fever</option>
+                <option value="postopbleed">Post-op Bleeding</option>
+                <option value="anastleak">Anastomotic Leak (suspected)</option>
+                <option value="ileus">Post-op Ileus</option>
+                <option value="aki">Post-op AKI / Oliguria</option>
+                <option value="dvt">Suspected DVT / PE</option>
+              </optgroup>
+              <optgroup label="Other surgical">
+                <option value="gibleed">Upper GI Bleed</option>
+                <option value="dka">DKA in surgical patient</option>
+                <option value="hypokal">Hypokalaemia</option>
+                <option value="hyponatr">Hyponatraemia</option>
+                <option value="afib">New-onset Atrial Fibrillation</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="field full"><label>Or auto-suggest from this patient's diagnosis</label>
+            <button class="btn btn-outline" style="width:100%" onclick="autoSuggestGuidance()">🔍 Suggest from current diagnosis &amp; vitals</button>
+          </div>
+        </div>
+        <div id="guide-output" style="margin-top:14px"></div>
+      </div>
+    </div>
+
+
     <div style="position:sticky;bottom:70px;z-index:50;padding:0 0 6px">
       <div class="btn-row" style="justify-content:flex-end">
         <span class="saved-badge" id="saved-badge">✓ Saved</span>
@@ -765,6 +961,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     <button class="bnav-btn" onclick="goSub('followup',this)" id="bnav-followup"><span class="bnav-icon">📝</span>Notes</button>
     <button class="bnav-btn" onclick="goSub('inv',this)" id="bnav-inv"><span class="bnav-icon">🧪</span>Labs</button>
     <button class="bnav-btn" onclick="goSub('transcript',this)" id="bnav-transcript"><span class="bnav-icon">📄</span>Reports</button>
+    <button class="bnav-btn" onclick="goSub('guide',this)" id="bnav-guide"><span class="bnav-icon">🧠</span>Guide</button>
   </nav>
 </div><!-- end screen-detail -->
 
@@ -1283,7 +1480,7 @@ window.renderList = function(){
 window.newPatient = function(){
   const id='pt_'+Date.now();
   const today=new Date().toISOString().split('T')[0];
-  patients.push({id,name:'',age:'',cr:'',diag:'',status:'',news2:undefined,tasks:[],complications:[],trends:[],noteHistory:[],updatedAt:Date.now(),data:{'pt-admdate':today,'m-date':today}});
+  patients.push({id,name:'',age:'',cr:'',diag:'',status:'',news2:undefined,tasks:[],complications:[],trends:[],noteHistory:[],vitalsHistory:[],antibiotics:[],drugChart:[],updatedAt:Date.now(),data:{'pt-admdate':today,'m-date':today}});
   saveStore();
   openPatient(id);
   pushToFirebase('patient_add','added a new patient');
@@ -1291,6 +1488,8 @@ window.newPatient = function(){
 
 // ─── FIELDS LIST ─────────────────────────────────────────────
 const FIELDS=['pt-name','pt-age','pt-cr','pt-bed','pt-admdate','pt-consult','pt-diag','pt-proc','pt-weight','pt-allergy',
+  'hx-pmh','hx-surgical','hx-comorbid','hx-smoking','hx-alcohol','hx-packyears','hx-drugs','hx-meds','hx-family','hx-functional',
+  'op-date','op-time','op-procedure','op-diag','op-surgeon','op-assist','op-anaesth','op-anaesth-type','op-incision','op-position','op-findings','op-steps','op-bloodloss','op-fluids','op-drains','op-specimens','op-complications','op-postop',
   'v-bp','v-hr','v-rr','v-temp','v-spo2','v-gcs','v-bsg','v-uo','v-drain','v-pain',
   'm-date','m-day','m-comp','m-exam','m-assess','m-plan','e-comp','e-exam','e-plan','n-comp','n-exam','n-plan',
   'inv-labs','inv-img','inv-pending','meds','wound-status','drain-char',
@@ -1319,6 +1518,7 @@ function loadPatientIntoForm(id){
     if(btn) btn.className=`status-btn sel-${pt.status}`;
   }
   renderTasks(pt); renderComplications(pt); renderTrends(pt); renderNoteHistory(pt);
+  renderVitalsHistory(pt); renderAntibiotics(pt); renderDrugChart(pt);
 }
 
 // ─── SAVE PATIENT ─────────────────────────────────────────────
@@ -1903,6 +2103,494 @@ try{ const a=JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]'); if(a.length) 
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 
+
+// ═════════════════════════════════════════════════════════════════════
+//  VITALS HISTORY · ANTIBIOTICS · DRUG CHART · CLINICAL GUIDANCE
+// ═════════════════════════════════════════════════════════════════════
+
+function fmtTime(ts){
+  try{
+    const d=new Date(ts);
+    return d.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false});
+  }catch(e){ return String(ts); }
+}
+function daysBetween(a,b){
+  if(!a) return 0;
+  const ms=(b||Date.now()) - new Date(a).getTime();
+  return Math.max(0,Math.floor(ms/86400000));
+}
+
+// ─── VITALS HISTORY ─────────────────────────────────────────────────
+window.takeVitalsSnapshot = function(){
+  const pt=patients.find(p=>p.id===currentId); if(!pt){ alert('Open a patient first'); return; }
+  if(!pt.vitalsHistory) pt.vitalsHistory=[];
+  const snap={
+    id:'vh_'+Date.now(),
+    ts:Date.now(),
+    by:doctorProfile.name||'—',
+    bp:val('v-bp'), hr:val('v-hr'), rr:val('v-rr'), temp:val('v-temp'),
+    spo2:val('v-spo2'), gcs:val('v-gcs'), bsg:val('v-bsg'),
+    uo:val('v-uo'), drain:val('v-drain'), pain:val('v-pain'),
+    news2: (typeof calcNEWS2==='function' ? calcNEWS2() : null)
+  };
+  // Require at least one vital
+  if(!snap.bp && !snap.hr && !snap.rr && !snap.temp && !snap.spo2){
+    alert('Enter at least one vital before taking a snapshot'); return;
+  }
+  pt.vitalsHistory.unshift(snap);
+  pt.updatedAt=Date.now();
+  renderVitalsHistory(pt);
+  saveStore && saveStore();
+  pushToFirebase('vitals_snapshot',`recorded vitals for ${pt.name||'patient'} (NEWS2 ${snap.news2??'-'})`);
+  showToast && showToast('📸 Snapshot saved');
+};
+
+window.deleteVitalsSnapshot = function(snapId){
+  const pt=patients.find(p=>p.id===currentId); if(!pt||!pt.vitalsHistory) return;
+  if(!confirm('Delete this vitals snapshot?')) return;
+  pt.vitalsHistory=pt.vitalsHistory.filter(s=>s.id!==snapId);
+  renderVitalsHistory(pt);
+  saveStore && saveStore();
+  pushToFirebase('vitals_snapshot',`deleted a vitals snapshot for ${pt.name||'patient'}`);
+};
+
+function renderVitalsHistory(pt){
+  const el=$('vitals-history-list'); if(!el) return;
+  const hist=pt.vitalsHistory||[];
+  if(!hist.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:14px">No snapshots saved yet</div>';
+    return;
+  }
+  el.innerHTML=hist.map(s=>{
+    const n2=s.news2;
+    const n2col = n2==null?'var(--muted)' : (n2>=7?'#ff5577':n2>=5?'#ffaa44':n2>=1?'#ffd066':'var(--green)');
+    return `<div style="border:1px solid var(--border);border-radius:8px;padding:9px 10px;margin-bottom:7px;background:rgba(255,255,255,0.02)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--cyan)">${fmtTime(s.ts)}</div>
+        <div style="display:flex;gap:6px;align-items:center">
+          ${n2!=null?`<span style="font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,0.05);color:${n2col};border:1px solid ${n2col}">NEWS2 ${n2}</span>`:''}
+          <button onclick="deleteVitalsSnapshot('${s.id}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px" title="Delete">🗑</button>
+        </div>
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text);line-height:1.55;display:grid;grid-template-columns:repeat(2,1fr);gap:2px 12px">
+        ${s.bp?`<span>BP <b>${s.bp}</b></span>`:''}${s.hr?`<span>HR <b>${s.hr}</b></span>`:''}
+        ${s.rr?`<span>RR <b>${s.rr}</b></span>`:''}${s.temp?`<span>T° <b>${s.temp}</b></span>`:''}
+        ${s.spo2?`<span>SpO₂ <b>${s.spo2}%</b></span>`:''}${s.gcs?`<span>GCS <b>${s.gcs}</b></span>`:''}
+        ${s.bsg?`<span>BSG <b>${s.bsg}</b></span>`:''}${s.uo?`<span>UO <b>${s.uo}</b></span>`:''}
+        ${s.drain?`<span>Drain <b>${s.drain}</b></span>`:''}${s.pain&&s.pain!=='0'?`<span>Pain <b>${s.pain}/10</b></span>`:''}
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:5px">by ${s.by||'—'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── ANTIBIOTIC TRACKER ─────────────────────────────────────────────
+window.addAntibiotic = function(){
+  const pt=patients.find(p=>p.id===currentId); if(!pt){ alert('Open a patient first'); return; }
+  const name=val('abx-name').trim(); if(!name){ alert('Enter antibiotic name'); return; }
+  if(!pt.antibiotics) pt.antibiotics=[];
+  const abx={
+    id:'abx_'+Date.now(),
+    name, dose:val('abx-dose'), route:val('abx-route'), freq:val('abx-freq'),
+    start:val('abx-start')||new Date().toISOString().split('T')[0],
+    duration:Number(val('abx-duration'))||0,
+    indication:val('abx-indic'),
+    stopped:false, addedBy:doctorProfile.name||'—', addedAt:Date.now()
+  };
+  pt.antibiotics.unshift(abx);
+  ['abx-name','abx-dose','abx-duration','abx-indic'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
+  renderAntibiotics(pt);
+  saveStore && saveStore();
+  pushToFirebase('abx_add',`started ${abx.name} ${abx.dose} ${abx.freq} for ${pt.name||'patient'} (${abx.indication||'no indication'})`);
+};
+
+window.toggleAntibioticStop = function(abxId){
+  const pt=patients.find(p=>p.id===currentId); if(!pt||!pt.antibiotics) return;
+  const a=pt.antibiotics.find(x=>x.id===abxId); if(!a) return;
+  a.stopped=!a.stopped;
+  if(a.stopped){ a.stopDate=new Date().toISOString().split('T')[0]; a.stoppedBy=doctorProfile.name||'—'; }
+  else { delete a.stopDate; delete a.stoppedBy; }
+  renderAntibiotics(pt);
+  saveStore && saveStore();
+  pushToFirebase('abx_stop', a.stopped?`STOPPED ${a.name} for ${pt.name||'patient'}`:`resumed ${a.name} for ${pt.name||'patient'}`);
+};
+
+window.deleteAntibiotic = function(abxId){
+  const pt=patients.find(p=>p.id===currentId); if(!pt||!pt.antibiotics) return;
+  if(!confirm('Delete this antibiotic entry?')) return;
+  pt.antibiotics=pt.antibiotics.filter(x=>x.id!==abxId);
+  renderAntibiotics(pt);
+  saveStore && saveStore();
+  pushToFirebase('abx_del',`removed an antibiotic entry for ${pt.name||'patient'}`);
+};
+
+function renderAntibiotics(pt){
+  const el=$('abx-list'); if(!el) return;
+  const list=pt.antibiotics||[];
+  if(!list.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">No antibiotics recorded</div>';
+    return;
+  }
+  el.innerHTML=list.map(a=>{
+    const d=daysBetween(a.start);
+    const planned=a.duration||0;
+    const remaining=planned?Math.max(0,planned-d):null;
+    const overdue=planned && d>planned;
+    const reviewSoon=planned && remaining!=null && remaining<=1 && !a.stopped;
+    let badge='';
+    if(a.stopped) badge=`<span style="font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border);padding:2px 7px;border-radius:10px">STOPPED ${a.stopDate||''}</span>`;
+    else if(overdue) badge=`<span style="font-family:var(--mono);font-size:10px;color:#ff5577;border:1px solid #ff5577;padding:2px 7px;border-radius:10px">⚠ REVIEW (D${d}/${planned})</span>`;
+    else if(reviewSoon) badge=`<span style="font-family:var(--mono);font-size:10px;color:#ffaa44;border:1px solid #ffaa44;padding:2px 7px;border-radius:10px">REVIEW SOON (D${d}/${planned})</span>`;
+    else if(planned) badge=`<span style="font-family:var(--mono);font-size:10px;color:var(--green);border:1px solid var(--green);padding:2px 7px;border-radius:10px">Day ${d}/${planned}</span>`;
+    else badge=`<span style="font-family:var(--mono);font-size:10px;color:var(--cyan);border:1px solid var(--cyan);padding:2px 7px;border-radius:10px">Day ${d}</span>`;
+    return `<div style="border:1px solid ${a.stopped?'var(--border)':(overdue?'#ff5577':'rgba(255,170,60,0.35)')};border-radius:8px;padding:9px 10px;margin-bottom:7px;background:rgba(255,255,255,0.02);${a.stopped?'opacity:.55':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px">
+        <div style="font-weight:700;font-size:13px;color:var(--text)">${a.name} <span style="font-weight:500;color:var(--muted);font-size:12px">${a.dose||''} ${a.route||''} ${a.freq||''}</span></div>
+        ${badge}
+      </div>
+      ${a.indication?`<div style="font-size:11px;color:var(--muted);margin-bottom:4px">📌 ${a.indication}</div>`:''}
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">Started ${a.start||'—'} · by ${a.addedBy||'—'}</div>
+      <div style="display:flex;gap:6px;margin-top:7px">
+        <button class="btn btn-outline" style="font-size:11px;padding:5px 9px" onclick="toggleAntibioticStop('${a.id}')">${a.stopped?'↩️ Resume':'⏸ Stop'}</button>
+        <button class="btn btn-outline" style="font-size:11px;padding:5px 9px" onclick="deleteAntibiotic('${a.id}')">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── STRUCTURED DRUG CHART (non-antibiotic) ────────────────────────
+window.addDrug = function(){
+  const pt=patients.find(p=>p.id===currentId); if(!pt){ alert('Open a patient first'); return; }
+  const name=val('dr-name').trim(); if(!name){ alert('Enter drug name'); return; }
+  if(!pt.drugChart) pt.drugChart=[];
+  const d={
+    id:'drg_'+Date.now(),
+    name, dose:val('dr-dose'), route:val('dr-route'), freq:val('dr-freq'),
+    start:val('dr-start')||new Date().toISOString().split('T')[0],
+    category:val('dr-cat'), notes:val('dr-notes'),
+    stopped:false, addedBy:doctorProfile.name||'—', addedAt:Date.now()
+  };
+  pt.drugChart.unshift(d);
+  ['dr-name','dr-dose','dr-notes'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
+  renderDrugChart(pt);
+  saveStore && saveStore();
+  pushToFirebase('drug_add',`added ${d.name} ${d.dose} ${d.freq} for ${pt.name||'patient'}`);
+};
+
+window.toggleDrugStop = function(id){
+  const pt=patients.find(p=>p.id===currentId); if(!pt||!pt.drugChart) return;
+  const d=pt.drugChart.find(x=>x.id===id); if(!d) return;
+  d.stopped=!d.stopped;
+  if(d.stopped) d.stopDate=new Date().toISOString().split('T')[0]; else delete d.stopDate;
+  renderDrugChart(pt);
+  saveStore && saveStore();
+  pushToFirebase('drug_stop', d.stopped?`stopped ${d.name} for ${pt.name||'patient'}`:`resumed ${d.name}`);
+};
+window.deleteDrug = function(id){
+  const pt=patients.find(p=>p.id===currentId); if(!pt||!pt.drugChart) return;
+  if(!confirm('Delete this drug entry?')) return;
+  pt.drugChart=pt.drugChart.filter(x=>x.id!==id);
+  renderDrugChart(pt);
+  saveStore && saveStore();
+  pushToFirebase('drug_del',`removed a drug entry for ${pt.name||'patient'}`);
+};
+
+function renderDrugChart(pt){
+  const el=$('drug-list'); if(!el) return;
+  const list=pt.drugChart||[];
+  if(!list.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">No drugs recorded</div>';
+    return;
+  }
+  const catColor={'Analgesia':'#ffd066','IV Fluid':'#5ac8fa','PPI / Antacid':'#9b8cff','Antiemetic':'#8be38b','DVT prophylaxis':'#ff8fa3','Insulin / Glycaemic':'#ffb84d','Cardiac':'#ff5577','Respiratory':'#7fd1ff','Steroid':'#c89bff','Regular home med':'#a0adc7','Other':'#a0adc7'};
+  el.innerHTML=list.map(d=>{
+    const days=daysBetween(d.start);
+    const col=catColor[d.category]||'#a0adc7';
+    return `<div style="border:1px solid var(--border);border-left:3px solid ${col};border-radius:8px;padding:9px 10px;margin-bottom:7px;background:rgba(255,255,255,0.02);${d.stopped?'opacity:.5':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+        <div style="font-weight:700;font-size:13px;color:var(--text)">${d.name} <span style="font-weight:500;color:var(--muted);font-size:12px">${d.dose||''} ${d.route||''} ${d.freq||''}</span></div>
+        <span style="font-family:var(--mono);font-size:10px;color:${col};border:1px solid ${col};padding:2px 7px;border-radius:10px">${d.category||'—'}</span>
+      </div>
+      ${d.notes?`<div style="font-size:11px;color:var(--muted);margin-bottom:4px">${d.notes}</div>`:''}
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">${d.stopped?`Stopped ${d.stopDate||''}`:`Started ${d.start||'—'} · Day ${days}`} · by ${d.addedBy||'—'}</div>
+      <div style="display:flex;gap:6px;margin-top:7px">
+        <button class="btn btn-outline" style="font-size:11px;padding:5px 9px" onclick="toggleDrugStop('${d.id}')">${d.stopped?'↩️ Resume':'⏸ Stop'}</button>
+        <button class="btn btn-outline" style="font-size:11px;padding:5px 9px" onclick="deleteDrug('${d.id}')">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═════════════════════════════════════════════════════════════════════
+//  CLINICAL DECISION SUPPORT — RECOMMENDATIONS (NOT ORDERS)
+// ═════════════════════════════════════════════════════════════════════
+const GUIDANCE_PROTOCOLS = {
+  sbp:{
+    title:'Spontaneous Bacterial Peritonitis (SBP)',
+    summary:'Suspect in any cirrhotic / ascitic patient with fever, abdominal pain, encephalopathy, AKI, or unexplained deterioration. Diagnostic gold-standard: ascitic PMN ≥250 cells/mm³.',
+    escalate:['Inform on-call senior / consultant immediately (cirrhotic + suspected SBP is high-mortality).','Discuss with Medicine/Hepatology if available.','Consider HDU/ICU level monitoring if shocked or encephalopathic.'],
+    investigations:['Urgent diagnostic ascitic tap BEFORE first antibiotic dose: cell count + differential, gram stain, culture (in blood-culture bottles at bedside), albumin, protein, glucose, LDH.','Blood cultures × 2 sets (peripheral) before antibiotics.','CBC, CRP, LFTs, RFTs, electrolytes, coag, lactate, ABG, blood sugar.','Urinalysis + urine culture.','CXR; consider USG abdomen.'],
+    management:['Start empirical IV antibiotic immediately after ascitic tap — do NOT wait for results: IV Ceftriaxone 2 g OD (5–7 days). Alternative: Cefotaxime 2 g Q8H.','If healthcare-associated or recent β-lactam exposure → broaden (e.g. Piperacillin-tazobactam 4.5 g Q8H) per local antibiogram.','IV Albumin 1.5 g/kg on day 1 and 1 g/kg on day 3 — reduces hepatorenal syndrome and mortality (esp if Cr >1, BUN >30, or bili >4).','Hold non-selective β-blockers if hypotensive / AKI.','Avoid nephrotoxins (NSAIDs, aminoglycosides, IV contrast where possible).','Treat hepatic encephalopathy: lactulose to 2–3 soft stools/day; rifaximin if recurrent.','Fluid resuscitation guided by perfusion / lactate / urine output; avoid over-resuscitation.','Strict input/output, daily weight, daily LFT/RFT/electrolytes.'],
+    monitor:['Repeat ascitic tap at 48 h if no clinical improvement (expect ≥25% drop in PMN).','Watch for hepatorenal syndrome — rising creatinine.','Plan long-term SBP prophylaxis on discharge: Norfloxacin 400 mg OD (or Ciprofloxacin / Co-trimoxazole) — high recurrence risk.'],
+    redflags:['Septic shock','Worsening encephalopathy / GCS drop','Rising creatinine despite albumin','PMN not falling on repeat tap']
+  },
+  sepsis:{
+    title:'Surgical Sepsis / Septic Shock',
+    summary:'Life-threatening organ dysfunction from dysregulated host response to infection. Apply Sepsis-6 within 1 hour.',
+    escalate:['Activate sepsis bundle / call ICU/anaesthesia review.','Inform senior immediately if qSOFA ≥2, lactate >2, or hypotension.','Identify and control the source — surgical / IR drainage of any collection is mandatory.'],
+    investigations:['Blood cultures × 2 (before antibiotics, but do not delay beyond 45 min).','Lactate, ABG, CBC, CRP, procalcitonin if available, RFTs, LFTs, coag, glucose.','Urinalysis + urine culture; CXR; cultures of any drains/wounds; CT abdomen if intra-abdominal source suspected.'],
+    management:['Sepsis-6 within 1 hour: 1) High-flow O₂ to SpO₂ 94–98%, 2) Blood cultures, 3) Broad-spectrum IV antibiotics, 4) IV fluids (30 mL/kg crystalloid if hypotensive/lactate ≥4), 5) Serial lactate, 6) Urinary catheter + hourly UO.','Empirical antibiotic (intra-abdominal source): Piperacillin-tazobactam 4.5 g IV Q8H, OR Ceftriaxone 2 g IV OD + Metronidazole 500 mg IV Q8H. Add Vancomycin / Linezolid if MRSA risk.','Vasopressors (Noradrenaline) via central line if MAP <65 despite fluids — needs ICU.','Source control: drainage, debridement, or surgery as indicated — do not delay.','VTE prophylaxis once bleeding risk allows.'],
+    monitor:['Reassess after each fluid bolus — avoid over-resuscitation.','Serial lactate every 2–4 h until clearing.','Hourly UO target ≥0.5 mL/kg/h.','De-escalate antibiotics at 48–72 h based on cultures.'],
+    redflags:['Lactate rising','Persistent hypotension despite fluids → vasopressors + ICU','New AKI','Altered mental state']
+  },
+  ssi:{
+    title:'Surgical Site Infection (SSI)',
+    summary:'Classify: superficial incisional, deep incisional, or organ/space. Most occur 5–10 days post-op.',
+    escalate:['Inform operating surgeon / senior of suspected SSI.','Organ/space SSI → urgent surgical review, may need re-imaging or re-operation.'],
+    investigations:['Wound swab for C/S BEFORE starting antibiotics (deep swab, not surface).','CBC, CRP, blood cultures if systemically unwell.','USG / CT if collection suspected.'],
+    management:['Superficial SSI with no systemic features: open wound, drain pus, daily saline dressings — often no antibiotics needed.','Cellulitis around wound: oral Flucloxacillin 500 mg QID (or Cefalexin) 5–7 days; if MRSA risk → Co-trimoxazole or Doxycycline.','Deep / organ-space SSI: IV antibiotics (e.g. Co-amoxiclav 1.2 g Q8H or Pip-Taz) + source control (drainage).','Tetanus prophylaxis if wound contaminated.','Optimise glycaemic control (target <10 mmol/L), nutrition.'],
+    monitor:['Daily wound review; mark erythema border to track.','Watch for necrotising fasciitis (severe pain out of proportion, crepitus, rapid spread, systemic toxicity) — SURGICAL EMERGENCY.','Repeat CRP/WCC at 48–72 h.'],
+    redflags:['Pain out of proportion / crepitus → suspect nec fasc','Systemic sepsis features','Wound dehiscence']
+  },
+  cholangitis:{
+    title:'Acute Cholangitis (Tokyo Guidelines 2018)',
+    summary:'Triad: fever + jaundice + RUQ pain (Charcot). Pentad adds hypotension + altered mental state (Reynolds = severe).',
+    escalate:['Inform senior / consultant — biliary drainage required.','Refer to gastroenterology / interventional radiology for urgent ERCP (within 24 h for moderate, within 12 h for severe).'],
+    investigations:['CBC, CRP, LFTs (raised ALP, GGT, bilirubin), RFTs, coag, blood cultures × 2, lactate.','USG abdomen first-line (CBD dilatation, stones).','MRCP if diagnosis unclear; CT if complications suspected.'],
+    management:['Resuscitate: IV fluids, correct electrolytes, NBM.','Empirical IV antibiotics (community-acquired moderate): Ceftriaxone 2 g OD + Metronidazole 500 mg Q8H. Severe / healthcare-associated: Piperacillin-tazobactam 4.5 g Q8H.','Biliary drainage = definitive treatment: ERCP with stone extraction / stenting. PTC if ERCP not feasible.','Correct coagulopathy (Vit K, FFP) before any procedure.','Analgesia (avoid morphine — use paracetamol ± buprenorphine/tramadol).'],
+    monitor:['Reassess severity (Tokyo grade I/II/III) at 24 h.','Watch for septic shock, AKI, DIC.','Plan cholecystectomy after recovery (during same admission for grade I).'],
+    redflags:['Hypotension / altered mental state → Grade III, ICU + emergent drainage','Persistent fever after 48 h of antibiotics → inadequate drainage']
+  },
+  appendicitis:{
+    title:'Acute Appendicitis',
+    summary:'Use Alvarado or AIR score. CT abdomen if diagnosis unclear in adults; USG first-line in children/pregnancy.',
+    escalate:['Inform on-call surgical registrar / consultant.','Book emergency theatre for laparoscopic appendectomy.'],
+    investigations:['CBC (WCC, neutrophilia), CRP, UEs, β-hCG in females of reproductive age, urinalysis.','USG (graded compression) first-line in children/young women; CT if equivocal in adults.','Group & save, coag, ECG if >40y.'],
+    management:['NBM, IV fluids (NS or RL), analgesia (Paracetamol 1 g IV + Tramadol 50 mg IV if needed).','Antiemetic (Ondansetron 4 mg IV).','Pre-op antibiotic: Co-amoxiclav 1.2 g IV at induction, OR Cefuroxime 1.5 g + Metronidazole 500 mg.','Laparoscopic appendectomy — gold standard.','Post-op: continue antibiotics 24 h if uncomplicated; 5–7 days if perforated/gangrenous.','Non-operative management (antibiotics alone) only in selected uncomplicated cases after consultant decision.'],
+    monitor:['Post-op: vitals, pain, oral intake, wound, drain.','Watch for missed perforation, ileus, intra-abdominal collection.'],
+    redflags:['Free air on imaging → urgent theatre','Generalised peritonitis','Appendiceal mass — may need interval appendectomy']
+  },
+  cholecystitis:{
+    title:'Acute Cholecystitis (Tokyo Guidelines)',
+    summary:'RUQ pain + Murphy sign + fever ± leucocytosis. USG: distended GB, wall thickening >3 mm, pericholecystic fluid, sonographic Murphy.',
+    escalate:['Inform surgical senior — early laparoscopic cholecystectomy (within 7 days, ideally <72 h) is preferred.','High-risk patients: discuss percutaneous cholecystostomy with IR.'],
+    investigations:['CBC, CRP, LFTs (mildly raised), amylase/lipase (exclude pancreatitis), RFTs, coag.','USG abdomen first-line; HIDA scan if equivocal; MRCP if CBD stone suspected.','Blood cultures if febrile/septic.'],
+    management:['NBM, IV fluids, analgesia (Paracetamol + Diclofenac 75 mg IM if no contraindication; avoid morphine).','Antiemetic.','IV antibiotics (Grade I/II): Co-amoxiclav 1.2 g Q8H OR Ceftriaxone 2 g OD + Metronidazole. Grade III: Piperacillin-tazobactam.','Early laparoscopic cholecystectomy (within 72 h) preferred over delayed.','Percutaneous cholecystostomy if unfit for surgery.'],
+    monitor:['Watch for empyema, gangrene, perforation, Mirizzi.','Repeat LFTs — rising bilirubin → suspect CBD stone, plan MRCP/ERCP.'],
+    redflags:['Generalised peritonitis → perforation, emergency surgery','Sepsis → cover as cholangitis pathway']
+  },
+  pancreatitis:{
+    title:'Acute Pancreatitis',
+    summary:'Diagnosis: 2 of 3 — typical pain, lipase/amylase >3× upper limit, characteristic imaging. Severity: Atlanta classification (mild / moderately severe / severe).',
+    escalate:['Severe pancreatitis (organ failure >48 h) → ICU.','Gallstone pancreatitis with cholangitis → urgent ERCP within 24 h.','Suspected infected necrosis → discuss with HPB / IR.'],
+    investigations:['Amylase / lipase, CBC, CRP (at 48 h — >150 predicts severe), LFTs (ALT >150 suggests gallstone), RFTs, calcium, glucose, LDH, triglycerides, ABG, lactate.','USG abdomen — look for gallstones, CBD dilatation.','CECT abdomen at 72 h if severe or not improving (to assess necrosis).','Imaging only if diagnosis uncertain or severe disease.'],
+    management:['Aggressive IV fluid resuscitation: Ringer\'s lactate 5–10 mL/kg/h initially, then titrate to UO 0.5–1 mL/kg/h (avoid >250 mL/h after first 24 h — over-resuscitation harmful).','Analgesia: Paracetamol IV + Tramadol; consider PCA in severe disease.','NBM initially; in mild disease, start oral feeding within 24–72 h as tolerated.','Severe: early enteral feeding (NJ or NG) preferred over TPN within 72 h.','No prophylactic antibiotics in sterile necrosis. Start antibiotics (Meropenem/Pip-Taz) only if infected necrosis or extra-pancreatic infection.','Gallstone pancreatitis: cholecystectomy during same admission for mild disease; ERCP if obstructing CBD stone + cholangitis.','Treat hyperglycaemia, correct calcium, magnesium.','VTE prophylaxis.'],
+    monitor:['Hourly UO, vitals; daily CBC, CRP, RFT, Ca, glucose.','Reassess severity at 24 h and 48 h (BISAP, APACHE-II, modified Glasgow).','Watch for ARDS, AKI, abdominal compartment syndrome.'],
+    redflags:['Persistent organ failure >48 h → severe pancreatitis','Rising CRP / WBC after 7 days → suspect infected necrosis']
+  },
+  sbo:{
+    title:'Small Bowel Obstruction',
+    summary:'Colicky pain, vomiting, distension, absolute constipation. Adhesions are commonest cause; also hernias, malignancy.',
+    escalate:['Inform senior. Closed-loop / strangulated obstruction → emergency theatre.','Suspected ischaemia (peritonism, raised lactate, tenderness over hernia) → urgent surgical consult.'],
+    investigations:['CBC, UEs (often hypokalaemia, dehydration), lactate, ABG, coag, group & save.','Erect CXR + supine AXR (dilated loops >3 cm, fluid levels).','CT abdomen with contrast — gold standard; identifies cause, transition point, ischaemia.'],
+    management:['"Drip and suck": NBM, NG tube on free drainage + 4-hourly aspirates, IV fluids (NS/RL) with K⁺ replacement, urinary catheter, strict I/O.','Analgesia + antiemetic.','VTE prophylaxis.','Adhesional SBO without ischaemia: trial conservative management 48–72 h; consider Gastrografin challenge (100 mL via NG; if reaches colon in 24 h → likely to resolve, also therapeutic).','Surgery indicated for: strangulation, closed-loop, peritonitis, failure of conservative management at 72 h, virgin abdomen, hernia.'],
+    monitor:['Serial abdominal exams + lactate every 6–12 h.','Output from NG, urine.','Repeat AXR if not improving.'],
+    redflags:['Rising lactate, tachycardia, peritonism → strangulation, emergency surgery','Fever + leucocytosis']
+  },
+  perforation:{
+    title:'Perforated Viscus / Generalised Peritonitis',
+    summary:'Sudden severe abdominal pain, rigid abdomen, free gas on imaging. Surgical emergency.',
+    escalate:['Inform consultant immediately. Book emergency theatre.','Anaesthesia / ICU pre-op review.'],
+    investigations:['CBC, CRP, UEs, lactate, ABG, coag, group & crossmatch, glucose.','Erect CXR (free air under diaphragm) or CT abdomen (more sensitive; identifies site).','Blood cultures × 2.'],
+    management:['Resuscitate as per sepsis: IV fluids, O₂, NG tube, urinary catheter.','Empirical IV antibiotics: Piperacillin-tazobactam 4.5 g Q8H, OR Ceftriaxone 2 g + Metronidazole 500 mg Q8H. Add antifungal if upper GI perforation + risk factors.','Analgesia (Paracetamol IV ± opioid).','VTE prophylaxis once bleeding risk allows.','Emergency laparotomy / laparoscopy for source control.','Optimise: correct electrolytes, transfuse if Hb <8 / actively bleeding.'],
+    monitor:['Hourly vitals, UO; serial lactate.','Post-op: ICU/HDU as indicated.'],
+    redflags:['Septic shock','Faecal peritonitis → high mortality, ICU post-op']
+  },
+  mesenteric:{
+    title:'Acute Mesenteric Ischaemia',
+    summary:'Pain out of proportion to clinical findings, often AF / vascular disease background. High mortality — needs early diagnosis.',
+    escalate:['IMMEDIATE consultant and vascular surgery referral.','Interventional radiology for possible angiography / embolectomy.'],
+    investigations:['CBC, UEs, lactate (often markedly raised), ABG (metabolic acidosis), coag, group & crossmatch, ECG (look for AF), troponin.','CT angiography mesenteric vessels — investigation of choice.'],
+    management:['Resuscitate: IV fluids, O₂, NG tube, urinary catheter.','IV broad-spectrum antibiotics (Pip-Taz).','Therapeutic anticoagulation (heparin) once diagnosis confirmed and bleeding risk acceptable.','Endovascular revascularisation (angio + thrombectomy/stent) if no peritonism.','Laparotomy + embolectomy / bowel resection if peritonitis or non-viable bowel.','Second-look laparotomy at 24–48 h often required.'],
+    monitor:['Serial lactate, abdominal exam, urine output.','Post-op ICU.'],
+    redflags:['Rising lactate, peritonism → non-viable bowel, immediate laparotomy']
+  },
+  postopfever:{
+    title:'Post-op Fever — "5 Ws" Approach',
+    summary:'Wind (atelectasis/pneumonia, POD 1–2), Water (UTI, POD 3–5), Wound (SSI, POD 5–7), Walking (DVT/PE, POD 5+), Wonder-drugs (drug fever, transfusion reaction), What-did-we-do (line/catheter, abscess, anastomotic leak).',
+    escalate:['New fever + sepsis features → senior review.','Fever after POD 5 with abdominal signs → suspect anastomotic leak / collection.'],
+    investigations:['CBC, CRP, blood cultures × 2, urinalysis + culture, sputum culture if cough, CXR.','Examine wound, drains, IV sites, calves.','USG / CT if intra-abdominal source suspected; D-dimer + CTPA if PE suspected.'],
+    management:['Treat the cause, not just the temperature.','Paracetamol 1 g for symptomatic relief if temp >38.5 or distressed.','Targeted antibiotics only after cultures (unless septic).','Remove unnecessary lines / catheters.','Encourage early mobilisation, incentive spirometry, chest physio.'],
+    monitor:['Reassess in 12–24 h. Persistent fever >POD 5 needs imaging.','Document the "5 Ws" review in notes.'],
+    redflags:['Tachycardia + hypotension + fever → sepsis pathway','Fever + abdominal pain post-bowel anastomosis → leak until proven otherwise']
+  },
+  postopbleed:{
+    title:'Post-op Bleeding',
+    summary:'Reactionary (within 24 h, slipped tie / missed vessel) or secondary (5–10 d, infection-related).',
+    escalate:['Inform operating surgeon and consultant IMMEDIATELY.','Alert theatre, anaesthesia, blood bank.'],
+    investigations:['Urgent CBC, coag, fibrinogen, group & crossmatch (4–6 units), ABG, lactate.','Imaging only if stable: CT angiography to localise.'],
+    management:['ABC: large-bore IV access × 2, O₂, NBM.','Resuscitate: balanced transfusion (PRBC:FFP:Plt ~1:1:1 if massive). Activate massive transfusion protocol if needed.','Correct coagulopathy: Vit K, FFP, platelets, tranexamic acid 1 g IV (if within 3 h of bleed onset).','Reverse anticoagulants (Vit K + PCC for warfarin, Idarucizumab for dabigatran, Andexanet for Xa inhibitors).','Local control: pressure on wound, pack if accessible.','Return to theatre for surgical control if ongoing bleed or instability.','Interventional radiology (angio-embolisation) for visceral bleeds.'],
+    monitor:['Continuous vitals, UO, serial Hb (every 1–2 h).','Watch for compartment syndrome / abdominal distension.'],
+    redflags:['Hypotension despite resuscitation → theatre','Tense abdomen / fall in Hb >2 g/dL → intra-abdominal bleed']
+  },
+  anastleak:{
+    title:'Anastomotic Leak (suspected)',
+    summary:'Typically POD 5–7 (range 3–14). Features: tachycardia, fever, ileus, abdominal pain, faeculent/bilious drain output, raised CRP that fails to fall after POD 4.',
+    escalate:['Inform operating consultant IMMEDIATELY — leak is a surgical emergency.','Anaesthesia / ICU pre-op review; book theatre.'],
+    investigations:['CBC, CRP, UEs, lactate, ABG, coag, blood cultures × 2, group & crossmatch.','CT abdomen with oral + IV contrast (look for extraluminal contrast, gas, collection).','Drain fluid amylase / bilirubin / creatinine as indicated.'],
+    management:['NBM, NG decompression, IV fluids, urinary catheter.','Broad-spectrum IV antibiotics: Piperacillin-tazobactam 4.5 g Q8H (cover gut flora + anaerobes).','Resuscitate as per sepsis pathway.','Definitive management depends on stability and leak type:\n  • Contained leak, stable patient → IR drainage + antibiotics ± stent.\n  • Free leak / peritonitis / unstable → emergency relaparotomy, washout, diversion (stoma), drainage.','Optimise nutrition (TPN or NJ feeding) — leaks heal poorly with malnutrition.'],
+    monitor:['ICU/HDU level monitoring post-op.','Serial CRP, lactate, abdominal exam.'],
+    redflags:['Generalised peritonitis → immediate theatre','Faecal peritonitis → high mortality']
+  },
+  ileus:{
+    title:'Post-op Ileus',
+    summary:'Functional obstruction; physiological up to POD 3–5. Prolonged if >5 days. Exclude mechanical SBO and anastomotic leak.',
+    escalate:['Prolonged ileus >5 d → senior review, imaging.','Suspected anastomotic leak → emergency review.'],
+    investigations:['UEs (correct K⁺, Mg²⁺), CBC, CRP.','AXR / CT abdomen if not resolving.'],
+    management:['NBM if vomiting; otherwise small sips.','NG decompression if vomiting / distended.','IV fluids; aggressive electrolyte correction (especially K⁺, Mg²⁺).','Stop opioids where possible; use multimodal analgesia (Paracetamol, NSAID, regional blocks).','Early mobilisation; chewing gum; coffee — small evidence base but harmless.','Consider Alvimopan / Neostigmine in refractory cases under senior guidance.','Avoid prokinetics routinely.'],
+    monitor:['Bowel sounds, flatus, stool output; daily AXR if needed.'],
+    redflags:['Worsening pain, fever, leucocytosis → reconsider leak / collection / mechanical SBO']
+  },
+  aki:{
+    title:'Post-op AKI / Oliguria',
+    summary:'AKI = rise in Cr ≥26 µmol/L in 48 h, OR ≥1.5× baseline in 7 d, OR UO <0.5 mL/kg/h for ≥6 h. Pre-renal commonest post-op.',
+    escalate:['Stage 2/3 AKI or need for RRT → renal / ICU review.','Anuria → urgent senior review (block? obstruction? shock?).'],
+    investigations:['Bladder scan / flush catheter first to exclude blockage / retention.','UEs, ABG (acidosis, K⁺), CBC, CRP, urinalysis, urine Na/osmolality.','USG KUB if obstruction suspected.','Review drug chart for nephrotoxins.'],
+    management:['Optimise volume: assess fluid status; fluid bolus 250–500 mL NS or RL if hypovolaemic, reassess.','Stop nephrotoxins: NSAIDs, ACEi/ARB, aminoglycosides, IV contrast, metformin (hold if Cr rising).','Treat the cause: sepsis → antibiotics + source control; obstruction → catheter / nephrostomy; hypotension → fluids ± vasopressors.','Treat hyperkalaemia (K⁺ >6.0 or ECG changes): IV Ca gluconate 10 mL 10% → Insulin 10 U + 50 mL 50% dextrose → Salbutamol neb → consider dialysis.','Correct acidosis if pH <7.2 (Sodium bicarb cautiously).','Avoid further insults: contrast, NSAIDs, nephrotoxins.','RRT indications: refractory hyperkalaemia, severe acidosis, fluid overload, uraemic complications, certain toxins.'],
+    monitor:['Hourly UO via catheter; daily UEs, fluid balance, weight.','Review at 6 h, 12 h, 24 h.'],
+    redflags:['K⁺ >6.5 / ECG changes','pH <7.15','Anuria','Pulmonary oedema → urgent dialysis']
+  },
+  dvt:{
+    title:'Suspected DVT / PE',
+    summary:'DVT: unilateral leg swelling, calf pain, warmth. PE: pleuritic chest pain, dyspnoea, tachycardia, hypoxia, syncope.',
+    escalate:['Suspected massive PE (hypotension, RV strain) → ICU + thrombolysis discussion.'],
+    investigations:['Wells score → guide D-dimer vs imaging.','DVT: Doppler USG of leg veins.','PE: D-dimer if low-probability; CTPA if high-probability or D-dimer positive. ECG (S1Q3T3 classic but uncommon), ABG, troponin, BNP, echo for RV strain.','CBC, UEs, coag.'],
+    management:['Start therapeutic anticoagulation as soon as suspected (if bleeding risk acceptable): LMWH (Enoxaparin 1.5 mg/kg OD or 1 mg/kg BD) — preferred post-op.','DOACs (Apixaban, Rivaroxaban) for non-pregnant, non-cancer once confirmed and stable.','Massive PE: thrombolysis (Alteplase 100 mg over 2 h) if no contraindication.','IVC filter only if anticoagulation contraindicated.','O₂ to maintain SpO₂ ≥94%.','Analgesia.'],
+    monitor:['Vitals, SpO₂, anti-Xa if prolonged LMWH.','Bleeding watch.'],
+    redflags:['Hypotension + tachycardia + hypoxia → massive PE, peri-arrest','Bleeding while anticoagulated']
+  },
+  gibleed:{
+    title:'Upper GI Bleed',
+    summary:'Haematemesis, melaena, coffee-ground vomit. Use Glasgow-Blatchford / Rockall for risk stratification.',
+    escalate:['Inform senior + GI/endoscopy team.','Active bleeding / shock → ICU, urgent endoscopy.'],
+    investigations:['CBC, UEs (raised urea), LFTs, coag, group & crossmatch (2–4 units), ABG, lactate, ECG.','Erect CXR if perforation suspected.','Urgent OGD within 24 h (within 12 h if unstable).'],
+    management:['ABC: 2 large-bore IV, O₂, NBM.','Resuscitate with crystalloid; transfuse if Hb <7 (target 7–9) or actively bleeding.','Correct coagulopathy / reverse anticoagulants.','High-dose IV PPI: Pantoprazole 80 mg IV bolus then 8 mg/h infusion (pre-OGD for suspected ulcer bleed).','Suspected variceal bleed (known cirrhosis): Terlipressin 2 mg IV Q4H + Ceftriaxone 1 g IV OD prophylaxis, urgent endoscopy + band ligation. Avoid PPI alone.','Tranexamic acid not routinely recommended for UGIB.','Stop NSAIDs, antiplatelets (discuss risk:benefit with cardiology if recent stent).','Urgent OGD: adrenaline injection + clip / thermal / band ligation.'],
+    monitor:['Continuous vitals, serial Hb every 2–4 h, UO.','Reassess for re-bleeding (fresh haematemesis, hypotension, tachycardia, falling Hb).'],
+    redflags:['Shock unresponsive to resuscitation → interventional radiology / surgery','Cirrhosis + UGIB → high mortality, ICU']
+  },
+  dka:{
+    title:'DKA in Surgical Patient',
+    summary:'Glucose >11, ketones >3 (or 2+ urine), pH <7.3 / HCO3 <15. Common in undiagnosed T1DM, infection, missed insulin, surgical stress.',
+    escalate:['Inform diabetes team / medicine.','Severe DKA (pH <7.0, K⁺ <3.5, GCS drop) → ICU/HDU.'],
+    investigations:['VBG/ABG, glucose, ketones, UEs (especially K⁺), CBC, CRP, blood cultures, urinalysis, ECG, HbA1c, amylase.','Identify trigger: infection (CXR, urine), MI, missed insulin, surgical stress.'],
+    management:['Fluids: NS 1 L over 1 h, then 1 L over 2 h, 1 L over 2 h, 1 L over 4 h (adjust for elderly/cardiac).','Switch to 5% dextrose when glucose <14.','Insulin: fixed-rate IV infusion 0.1 U/kg/h (Actrapid). Continue patient\'s long-acting basal insulin if usually on it.','Potassium: add to 2nd bag based on K⁺. If K⁺ <3.5 → hold insulin, give K⁺ first. K⁺ 3.5–5.5 → 40 mmol/L. K⁺ >5.5 → no K⁺.','Treat trigger: antibiotics if infection.','VTE prophylaxis.','Hourly glucose + ketones, 2-hourly K⁺ + VBG.','Resolve when ketones <0.6, pH >7.3, HCO3 >18 — then switch to s/c insulin with overlap.'],
+    monitor:['Strict I/O, hourly glucose/ketones, 2-h K⁺.','Watch for cerebral oedema (esp children/young adults, rapid Na correction).'],
+    redflags:['Drowsiness / headache → cerebral oedema','K⁺ <3.5 → hold insulin','pH not improving → check fluids, insulin, trigger']
+  },
+  hypokal:{
+    title:'Hypokalaemia',
+    summary:'Mild 3.0–3.5, moderate 2.5–3.0, severe <2.5. Common post-op (diuresis, NG losses, alkalosis, insulin, β2-agonists).',
+    escalate:['K⁺ <2.5 or ECG changes / arrhythmia → senior + cardiac monitor + IV K⁺.'],
+    investigations:['ECG (U waves, flat T, ST depression, long QT, arrhythmias).','UEs (with Mg²⁺ — correct concurrently), VBG.','Review drug chart (diuretics, β2-agonists, insulin), I/O (NG losses, diarrhoea).'],
+    management:['Replace Mg²⁺ simultaneously (Mg deficiency causes refractory hypoK).','Oral if K⁺ >3.0 and able: Sando-K 2 tabs TDS, or KCl solution.','IV if K⁺ <3.0 or symptomatic or unable to take orally:\n  • Peripheral: max 10 mmol/h, max 40 mmol/L.\n  • Central: up to 20 mmol/h with cardiac monitor.','Recheck K⁺ 2–4 h after each replacement bag.','Stop causative drugs where possible.'],
+    monitor:['Continuous ECG if K⁺ <2.5 or symptomatic.','Repeat K⁺ + Mg²⁺ q4–6h.'],
+    redflags:['Arrhythmia / cardiac arrest risk','Refractory despite replacement → check Mg²⁺']
+  },
+  hyponatr:{
+    title:'Hyponatraemia',
+    summary:'Mild 130–134, moderate 125–129, severe <125. Assess volume status + osmolality. Common post-op (SIADH from pain/opioids/surgery, hypotonic fluids).',
+    escalate:['Severe symptomatic hyponatraemia (seizures, GCS drop, vomiting) → ICU + hypertonic saline.','Acute drop (<48 h) → urgent senior review.'],
+    investigations:['Serum + urine osmolality, urine Na, TFTs, cortisol, glucose, lipid (pseudo-hypoNa).','Volume status assessment (clinical).','Review fluids and drugs (thiazides, SSRIs, opioids, carbamazepine).'],
+    management:['Acute severe symptomatic (<48 h or seizing/coma):\n  • 150 mL 3% hypertonic saline over 10 min (can repeat × 2) — aim to raise Na by 4–6 mmol/L. ICU only.','Chronic / asymptomatic:\n  • Hypovolaemic → cautious NS 0.9%.\n  • Euvolaemic (SIADH) → fluid restrict to 800–1000 mL/day; treat cause; consider tolvaptan (specialist).\n  • Hypervolaemic (HF, cirrhosis) → fluid restrict + treat underlying; loop diuretic.','Maximum correction rate: 8–10 mmol/L per 24 h (lower in chronic) — RISK OF OSMOTIC DEMYELINATION if over-corrected.','Stop offending drugs.'],
+    monitor:['Recheck Na every 4–6 h initially.','Strict I/O.'],
+    redflags:['Over-rapid correction → osmotic demyelination (irreversible)','Seizures / coma → hypertonic saline + ICU']
+  },
+  afib:{
+    title:'New-onset Atrial Fibrillation (post-op)',
+    summary:'Common after major surgery (esp cardiothoracic, oesophagectomy, colectomy). Often triggered by sepsis, electrolyte disturbance, fluid overload, pain.',
+    escalate:['Haemodynamically unstable (hypotension, chest pain, heart failure, GCS drop) → DC cardioversion (anaesthesia, senior).','Cardiology review for rhythm vs rate strategy and anticoagulation.'],
+    investigations:['ECG (confirm AF, rule out STEMI), CBC, UEs (esp K⁺, Mg²⁺), TFTs, troponin, CXR, echo if structural disease suspected.','Sepsis screen if trigger unclear.'],
+    management:['Treat reversible causes: correct K⁺ (target >4.0), Mg²⁺ (target >0.8 — give 2 g MgSO4 IV even if normal); treat pain, sepsis, hypoxia, fluid overload.','Unstable → synchronised DC cardioversion (after anticoagulation consideration).','Stable + rate control (HR <110): IV Bisoprolol or Metoprolol 5 mg slow IV; or oral Bisoprolol 2.5–5 mg. Digoxin if heart failure / hypotensive (load 500 µg PO/IV then 250 µg in 6 h).','Rhythm control (within 48 h onset, no structural heart disease): IV Amiodarone 300 mg over 1 h then 900 mg over 23 h.','Anticoagulation: CHA₂DS₂-VASc + HAS-BLED. Most post-op AF is transient — discuss with cardiology before starting long-term anticoagulation.'],
+    monitor:['Continuous cardiac monitoring; serial ECG.','Daily UEs, Mg²⁺.','Reassess AF persistence at 24, 48, 72 h.'],
+    redflags:['Hypotension / chest pain / pulmonary oedema → emergency cardioversion','Stroke risk if AF persists >48 h without anticoagulation']
+  }
+};
+
+window.runGuidance = function(){
+  const key=val('guide-condition');
+  const out=$('guide-output'); if(!out) return;
+  if(!key){ out.innerHTML=''; return; }
+  const p=GUIDANCE_PROTOCOLS[key]; if(!p){ out.innerHTML='<div style="color:var(--muted)">No protocol available for this scenario yet.</div>'; return; }
+  const block=(title,items,colour,icon)=>{
+    if(!items||!items.length) return '';
+    return `<div style="border:1px solid ${colour};border-left:4px solid ${colour};background:rgba(255,255,255,0.02);border-radius:8px;padding:11px 13px;margin-bottom:10px">
+      <div style="font-weight:700;font-size:12px;color:${colour};letter-spacing:.04em;margin-bottom:7px;text-transform:uppercase">${icon} ${title}</div>
+      <ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.6;color:var(--text)">
+        ${items.map(i=>`<li style="margin-bottom:5px;white-space:pre-line">${i}</li>`).join('')}
+      </ul>
+    </div>`;
+  };
+  out.innerHTML=`
+    <div style="border:1px solid var(--cyan);border-radius:10px;padding:12px 14px;background:rgba(56,217,245,0.06);margin-bottom:12px">
+      <div style="font-size:15px;font-weight:700;color:var(--cyan);margin-bottom:5px">${p.title}</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.55">${p.summary}</div>
+    </div>
+    ${block('Escalate / Inform',p.escalate,'#ff8fa3','📞')}
+    ${block('Investigations',p.investigations,'#5ac8fa','🔬')}
+    ${block('Immediate Management — suggested',p.management,'#8be38b','💊')}
+    ${block('Monitoring',p.monitor,'#ffd066','📊')}
+    ${block('Red Flags',p.redflags,'#ff5577','🚩')}
+    <div style="background:rgba(255,170,60,0.10);border:1px solid rgba(255,170,60,0.35);border-radius:8px;padding:10px;font-size:11px;color:#ffd089;line-height:1.5;margin-top:6px">
+      <strong>⚠ Final decision is yours.</strong> These suggestions reflect commonly accepted protocols and must be tailored to the patient, local antibiogram, allergies, organ function, and your senior's directive.
+    </div>
+    <div style="margin-top:10px">
+      <button class="btn btn-outline" style="width:100%" onclick="copyGuidance('${key}')">📋 Copy recommendations</button>
+    </div>
+  `;
+};
+
+window.copyGuidance = function(key){
+  const p=GUIDANCE_PROTOCOLS[key]; if(!p) return;
+  const sect=(t,a)=>a&&a.length?`\n${t}:\n`+a.map(x=>'  • '+x).join('\n'):'';
+  const txt=`CLINICAL GUIDANCE — ${p.title}\n(Recommendations only — final decision is the treating clinician's)\n\nSummary: ${p.summary}`+
+    sect('\nEscalate / Inform',p.escalate)+sect('\nInvestigations',p.investigations)+
+    sect('\nSuggested Management',p.management)+sect('\nMonitoring',p.monitor)+sect('\nRed Flags',p.redflags);
+  navigator.clipboard.writeText(txt).then(()=>{ showToast && showToast('📋 Recommendations copied'); });
+};
+
+window.autoSuggestGuidance = function(){
+  const diag=(val('pt-diag')||'').toLowerCase();
+  const proc=(val('pt-proc')||'').toLowerCase();
+  const all=diag+' '+proc;
+  const map=[
+    [/sbp|spontaneous bacterial peritonitis/, 'sbp'],
+    [/cholangitis/, 'cholangitis'],
+    [/septic shock|sepsis/, 'sepsis'],
+    [/appendic/, 'appendicitis'],
+    [/cholecyst/, 'cholecystitis'],
+    [/pancreatit/, 'pancreatitis'],
+    [/obstruction|sbo|ileus(?! post)/, 'sbo'],
+    [/perforat|peritonit/, 'perforation'],
+    [/mesenteric ischa?emia/, 'mesenteric'],
+    [/anastomotic leak|leak\b/, 'anastleak'],
+    [/post-?op fever|post operative fever|pyrexia/, 'postopfever'],
+    [/bleed|haemorrhage|hemorrhage/, 'gibleed'],
+    [/dvt|deep vein|pulmonary embolism|\bpe\b/, 'dvt'],
+    [/dka|diabetic keto/, 'dka'],
+    [/aki|acute kidney|oliguri/, 'aki'],
+    [/hypokal/, 'hypokal'],
+    [/hyponatr/, 'hyponatr'],
+    [/atrial fibrillation|\baf\b/, 'afib'],
+    [/ssi|surgical site|wound infection/, 'ssi'],
+    [/post.?op|pod\s*\d/, 'postopfever']
+  ];
+  let pick=null;
+  for(const [re,k] of map){ if(re.test(all)){ pick=k; break; } }
+  if(!pick){ alert('Could not auto-detect. Please pick from the dropdown.'); return; }
+  $('guide-condition').value=pick;
+  runGuidance();
+};
 </script>
+
 </body>
 </html>
