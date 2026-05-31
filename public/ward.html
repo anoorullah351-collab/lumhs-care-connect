@@ -1480,7 +1480,7 @@ window.renderList = function(){
 window.newPatient = function(){
   const id='pt_'+Date.now();
   const today=new Date().toISOString().split('T')[0];
-  patients.push({id,name:'',age:'',cr:'',diag:'',status:'',news2:undefined,tasks:[],complications:[],trends:[],noteHistory:[],updatedAt:Date.now(),data:{'pt-admdate':today,'m-date':today}});
+  patients.push({id,name:'',age:'',cr:'',diag:'',status:'',news2:undefined,tasks:[],complications:[],trends:[],noteHistory:[],vitalsHistory:[],antibiotics:[],drugChart:[],updatedAt:Date.now(),data:{'pt-admdate':today,'m-date':today}});
   saveStore();
   openPatient(id);
   pushToFirebase('patient_add','added a new patient');
@@ -1488,6 +1488,8 @@ window.newPatient = function(){
 
 // ─── FIELDS LIST ─────────────────────────────────────────────
 const FIELDS=['pt-name','pt-age','pt-cr','pt-bed','pt-admdate','pt-consult','pt-diag','pt-proc','pt-weight','pt-allergy',
+  'hx-pmh','hx-surgical','hx-comorbid','hx-smoking','hx-alcohol','hx-packyears','hx-drugs','hx-meds','hx-family','hx-functional',
+  'op-date','op-time','op-procedure','op-diag','op-surgeon','op-assist','op-anaesth','op-anaesth-type','op-incision','op-position','op-findings','op-steps','op-bloodloss','op-fluids','op-drains','op-specimens','op-complications','op-postop',
   'v-bp','v-hr','v-rr','v-temp','v-spo2','v-gcs','v-bsg','v-uo','v-drain','v-pain',
   'm-date','m-day','m-comp','m-exam','m-assess','m-plan','e-comp','e-exam','e-plan','n-comp','n-exam','n-plan',
   'inv-labs','inv-img','inv-pending','meds','wound-status','drain-char',
