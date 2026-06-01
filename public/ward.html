@@ -324,6 +324,11 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 .firebase-banner{background:var(--amber-dim);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;cursor:pointer;}
 .firebase-banner-text{font-size:12px;color:var(--amber);flex:1;line-height:1.4;}
 .firebase-banner-btn{background:var(--amber);color:#060c1a;border:none;border-radius:var(--radius-xs);padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+
+/* ── CREDITS FOOTER ──────────────────────────────────────── */
+.credits-footer{text-align:center;padding:20px 14px 30px;color:var(--dim);font-size:11px;line-height:1.6;border-top:1px solid var(--border);margin-top:20px;}
+.credits-footer .c-name{font-weight:700;color:var(--muted);}
+.credits-footer .c-email{font-family:var(--mono);font-size:10px;color:var(--dim);}
 </style>
 </head>
 <body>
@@ -350,6 +355,10 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     </form>
     <div style="font-size:11px;color:#5a6a8a;text-align:center;margin-top:12px;line-height:1.5">
       Authorized staff only. Patient data is protected and only visible to signed-in clinicians.
+    </div>
+    <div style="text-align:center;margin-top:14px;padding-top:12px;border-top:1px solid #1c2a45">
+      <div style="font-size:11px;color:#7b8aa8;font-weight:600">Developed by Dr. Noorullah Ahmed</div>
+      <div style="font-size:10px;color:#5a6a8a">House Officer, LUMHS Jamshoro</div>
     </div>
   </div>
 </div>
@@ -407,6 +416,12 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     </div>
     <input class="search-box" type="text" placeholder="🔍  Search name, CR, diagnosis..." id="search-input" oninput="renderList()">
     <div id="pt-list-container"></div>
+
+    <div class="credits-footer">
+      <div class="c-name">Developed by Dr. Noorullah Ahmed</div>
+      <div>House Officer, Liaquat University Hospital, Jamshoro</div>
+      <div class="c-email">noorullahahmed385@gmail.com</div>
+    </div>
   </div>
   <button class="fab" onclick="newPatient()" title="Add patient">＋</button>
 </div>
@@ -950,6 +965,12 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         <span class="saved-badge" id="saved-badge">✓ Saved</span>
         <button class="btn btn-green" onclick="saveCurrentPatient()">💾 Save</button>
       </div>
+    </div>
+
+    <div class="credits-footer">
+      <div class="c-name">Developed by Dr. Noorullah Ahmed</div>
+      <div>House Officer, Liaquat University Hospital, Jamshoro</div>
+      <div class="c-email">noorullahahmed385@gmail.com</div>
     </div>
 
   </div><!-- end detail-scroll -->
