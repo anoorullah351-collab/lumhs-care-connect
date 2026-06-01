@@ -1022,10 +1022,85 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
   </div>
 </div>
 
-<!-- BOTTOM NAV (global — list + activity) -->
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: ABOUT / USER GUIDE
+═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-about">
+  <div class="scroll-area" style="padding-bottom:90px">
+    <div class="list-header" style="margin-bottom:8px">
+      <h2>About &amp; User Guide</h2>
+    </div>
+
+    <div class="card" style="border-color:#2a3f5a;background:linear-gradient(180deg,rgba(80,140,220,0.10),rgba(80,140,220,0.02))">
+      <div class="card-title"><span class="dot dot-blue"></span>LUMHS Care Connect</div>
+      <div style="font-size:13px;line-height:1.6;color:var(--fg)">
+        <p style="margin:0 0 8px 0"><strong>Ward Management System</strong> — Surgery Department, LUMHS Jamshoro</p>
+        <p style="color:var(--muted);font-size:12px;margin:0">A comprehensive ward management app designed specifically for surgical house officers, medical officers, and registrars at Liaquat University of Medical &amp; Health Sciences, Jamshoro. Built from real ward experience — digitizing and streamlining the daily clinical workflow of a busy surgical unit.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot dot-purple"></span>Why this app exists</div>
+      <div style="font-size:12px;line-height:1.65;color:var(--fg)">
+        Managing 30–50 surgical patients on a ward round is overwhelming — paper charts get lost, drug charts are incomplete, and critical tasks fall through the cracks. <strong>LUMHS Care Connect</strong> puts everything in one place on your phone: patient list, vitals trends, tasks, antibiotics, VTE risk, operative notes, and instant clinical decision support — all syncing live across the team.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot dot-green"></span>What this app does</div>
+      <div style="font-size:12px;line-height:1.7;color:var(--fg)">
+        <div style="margin-bottom:6px"><strong>👤 Patient Management</strong> — digital list with diagnosis, bed, consultant, admission date.</div>
+        <div style="margin-bottom:6px"><strong>💓 Vitals + NEWS2</strong> — color-coded alerts and full vitals history log.</div>
+        <div style="margin-bottom:6px"><strong>✅ Tasks &amp; Orders</strong> — Urgent / Routine / PRN with priority flags.</div>
+        <div style="margin-bottom:6px"><strong>🧠 Clinical Decision Support</strong> — evidence-based guidance for SBP, sepsis, cholecystitis, appendicitis, GI bleed, pancreatitis &amp; more.</div>
+        <div style="margin-bottom:6px"><strong>💊 Antibiotic Tracker</strong> — day counts, indication, OVERDUE alerts for stewardship.</div>
+        <div style="margin-bottom:6px"><strong>🩸 VTE Risk (Caprini)</strong> — auto prophylaxis recommendations.</div>
+        <div style="margin-bottom:6px"><strong>📝 Operative Note Generator</strong> — formatted op note ready to copy.</div>
+        <div style="margin-bottom:6px"><strong>📚 Past Medical History</strong> — one-tap PMH that modifies CDSS guidance.</div>
+        <div style="margin-bottom:6px"><strong>🧪 Labs &amp; Drug Calculator</strong> — record investigations, weight-based dosing.</div>
+        <div style="margin-bottom:6px"><strong>📄 Follow-up Notes</strong> — structured daily progress &amp; discharge planning.</div>
+        <div><strong>☁️ Live Sync</strong> — real-time across the whole team.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot dot-amber"></span>How to use it — step by step</div>
+      <div style="font-size:12px;line-height:1.7;color:var(--fg)">
+        <div style="margin-bottom:8px"><strong>1. Sign in &amp; join your ward</strong><br><span style="color:var(--muted)">Log in with email &amp; password, enter your name &amp; role, type the shared ward code (e.g. <em>LUMHS-SURGERY-A</em>). Everyone on the same code shares one live patient list.</span></div>
+        <div style="margin-bottom:8px"><strong>2. Add a patient</strong><br><span style="color:var(--muted)">Tap <strong>+ Add Patient</strong> on the Ward screen. Enter name, age, bed, diagnosis, consultant.</span></div>
+        <div style="margin-bottom:8px"><strong>3. Open a patient record</strong><br><span style="color:var(--muted)">Tap a card. Use the bottom tabs: <strong>Patient · Vitals · Notes · Labs · Reports · Guide</strong>.</span></div>
+        <div style="margin-bottom:8px"><strong>4. Record vitals</strong><br><span style="color:var(--muted)">Vitals tab → enter BP, HR, RR, SpO₂, Temp → <em>Save Snapshot</em>. NEWS2 score auto-calculates with color alerts. History is kept.</span></div>
+        <div style="margin-bottom:8px"><strong>5. Add antibiotics &amp; drug chart</strong><br><span style="color:var(--muted)">Patient tab → Antibiotic Tracker → add name, dose, start date, planned duration, indication. App warns when overdue.</span></div>
+        <div style="margin-bottom:8px"><strong>6. Use Clinical Guidance</strong><br><span style="color:var(--muted)">Guide tab → pick a scenario (e.g. SBP) <em>or</em> tap <em>Suggest from current diagnosis</em>. Get immediate actions, antibiotics, investigations &amp; pearls. <strong>Final decision is always yours.</strong></span></div>
+        <div style="margin-bottom:8px"><strong>7. VTE assessment</strong><br><span style="color:var(--muted)">Open the Caprini calculator → tick factors → get prophylaxis recommendation.</span></div>
+        <div style="margin-bottom:8px"><strong>8. Operative Note</strong><br><span style="color:var(--muted)">Fill the Op Note template → copy → paste into the file.</span></div>
+        <div style="margin-bottom:8px"><strong>9. Tasks &amp; handover</strong><br><span style="color:var(--muted)">Add tasks with priority. Tap <strong>Handover</strong> from the Ward screen to generate a full sheet for the next shift.</span></div>
+        <div><strong>10. Activity feed</strong><br><span style="color:var(--muted)">Tap <strong>Activity</strong> in the bottom nav to see what every team member just did, in real time.</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:#5a4020;background:rgba(255,170,60,0.06)">
+      <div class="card-title" style="color:#ffd089"><span class="dot dot-amber"></span>Disclaimer</div>
+      <div style="font-size:12px;line-height:1.6;color:#ffd089">
+        All clinical decision support is evidence-based and guideline-derived (NICE / SAGES / Sanford / Tokyo / IDSA), but represents <strong>assistance only</strong> — final clinical decisions rest entirely with the treating physician. Verify drug doses against local formulary and patient-specific factors before administration. This app is <strong>not</strong> a replacement for the hospital information system.
+      </div>
+    </div>
+
+    <div class="card" style="text-align:center">
+      <div style="font-size:13px;font-weight:600;color:var(--fg);margin-bottom:4px">Developed by Dr. Noorullah Ahmed</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:2px">House Officer, Surgery Department</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Liaquat University Hospital, Jamshoro</div>
+      <div style="font-size:11px;color:var(--accent);font-family:var(--mono)">noorullahahmed385@gmail.com</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:10px;font-style:italic">Built for the ward. By someone who works the ward.</div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV (global — list + activity + about) -->
 <nav class="bottom-nav" id="global-nav" style="display:none">
   <button class="bnav-btn active" onclick="switchGlobalTab('list',this)" id="gnav-list"><span class="bnav-icon">🏥</span>Ward</button>
   <button class="bnav-btn" onclick="switchGlobalTab('activity',this)" id="gnav-activity"><span class="bnav-icon">⚡</span>Activity</button>
+  <button class="bnav-btn" onclick="switchGlobalTab('about',this)" id="gnav-about"><span class="bnav-icon">ℹ️</span>About</button>
 </nav>
 
 <!-- ═══════════════════════════════════════════════════════
