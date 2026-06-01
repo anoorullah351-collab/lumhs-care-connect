@@ -1486,12 +1486,15 @@ function showScreen(id){
   const isDetail=id==='screen-detail';
   const isActivity=id==='screen-activity';
   const isList=id==='screen-list';
+  const isAbout=id==='screen-about';
   $('back-btn').style.display=isDetail?'flex':'none';
-  $('topbar-title').textContent=isDetail?'Patient Record':isActivity?'Activity Feed':'Ward Follow-Up';
+  $('topbar-title').textContent=isDetail?'Patient Record':isActivity?'Activity Feed':isAbout?'About & Guide':'Ward Follow-Up';
   $('detail-nav').style.display=isDetail?'flex':'none';
-  $('global-nav').style.display=(isList||isActivity)?'flex':'none';
-  if(isList){ $('gnav-list').classList.add('active'); $('gnav-activity').classList.remove('active'); }
-  if(isActivity){ $('gnav-activity').classList.add('active'); $('gnav-list').classList.remove('active'); }
+  $('global-nav').style.display=(isList||isActivity||isAbout)?'flex':'none';
+  ['gnav-list','gnav-activity','gnav-about'].forEach(x=>{ const el=$(x); if(el) el.classList.remove('active'); });
+  if(isList) $('gnav-list').classList.add('active');
+  if(isActivity) $('gnav-activity').classList.add('active');
+  if(isAbout) $('gnav-about').classList.add('active');
 }
 
 window.goToList = function(){ showScreen('screen-list'); renderList(); };
@@ -1508,6 +1511,7 @@ window.switchGlobalTab = function(tab,btn){
   document.querySelectorAll('#global-nav .bnav-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   if(tab==='list') showScreen('screen-list');
+  else if(tab==='about') showScreen('screen-about');
   else if(tab==='activity'){
     showScreen('screen-activity');
     // load local activity if offline
