@@ -182,6 +182,40 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
 /* ── SUBPAGE ─────────────────────────────────────────────── */
 .subpage{display:none;}
 .subpage.active{display:block;}
+
+/* ── CONSENT FORM (printable) ──────────────────────────── */
+.urdu{font-family:'Noto Nastaliq Urdu','Jameel Noori Nastaliq',serif;font-weight:600;}
+.consent-doc{background:#fff;color:#111;font-family:'Times New Roman',Georgia,serif;font-size:12px;line-height:1.5;padding:22px 26px;border-radius:8px;border:1px solid #cbd5e1;margin-top:14px;max-width:780px;}
+.consent-doc .cd-header{text-align:center;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px;}
+.consent-doc .cd-h-en{font-size:15px;font-weight:700;color:#111;}
+.consent-doc .cd-title{margin-top:8px;font-size:18px;font-weight:700;display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;}
+.consent-doc table{width:100%;border-collapse:collapse;margin:6px 0 10px;}
+.consent-doc .cd-info td,.consent-doc .cd-sign td{border:1px solid #333;padding:6px 8px;vertical-align:top;font-size:12px;color:#111;}
+.consent-doc .lbl{background:#f1f5f9;font-weight:600;width:22%;font-size:11px;color:#111;}
+.consent-doc .val{min-height:18px;color:#111;}
+.consent-doc .sigbox{height:55px;}
+.consent-doc .cd-section{margin-top:12px;}
+.consent-doc .cd-section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #94a3b8;padding-bottom:3px;margin-bottom:6px;color:#111;}
+.consent-doc .cd-para{margin:6px 0;text-align:justify;color:#111;}
+.consent-doc .cd-risks{min-height:38px;white-space:pre-wrap;border:1px dashed #94a3b8;padding:6px 8px;border-radius:3px;color:#111;}
+.consent-doc .cd-sigline{border-bottom:1px solid #111;height:34px;margin-top:8px;}
+.consent-doc .cd-footer{margin-top:14px;padding-top:6px;border-top:1px solid #94a3b8;font-size:9.5px;color:#475569;text-align:center;}
+
+/* ── PRINT ─────────────────────────────────────────────── */
+@media print{
+  @page{size:A4;margin:14mm;}
+  html,body{background:#fff !important;color:#111 !important;}
+  body::before{display:none !important;}
+  .topbar,.bottom-nav,#detail-nav,#global-nav,.no-print,.back-btn,#save-bar,.credits-footer{display:none !important;}
+  .screen{display:none !important;}
+  .screen#screen-detail{display:block !important;height:auto !important;overflow:visible !important;}
+  .subpage{display:none !important;}
+  .subpage#sub-consent{display:block !important;}
+  #sub-consent > .card.no-print{display:none !important;}
+  .scroll-area,#detail-scroll{overflow:visible !important;padding:0 !important;max-width:none !important;}
+  .consent-doc{border:none !important;box-shadow:none !important;padding:0 !important;margin:0 !important;max-width:none !important;font-size:11.5px;}
+  .consent-doc .cd-h-en{color:#000 !important;}
+}
 hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 
 /* ── PATIENT BANNER ──────────────────────────────────────── */
