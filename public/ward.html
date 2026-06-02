@@ -1762,6 +1762,41 @@ window.saveCurrentPatient = function(){
   setTimeout(()=>badge.style.display='none',1800);
 };
 
+// ─── CONSENT FORM ─────────────────────────────────────────────
+function setText(id,v){ const el=$(id); if(el) el.textContent=v||'—'; }
+window.refreshConsentPreview = function(){
+  setText('cd-name', val('pt-name'));
+  setText('cd-cr',   val('pt-cr'));
+  setText('cd-age',  val('pt-age'));
+  setText('cd-bed',  val('pt-bed'));
+  setText('cd-diag', val('pt-diag'));
+  setText('cd-proc', val('pt-proc'));
+  setText('cd-surgeon', val('pt-consult') || val('op-surgeon'));
+  setText('cd-risks', val('cf-risks'));
+  setText('cd-guardian', val('cf-guardian') || val('pt-name'));
+  setText('cd-relation', val('cf-relation') || 'Self');
+  setText('cd-date', val('cf-date'));
+  setText('cd-time', val('cf-time'));
+  setText('cd-witness', val('cf-witness'));
+  setText('cd-doctor', val('cf-doctor') || (window.currentDoctor && currentDoctor.name) || '');
+};
+window.openConsent = function(){
+  // sensible defaults on first open
+  if(!val('cf-date')){ const d=new Date(); $('cf-date').value=d.toISOString().split('T')[0]; }
+  if(!val('cf-time')){ const d=new Date(); $('cf-time').value=d.toTimeString().slice(0,5); }
+  if(!val('cf-risks')){ $('cf-risks').value='Bleeding, infection, wound complications, anaesthetic reaction, DVT / PE, injury to adjacent structures, conversion to open surgery, need for further procedures, recurrence of disease.'; }
+  if(!val('cf-doctor') && window.currentDoctor && currentDoctor.name){ $('cf-doctor').value=currentDoctor.name; }
+  ['cf-risks','cf-guardian','cf-relation','cf-date','cf-time','cf-witness','cf-doctor'].forEach(id=>{
+    const el=$(id); if(el && !el._cfBound){ el.addEventListener('input',refreshConsentPreview); el._cfBound=true; }
+  });
+  refreshConsentPreview();
+};
+window.printConsent = function(){
+  refreshConsentPreview();
+  saveCurrentPatient();
+  setTimeout(()=>window.print(),120);
+};
+
 // ─── DELETE PATIENT ───────────────────────────────────────────
 window.deletePatient = function(id){
   const pt=patients.find(p=>p.id===id);
