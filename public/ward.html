@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
 <title>Ward Follow-Up — LUMHS Surgery</title>
 <style>
 /* ── DESIGN TOKENS ───────────────────────────────────────── */
@@ -182,6 +182,40 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
 /* ── SUBPAGE ─────────────────────────────────────────────── */
 .subpage{display:none;}
 .subpage.active{display:block;}
+
+/* ── CONSENT FORM (printable) ──────────────────────────── */
+.urdu{font-family:'Noto Nastaliq Urdu','Jameel Noori Nastaliq',serif;font-weight:600;}
+.consent-doc{background:#fff;color:#111;font-family:'Times New Roman',Georgia,serif;font-size:12px;line-height:1.5;padding:22px 26px;border-radius:8px;border:1px solid #cbd5e1;margin-top:14px;max-width:780px;}
+.consent-doc .cd-header{text-align:center;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px;}
+.consent-doc .cd-h-en{font-size:15px;font-weight:700;color:#111;}
+.consent-doc .cd-title{margin-top:8px;font-size:18px;font-weight:700;display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;}
+.consent-doc table{width:100%;border-collapse:collapse;margin:6px 0 10px;}
+.consent-doc .cd-info td,.consent-doc .cd-sign td{border:1px solid #333;padding:6px 8px;vertical-align:top;font-size:12px;color:#111;}
+.consent-doc .lbl{background:#f1f5f9;font-weight:600;width:22%;font-size:11px;color:#111;}
+.consent-doc .val{min-height:18px;color:#111;}
+.consent-doc .sigbox{height:55px;}
+.consent-doc .cd-section{margin-top:12px;}
+.consent-doc .cd-section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #94a3b8;padding-bottom:3px;margin-bottom:6px;color:#111;}
+.consent-doc .cd-para{margin:6px 0;text-align:justify;color:#111;}
+.consent-doc .cd-risks{min-height:38px;white-space:pre-wrap;border:1px dashed #94a3b8;padding:6px 8px;border-radius:3px;color:#111;}
+.consent-doc .cd-sigline{border-bottom:1px solid #111;height:34px;margin-top:8px;}
+.consent-doc .cd-footer{margin-top:14px;padding-top:6px;border-top:1px solid #94a3b8;font-size:9.5px;color:#475569;text-align:center;}
+
+/* ── PRINT ─────────────────────────────────────────────── */
+@media print{
+  @page{size:A4;margin:14mm;}
+  html,body{background:#fff !important;color:#111 !important;}
+  body::before{display:none !important;}
+  .topbar,.bottom-nav,#detail-nav,#global-nav,.no-print,.back-btn,#save-bar,.credits-footer{display:none !important;}
+  .screen{display:none !important;}
+  .screen#screen-detail{display:block !important;height:auto !important;overflow:visible !important;}
+  .subpage{display:none !important;}
+  .subpage#sub-consent{display:block !important;}
+  #sub-consent > .card.no-print{display:none !important;}
+  .scroll-area,#detail-scroll{overflow:visible !important;padding:0 !important;max-width:none !important;}
+  .consent-doc{border:none !important;box-shadow:none !important;padding:0 !important;margin:0 !important;max-width:none !important;font-size:11.5px;}
+  .consent-doc .cd-h-en{color:#000 !important;}
+}
 hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 
 /* ── PATIENT BANNER ──────────────────────────────────────── */
@@ -959,6 +993,95 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
       </div>
     </div>
 
+    <!-- ── SUBPAGE: CONSENT FORM ── -->
+    <div class="subpage" id="sub-consent">
+      <div class="card no-print" style="border-color:#3a2a52;background:linear-gradient(180deg,rgba(180,120,255,0.08),rgba(180,120,255,0.02))">
+        <div class="card-title"><span class="dot dot-purple"></span>Surgical Consent Form</div>
+        <div style="background:rgba(255,170,60,0.10);border:1px solid rgba(255,170,60,0.35);border-radius:8px;padding:10px;font-size:11px;color:#ffd089;line-height:1.5;margin-bottom:12px">
+          Auto-fills from patient data. Fill remaining fields, then <strong>Print / Save as PDF</strong>. The signature area is left blank for in-person signing.
+        </div>
+        <div class="grid2" style="gap:10px">
+          <div class="field full"><label>Specific risks discussed (procedure-specific)</label>
+            <textarea id="cf-risks" placeholder="e.g. Bleeding, infection, anaesthetic reaction, DVT/PE, injury to adjacent structures, conversion to open surgery, need for further procedures, recurrence" style="min-height:70px"></textarea></div>
+          <div class="field"><label>Patient / Guardian Name</label><input type="text" id="cf-guardian" placeholder="Full name"></div>
+          <div class="field"><label>Relationship (if guardian)</label><input type="text" id="cf-relation" placeholder="Self / Father / Husband / etc."></div>
+          <div class="field"><label>Date</label><input type="date" id="cf-date"></div>
+          <div class="field"><label>Time</label><input type="time" id="cf-time"></div>
+          <div class="field"><label>Witness Name</label><input type="text" id="cf-witness" placeholder="Nurse / staff name"></div>
+          <div class="field"><label>Doctor Name</label><input type="text" id="cf-doctor" placeholder="Consenting doctor"></div>
+        </div>
+        <div class="btn-row" style="margin-top:14px">
+          <button class="btn btn-outline" onclick="refreshConsentPreview()">🔄 Refresh Preview</button>
+          <button class="btn btn-accent" onclick="printConsent()">🖨️ Print / Save as PDF</button>
+        </div>
+      </div>
+
+      <!-- Printable consent document -->
+      <div id="consent-printable" class="consent-doc">
+        <div class="cd-header">
+          <div class="cd-hospital">
+            <div class="cd-h-en">Liaquat University of Medical &amp; Health Sciences — Jamshoro</div>
+            <div class="cd-h-en" style="font-size:13px;font-weight:600">Department of Surgery</div>
+          </div>
+          <div class="cd-title">
+            <span>Surgical Consent Form</span>
+            <span class="urdu"> / رضا نامہ برائے آپریشن</span>
+          </div>
+        </div>
+
+        <table class="cd-info">
+          <tr><td class="lbl">Patient Name <span class="urdu">/ مریض کا نام</span></td><td class="val" id="cd-name"></td>
+              <td class="lbl">MR No.</td><td class="val" id="cd-cr"></td></tr>
+          <tr><td class="lbl">Age <span class="urdu">/ عمر</span></td><td class="val" id="cd-age"></td>
+              <td class="lbl">Ward / Bed</td><td class="val" id="cd-bed"></td></tr>
+          <tr><td class="lbl">Diagnosis <span class="urdu">/ تشخیص</span></td><td class="val" colspan="3" id="cd-diag"></td></tr>
+          <tr><td class="lbl">Proposed Operation <span class="urdu">/ تجویز کردہ آپریشن</span></td><td class="val" colspan="3" id="cd-proc"></td></tr>
+          <tr><td class="lbl">Surgeon <span class="urdu">/ سرجن</span></td><td class="val" colspan="3" id="cd-surgeon"></td></tr>
+        </table>
+
+        <div class="cd-section">
+          <div class="cd-section-title">Consent Statement</div>
+          <p class="cd-para"><strong>English:</strong> I confirm that the nature of my disease, the proposed operation / procedure, its benefits, risks, possible complications, anaesthesia-related risks, alternative treatments, and the consequences of refusing treatment have been explained to me in a language I understand. I have had the opportunity to ask questions, all of which have been answered to my satisfaction. I voluntarily give my consent for the above procedure and any additional procedure that may be deemed necessary by the operating surgeon during surgery.</p>
+          <p class="cd-para urdu" dir="rtl" style="text-align:right;font-size:14px;line-height:2"><strong>اردو:</strong> میں اس بات کی تصدیق کرتا/کرتی ہوں کہ مجھے اپنی بیماری کی نوعیت، تجویز کردہ آپریشن، اس کے فوائد، خطرات، ممکنہ پیچیدگیاں، بیہوشی کے خطرات، متبادل علاج اور علاج سے انکار کے نتائج اچھی طرح سمجھا دیے گئے ہیں۔ مجھے سوالات پوچھنے کا موقع ملا اور تمام جوابات سے میں مطمئن ہوں۔ میں اپنی مرضی سے اس آپریشن اور دورانِ آپریشن سرجن کی رائے سے کسی بھی ضروری اضافی عمل کی اجازت دیتا/دیتی ہوں۔</p>
+        </div>
+
+        <div class="cd-section">
+          <div class="cd-section-title">Specific Risks / Complications Discussed</div>
+          <div class="cd-risks" id="cd-risks"></div>
+        </div>
+
+        <div class="cd-section">
+          <div class="cd-section-title">Patient / Guardian Declaration</div>
+          <table class="cd-sign">
+            <tr><td class="lbl">Name <span class="urdu">/ نام</span></td><td class="val" id="cd-guardian"></td>
+                <td class="lbl">Relationship</td><td class="val" id="cd-relation"></td></tr>
+            <tr><td class="lbl">Signature / Thumb Impression <span class="urdu">/ دستخط یا انگوٹھا</span></td><td class="val sigbox" colspan="3">&nbsp;</td></tr>
+            <tr><td class="lbl">Date</td><td class="val" id="cd-date"></td>
+                <td class="lbl">Time</td><td class="val" id="cd-time"></td></tr>
+          </table>
+        </div>
+
+        <table class="cd-sign">
+          <tr>
+            <td style="width:50%;vertical-align:top;padding:8px 10px">
+              <div class="lbl">Witness</div>
+              <div class="cd-sigline"></div>
+              <div style="font-size:10px;color:#444;margin-top:2px">Name: <span id="cd-witness"></span></div>
+            </td>
+            <td style="width:50%;vertical-align:top;padding:8px 10px">
+              <div class="lbl">Doctor obtaining consent</div>
+              <div class="cd-sigline"></div>
+              <div style="font-size:10px;color:#444;margin-top:2px">Name: <span id="cd-doctor"></span></div>
+            </td>
+          </tr>
+        </table>
+
+        <div class="cd-footer">
+          LUMHS Care Connect · Developed by Dr. Noorullah Ahmed, House Officer, Surgery Dept., LUMHS Jamshoro
+        </div>
+      </div>
+    </div>
+
 
     <div style="position:sticky;bottom:70px;z-index:50;padding:0 0 6px">
       <div class="btn-row" style="justify-content:flex-end">
@@ -983,6 +1106,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     <button class="bnav-btn" onclick="goSub('inv',this)" id="bnav-inv"><span class="bnav-icon">🧪</span>Labs</button>
     <button class="bnav-btn" onclick="goSub('transcript',this)" id="bnav-transcript"><span class="bnav-icon">📄</span>Reports</button>
     <button class="bnav-btn" onclick="goSub('guide',this)" id="bnav-guide"><span class="bnav-icon">🧠</span>Guide</button>
+    <button class="bnav-btn" onclick="goSub('consent',this);openConsent();" id="bnav-consent"><span class="bnav-icon">📋</span>Consent</button>
   </nav>
 </div><!-- end screen-detail -->
 
@@ -1594,7 +1718,8 @@ const FIELDS=['pt-name','pt-age','pt-cr','pt-bed','pt-admdate','pt-consult','pt-
   'm-date','m-day','m-comp','m-exam','m-assess','m-plan','e-comp','e-exam','e-plan','n-comp','n-exam','n-plan',
   'inv-labs','inv-img','inv-pending','meds','wound-status','drain-char',
   'fl-ivf','fl-oral','fl-blood','fl-urine','fl-drainout','fl-ng','fl-insensible',
-  'disc-date','disc-condition','disc-course','disc-meds','disc-followup'];
+  'disc-date','disc-condition','disc-course','disc-meds','disc-followup',
+  'cf-risks','cf-guardian','cf-relation','cf-date','cf-time','cf-witness','cf-doctor'];
 
 // ─── OPEN PATIENT ─────────────────────────────────────────────
 window.openPatient = function(id){
@@ -1635,6 +1760,41 @@ window.saveCurrentPatient = function(){
   pushToFirebase('patient_save',`updated record for ${pt.name}`);
   const badge=$('saved-badge'); badge.style.display='inline-flex';
   setTimeout(()=>badge.style.display='none',1800);
+};
+
+// ─── CONSENT FORM ─────────────────────────────────────────────
+function setText(id,v){ const el=$(id); if(el) el.textContent=v||'—'; }
+window.refreshConsentPreview = function(){
+  setText('cd-name', val('pt-name'));
+  setText('cd-cr',   val('pt-cr'));
+  setText('cd-age',  val('pt-age'));
+  setText('cd-bed',  val('pt-bed'));
+  setText('cd-diag', val('pt-diag'));
+  setText('cd-proc', val('pt-proc'));
+  setText('cd-surgeon', val('pt-consult') || val('op-surgeon'));
+  setText('cd-risks', val('cf-risks'));
+  setText('cd-guardian', val('cf-guardian') || val('pt-name'));
+  setText('cd-relation', val('cf-relation') || 'Self');
+  setText('cd-date', val('cf-date'));
+  setText('cd-time', val('cf-time'));
+  setText('cd-witness', val('cf-witness'));
+  setText('cd-doctor', val('cf-doctor') || (window.currentDoctor && currentDoctor.name) || '');
+};
+window.openConsent = function(){
+  // sensible defaults on first open
+  if(!val('cf-date')){ const d=new Date(); $('cf-date').value=d.toISOString().split('T')[0]; }
+  if(!val('cf-time')){ const d=new Date(); $('cf-time').value=d.toTimeString().slice(0,5); }
+  if(!val('cf-risks')){ $('cf-risks').value='Bleeding, infection, wound complications, anaesthetic reaction, DVT / PE, injury to adjacent structures, conversion to open surgery, need for further procedures, recurrence of disease.'; }
+  if(!val('cf-doctor') && window.currentDoctor && currentDoctor.name){ $('cf-doctor').value=currentDoctor.name; }
+  ['cf-risks','cf-guardian','cf-relation','cf-date','cf-time','cf-witness','cf-doctor'].forEach(id=>{
+    const el=$(id); if(el && !el._cfBound){ el.addEventListener('input',refreshConsentPreview); el._cfBound=true; }
+  });
+  refreshConsentPreview();
+};
+window.printConsent = function(){
+  refreshConsentPreview();
+  saveCurrentPatient();
+  setTimeout(()=>window.print(),120);
 };
 
 // ─── DELETE PATIENT ───────────────────────────────────────────
