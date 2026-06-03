@@ -1084,9 +1084,37 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 
 
     <div style="position:sticky;bottom:70px;z-index:50;padding:0 0 6px">
-      <div class="btn-row" style="justify-content:flex-end">
+      <div class="btn-row" style="justify-content:flex-end;gap:6px;">
         <span class="saved-badge" id="saved-badge">✓ Saved</span>
+        <button class="btn" style="background:#7c3aed;color:#fff;border:none;" onclick="openVoiceFill()" title="Voice fill the form">🎤 Voice Fill</button>
         <button class="btn btn-green" onclick="saveCurrentPatient()">💾 Save</button>
+      </div>
+    </div>
+
+    <!-- VOICE FILL MODAL -->
+    <div id="voice-modal" class="no-print" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(2,6,23,.78);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:14px;">
+      <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;max-width:520px;width:100%;max-height:90vh;overflow:auto;padding:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-weight:800;font-size:15px;color:var(--cyan);">🎤 Voice Fill</div>
+          <button class="btn" onclick="closeVoiceFill()" style="padding:4px 10px;">✕</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-bottom:10px;">
+          Speak naturally. Examples:<br>
+          <em>"Patient name Ali Khan, age 45, MR number 12345, bed 7, diagnosis acute appendicitis, weight 70, allergy penicillin."</em><br>
+          <em>"BP 130 over 80, heart rate 92, RR 18, temp 37.8, SpO2 96, GCS 15, blood sugar 140, pain 6."</em><br>
+          <em>"Assessment improving, plan continue IV antibiotics and review tomorrow."</em>
+        </div>
+        <div id="voice-status" style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">Idle</div>
+        <div id="voice-transcript" style="min-height:90px;max-height:200px;overflow:auto;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px;font-size:12px;line-height:1.5;color:var(--text);white-space:pre-wrap;"></div>
+        <div id="voice-filled" style="margin-top:8px;font-size:11px;color:#22c55e;"></div>
+        <div class="btn-row" style="margin-top:12px;justify-content:space-between;">
+          <button class="btn" onclick="clearVoiceTranscript()">🗑 Clear</button>
+          <div style="display:flex;gap:6px;">
+            <button class="btn" id="voice-start-btn" onclick="startVoice()" style="background:#dc2626;color:#fff;border:none;">● Start</button>
+            <button class="btn" onclick="stopVoice()">■ Stop</button>
+            <button class="btn btn-green" onclick="applyVoiceFill()">✓ Apply &amp; Save</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1795,6 +1823,106 @@ window.printConsent = function(){
   refreshConsentPreview();
   saveCurrentPatient();
   setTimeout(()=>window.print(),120);
+};
+
+// ─── VOICE FILL ───────────────────────────────────────────────
+let _vRecog=null, _vFinal='', _vInterim='';
+window.openVoiceFill = function(){
+  const m=$('voice-modal'); if(!m) return;
+  m.style.display='flex';
+  $('voice-filled').textContent='';
+};
+window.closeVoiceFill = function(){ stopVoice(); $('voice-modal').style.display='none'; };
+window.clearVoiceTranscript = function(){ _vFinal=''; _vInterim=''; $('voice-transcript').textContent=''; $('voice-filled').textContent=''; };
+function setVoiceStatus(s,color){ const el=$('voice-status'); if(el){ el.textContent=s; el.style.color=color||'var(--muted)'; } }
+function renderVoiceTranscript(){ $('voice-transcript').textContent=(_vFinal+' '+_vInterim).trim(); }
+
+window.startVoice = function(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ alert('Voice recognition is not supported in this browser.\nUse Chrome on Android or desktop.'); return; }
+  if(_vRecog){ try{_vRecog.stop();}catch(e){} }
+  const r=new SR();
+  r.lang='en-US'; r.continuous=true; r.interimResults=true;
+  r.onstart=()=>{ setVoiceStatus('● Listening...', '#ef4444'); $('voice-start-btn').textContent='● Listening'; };
+  r.onerror=(e)=>{ setVoiceStatus('Error: '+(e.error||'unknown'),'#ef4444'); };
+  r.onend=()=>{ setVoiceStatus('Stopped','var(--muted)'); $('voice-start-btn').textContent='● Start'; };
+  r.onresult=(ev)=>{
+    let interim='';
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      const tr=ev.results[i][0].transcript;
+      if(ev.results[i].isFinal) _vFinal+=(_vFinal?' ':'')+tr.trim();
+      else interim+=tr;
+    }
+    _vInterim=interim;
+    renderVoiceTranscript();
+  };
+  try{ r.start(); _vRecog=r; }catch(e){ setVoiceStatus('Could not start: '+e.message,'#ef4444'); }
+};
+window.stopVoice = function(){ if(_vRecog){ try{_vRecog.stop();}catch(e){} _vRecog=null; } };
+
+// ── Smart parser: maps natural speech to form fields
+function parseVoiceText(raw){
+  if(!raw) return {filled:[]};
+  let t=' '+raw.toLowerCase().replace(/[,.;]/g,' ').replace(/\s+/g,' ')+' ';
+  // word-number normalization
+  const w2n={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15};
+  t=t.replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen)\b/g,(m,w)=>' '+w2n[w]+' ');
+  const out={}; const filled=[];
+  const set=(id,v,label)=>{ if(v===undefined||v===null||v==='') return; out[id]=String(v).trim(); filled.push(label||id); };
+  const grab=(re,grp)=>{ const m=t.match(re); return m?m[grp||1]:null; };
+  // ── Vitals
+  let bp=grab(/\bb\s*p\s*(?:is|of)?\s*(\d{2,3})\s*(?:over|\/|on)\s*(\d{2,3})/) || grab(/blood pressure\s*(?:is|of)?\s*(\d{2,3})\s*(?:over|\/|on)\s*(\d{2,3})/);
+  if(!bp){ const m=t.match(/\bb\s*p\s*(?:is|of)?\s*(\d{2,3})\s*(?:over|\/|on)\s*(\d{2,3})/); if(m) bp=m; }
+  { const m=t.match(/(?:\bbp|blood pressure)\s*(?:is|of)?\s*(\d{2,3})\s*(?:over|\/|on)\s*(\d{2,3})/); if(m) set('v-bp',m[1]+'/'+m[2],'BP'); }
+  { const m=t.match(/(?:heart rate|pulse|hr)\s*(?:is|of)?\s*(\d{2,3})/); if(m) set('v-hr',m[1],'HR'); }
+  { const m=t.match(/(?:respiratory rate|resp rate|\brr\b)\s*(?:is|of)?\s*(\d{1,2})/); if(m) set('v-rr',m[1],'RR'); }
+  { const m=t.match(/(?:temperature|temp)\s*(?:is|of)?\s*(\d{2,3}(?:\.\d)?)/); if(m) set('v-temp',m[1],'Temp'); }
+  { const m=t.match(/(?:spo2|sp o2|s p o2|saturation|sats?|oxygen sat\w*)\s*(?:is|of)?\s*(\d{2,3})/); if(m) set('v-spo2',m[1],'SpO2'); }
+  { const m=t.match(/\bgcs\s*(?:is|of)?\s*(\d{1,2})/); if(m) set('v-gcs',m[1],'GCS'); }
+  { const m=t.match(/(?:blood sugar|bsl|glucose|rbs|sugar)\s*(?:is|of)?\s*(\d{2,3})/); if(m) set('v-bsg',m[1],'Blood Sugar'); }
+  { const m=t.match(/(?:urine output|urine|uo)\s*(?:is|of)?\s*(\d{2,4})/); if(m) set('v-uo',m[1],'Urine Output'); }
+  { const m=t.match(/(?:drain output|drain)\s*(?:is|of)?\s*(\d{1,4})/); if(m) set('v-drain',m[1],'Drain'); }
+  { const m=t.match(/\bpain\s*(?:score|is|of)?\s*(\d{1,2})(?:\s*(?:out of|\/)\s*10)?/); if(m) set('v-pain',m[1],'Pain'); }
+  { const m=t.match(/\bweight\s*(?:is|of)?\s*(\d{2,3}(?:\.\d)?)/); if(m) set('pt-weight',m[1],'Weight'); }
+  // ── Patient demographics
+  { const m=t.match(/(?:patient name|name is|name)\s+([a-z][a-z\s'-]{1,40}?)(?=\s+(?:age|aged|mr|cr|bed|ward|diagnosis|diagnosed|weight|allergy|allergic|bp|blood pressure|heart|temp|spo2|sats?|pain|gcs|consultant|under|plan|assessment|complaint|exam|$))/); if(m) set('pt-name',titleCase(m[1].trim()),'Name'); }
+  { const m=t.match(/\bage(?:d)?\s*(?:is|of)?\s*(\d{1,3})/) || t.match(/(\d{1,3})\s*(?:year|yr|years|yrs)\s*old/); if(m) set('pt-age',m[1],'Age'); }
+  { const m=t.match(/(?:mr|m\s*r|cr|c\s*r|file)\s*(?:number|no\.?|#)?\s*(?:is|of)?\s*([a-z0-9-]{2,15})/); if(m) set('pt-cr',m[1].toUpperCase(),'MR No'); }
+  { const m=t.match(/\bbed\s*(?:number|no\.?)?\s*(?:is|of)?\s*([a-z0-9-]{1,6})/); if(m) set('pt-bed',m[1].toUpperCase(),'Bed'); }
+  { const m=t.match(/(?:consultant|under)\s+(?:dr\.?\s+)?([a-z][a-z\s'-]{1,40}?)(?=\s+(?:plan|diagnosis|age|mr|cr|bed|bp|$))/); if(m) set('pt-consult','Dr. '+titleCase(m[1].trim()),'Consultant'); }
+  { const m=t.match(/(?:diagnosis|diagnosed with|impression)\s+(?:is|of)?\s*(.+?)(?=\s+(?:procedure|plan|weight|allergy|bp|heart|temp|spo2|pain|gcs|assessment|complaint|exam|consultant|under|$))/); if(m) set('pt-diag',titleCase(m[1].trim()),'Diagnosis'); }
+  { const m=t.match(/(?:procedure|operation|surgery|plan(?:ned)? for)\s+(?:is|of)?\s*(.+?)(?=\s+(?:diagnosis|weight|allergy|bp|heart|temp|spo2|pain|gcs|assessment|complaint|exam|consultant|under|$))/); if(m) set('pt-proc',titleCase(m[1].trim()),'Procedure'); }
+  { const m=t.match(/(?:allergy|allergic to|allergies)\s+(?:is|to)?\s*(.+?)(?=\s+(?:diagnosis|procedure|weight|bp|heart|temp|spo2|pain|gcs|assessment|complaint|exam|consultant|under|$))/); if(m) set('pt-allergy',titleCase(m[1].trim()),'Allergy'); }
+  // ── Notes
+  { const m=t.match(/\b(?:complaint|complaints|symptoms|c\/o)\s+(.+?)(?=\s+(?:assessment|plan|exam|examination|diagnosis|bp|heart|temp|$))/); if(m) set('m-comp',cap(m[1].trim()),'Complaint'); }
+  { const m=t.match(/(?:examination|on exam|exam shows?)\s+(.+?)(?=\s+(?:assessment|plan|complaint|diagnosis|bp|heart|temp|$))/); if(m) set('m-exam',cap(m[1].trim()),'Examination'); }
+  { const m=t.match(/(?:assessment|impression is)\s+(.+?)(?=\s+(?:plan|complaint|exam|examination|diagnosis|bp|heart|temp|$))/); if(m) set('m-assess',cap(m[1].trim()),'Assessment'); }
+  { const m=t.match(/\bplan(?:\s+is)?\s+(?:to\s+)?(.+?)(?=\s+(?:assessment|complaint|exam|examination|diagnosis|bp|heart|temp|$))/); if(m && !out['pt-proc']) set('m-plan',cap(m[1].trim()),'Plan'); else if(m) set('m-plan',cap(m[1].trim()),'Plan'); }
+  return {data:out, filled};
+}
+function titleCase(s){ return s.replace(/\b([a-z])/g,c=>c.toUpperCase()); }
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+window.applyVoiceFill = function(){
+  stopVoice();
+  const text=(_vFinal+' '+_vInterim).trim();
+  if(!text){ $('voice-filled').textContent='Nothing recorded yet.'; $('voice-filled').style.color='#f59e0b'; return; }
+  const {data,filled}=parseVoiceText(text);
+  if(!filled.length){ $('voice-filled').textContent='Could not extract any fields. Try phrases like "BP 120 over 80" or "diagnosis acute appendicitis".'; $('voice-filled').style.color='#f59e0b'; return; }
+  Object.keys(data).forEach(id=>{
+    const el=$(id); if(!el) return;
+    el.value=data[id];
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+    el.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  // recompute derived UI
+  try{ ['hr','rr','temp','spo2'].forEach(k=>{ if(data['v-'+k]!==undefined) checkVital(k,data['v-'+k]); }); }catch(e){}
+  try{ calcNEWS2(); }catch(e){}
+  try{ if(data['v-pain']!==undefined) updatePain(data['v-pain']); }catch(e){}
+  saveCurrentPatient();
+  $('voice-filled').style.color='#22c55e';
+  $('voice-filled').textContent='✓ Filled: '+filled.join(', ');
+  setTimeout(()=>closeVoiceFill(), 1400);
 };
 
 // ─── DELETE PATIENT ───────────────────────────────────────────
