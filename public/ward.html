@@ -1663,6 +1663,39 @@ function showScreen(id){
 
 window.goToList = function(){ showScreen('screen-list'); renderList(); };
 
+// ─── REFRESH ALL DATA ────────────────────────────────────────
+window.refreshAllData = async function(){
+  const btn = document.getElementById('refresh-btn');
+  if(btn){ if(btn.classList.contains('spinning')) return; btn.classList.add('spinning'); }
+  try{
+    if(doctorProfile.wardCode && typeof sb!=='undefined' && sb){
+      const { data: row, error } = await sb.from('wards')
+        .select('patients').eq('code', doctorProfile.wardCode).maybeSingle();
+      if(error) throw error;
+      if(row && Array.isArray(row.patients)){
+        patients = row.patients;
+        saveStore();
+      }
+      renderList();
+      if(currentId) loadPatientIntoForm(currentId);
+      try{ refreshActivity && refreshActivity(); }catch{}
+      try{ refreshPresence && refreshPresence(); }catch{}
+      showToast('🔄 Synced from cloud');
+    } else {
+      loadLocalPatients();
+      renderList();
+      if(currentId) loadPatientIntoForm(currentId);
+      showToast('🔄 Refreshed (offline)');
+    }
+  } catch(e){
+    console.warn('refresh err',e);
+    showToast('⚠️ Refresh failed — using cached data');
+    try{ loadLocalPatients(); renderList(); }catch{}
+  } finally {
+    setTimeout(()=>{ if(btn) btn.classList.remove('spinning'); }, 600);
+  }
+};
+
 window.goSub = function(name,btn){
   document.querySelectorAll('.subpage').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('#detail-nav .bnav-btn').forEach(b=>b.classList.remove('active'));
