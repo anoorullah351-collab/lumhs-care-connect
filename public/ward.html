@@ -1234,11 +1234,83 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 </div>
 
 <!-- BOTTOM NAV (global — list + activity + about) -->
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: AI IMAGING (X-ray / CT analysis)
+═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-imaging">
+  <div class="scroll-area" style="padding-bottom:90px">
+    <div class="list-header" style="margin-bottom:8px"><h2>🩻 AI Imaging Assist</h2></div>
+    <div class="card">
+      <div class="card-title"><span class="dot dot-cyan"></span>Upload X-ray / CT / MRI / Ultrasound</div>
+      <div id="ai-net-warn" style="display:none;background:rgba(255,92,122,.1);border:1px solid var(--red);color:var(--red);padding:10px;border-radius:8px;margin-bottom:10px;font-size:12px;">⚠️ No internet — AI analysis requires an internet connection.</div>
+      <div class="field"><label>Modality / View</label>
+        <select id="img-modality" style="width:100%">
+          <option>Chest X-ray PA</option><option>Chest X-ray AP</option>
+          <option>Abdominal X-ray (erect)</option><option>Abdominal X-ray (supine)</option>
+          <option>CT Brain (plain)</option><option>CT Brain (contrast)</option>
+          <option>CT Abdomen / Pelvis</option><option>CT Chest</option>
+          <option>MRI Brain</option><option>MRI Spine</option>
+          <option>Ultrasound Abdomen</option><option>Ultrasound FAST</option>
+          <option>X-ray Limb / Bone</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Patient context (optional)</label>
+        <textarea id="img-context" rows="2" placeholder="e.g. 45 y/o male, RUQ pain, fever, raised WBC" style="width:100%"></textarea>
+      </div>
+      <div class="field"><label>Specific question (optional)</label>
+        <input type="text" id="img-prompt" placeholder="e.g. rule out pneumoperitoneum" style="width:100%">
+      </div>
+      <div class="btn-row" style="margin:8px 0;gap:6px;flex-wrap:wrap;">
+        <input type="file" id="img-file" accept="image/*" capture="environment" style="display:none" onchange="onImgPicked(event)">
+        <button class="btn btn-accent" onclick="document.getElementById('img-file').click()">📁 Choose / 📸 Take Photo</button>
+        <button class="btn btn-green" id="img-analyze-btn" onclick="analyzeImage()" disabled>🔬 Analyze with AI</button>
+      </div>
+      <div id="img-preview-wrap" style="display:none;margin-top:8px;">
+        <img id="img-preview" alt="preview" style="max-width:100%;border-radius:8px;border:1px solid var(--border2);max-height:280px;display:block;margin:0 auto;">
+      </div>
+      <div id="img-result" style="margin-top:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;color:var(--text);"></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:10px;font-style:italic;">AI-assisted preliminary read only — formal radiology reporting & clinical correlation required.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: ASK AI (medical Q&A)
+═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-askai">
+  <div class="scroll-area" style="padding-bottom:120px" id="askai-scroll">
+    <div class="list-header" style="margin-bottom:8px"><h2>🤖 Ask AI (Clinical Q&amp;A)</h2></div>
+    <div id="askai-net-warn" style="display:none;background:rgba(255,92,122,.1);border:1px solid var(--red);color:var(--red);padding:10px;border-radius:8px;margin-bottom:10px;font-size:12px;">⚠️ No internet — AI assistant requires an internet connection.</div>
+    <div id="askai-messages" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+  <div style="position:fixed;bottom:56px;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border2);padding:8px 10px;display:flex;gap:6px;z-index:90;">
+    <textarea id="askai-input" rows="1" placeholder="Ask any clinical question…" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:8px 10px;font-family:var(--font);font-size:13px;resize:none;max-height:120px;"></textarea>
+    <button class="btn btn-green" id="askai-send" onclick="askAISend()">Send</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: COMMONLY USED DRUGS (Pakistan brand → generic)
+═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-drugs">
+  <div class="scroll-area" style="padding-bottom:90px">
+    <div class="list-header" style="margin-bottom:8px"><h2>💊 Commonly Used Drugs (Pakistan)</h2></div>
+    <input class="search-box" type="text" id="drug-search" placeholder="🔍 Search brand or generic (e.g. Tanzo, augmentin, omeprazole)…" oninput="renderDrugList()">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Local brand → generic / formula reference. Always verify dose with BNF / local formulary.</div>
+    <div id="drug-list"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV (global) -->
 <nav class="bottom-nav" id="global-nav" style="display:none">
   <button class="bnav-btn active" onclick="switchGlobalTab('list',this)" id="gnav-list"><span class="bnav-icon">🏥</span>Ward</button>
   <button class="bnav-btn" onclick="switchGlobalTab('activity',this)" id="gnav-activity"><span class="bnav-icon">⚡</span>Activity</button>
+  <button class="bnav-btn" onclick="switchGlobalTab('imaging',this)" id="gnav-imaging"><span class="bnav-icon">🩻</span>Imaging</button>
+  <button class="bnav-btn" onclick="switchGlobalTab('askai',this)" id="gnav-askai"><span class="bnav-icon">🤖</span>Ask AI</button>
+  <button class="bnav-btn" onclick="switchGlobalTab('drugs',this)" id="gnav-drugs"><span class="bnav-icon">💊</span>Drugs</button>
   <button class="bnav-btn" onclick="switchGlobalTab('about',this)" id="gnav-about"><span class="bnav-icon">ℹ️</span>About</button>
 </nav>
+
 
 <!-- ═══════════════════════════════════════════════════════
      MODALS
