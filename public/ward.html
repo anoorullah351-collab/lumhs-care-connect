@@ -1689,22 +1689,23 @@ window.saveDoctorProfile = function(){
 };
 
 // ─── NAVIGATION ──────────────────────────────────────────────
+const GLOBAL_SCREENS = ['list','activity','imaging','askai','drugs','about'];
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const isDetail=id==='screen-detail';
-  const isActivity=id==='screen-activity';
-  const isList=id==='screen-list';
-  const isAbout=id==='screen-about';
+  const key = id.replace('screen-','');
+  const isGlobal = GLOBAL_SCREENS.includes(key);
+  const titles = {list:'Ward Follow-Up',activity:'Activity Feed',imaging:'AI Imaging',askai:'Ask AI',drugs:'Drug Reference',about:'About & Guide'};
   $('back-btn').style.display=isDetail?'flex':'none';
-  $('topbar-title').textContent=isDetail?'Patient Record':isActivity?'Activity Feed':isAbout?'About & Guide':'Ward Follow-Up';
+  $('topbar-title').textContent=isDetail?'Patient Record':(titles[key]||'Ward Follow-Up');
   $('detail-nav').style.display=isDetail?'flex':'none';
-  $('global-nav').style.display=(isList||isActivity||isAbout)?'flex':'none';
-  ['gnav-list','gnav-activity','gnav-about'].forEach(x=>{ const el=$(x); if(el) el.classList.remove('active'); });
-  if(isList) $('gnav-list').classList.add('active');
-  if(isActivity) $('gnav-activity').classList.add('active');
-  if(isAbout) $('gnav-about').classList.add('active');
+  $('global-nav').style.display=isGlobal?'flex':'none';
+  GLOBAL_SCREENS.forEach(k=>{ const el=$('gnav-'+k); if(el) el.classList.remove('active'); });
+  if(isGlobal){ const el=$('gnav-'+key); if(el) el.classList.add('active'); }
+  try{ updateAiNetWarnings(); }catch{}
 }
+
 
 window.goToList = function(){ showScreen('screen-list'); renderList(); };
 
