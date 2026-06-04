@@ -1755,12 +1755,15 @@ window.switchGlobalTab = function(tab,btn){
   if(btn) btn.classList.add('active');
   if(tab==='list') showScreen('screen-list');
   else if(tab==='about') showScreen('screen-about');
+  else if(tab==='imaging') showScreen('screen-imaging');
+  else if(tab==='askai'){ showScreen('screen-askai'); setTimeout(()=>{ try{ $('askai-input').focus(); }catch{} },50); }
+  else if(tab==='drugs'){ showScreen('screen-drugs'); renderDrugList(); }
   else if(tab==='activity'){
     showScreen('screen-activity');
-    // load local activity if offline
     if(!isOnline){ try{ const a=JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]'); renderActivity(a); }catch{} }
   }
 };
+
 
 // ─── PATIENT LIST ─────────────────────────────────────────────
 function initials(name){
