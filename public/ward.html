@@ -1098,37 +1098,10 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     <div style="position:sticky;bottom:70px;z-index:50;padding:0 0 6px">
       <div class="btn-row" style="justify-content:flex-end;gap:6px;">
         <span class="saved-badge" id="saved-badge">✓ Saved</span>
-        <button class="btn" style="background:#7c3aed;color:#fff;border:none;" onclick="openVoiceFill()" title="Voice fill the form">🎤 Voice Fill</button>
         <button class="btn btn-green" onclick="saveCurrentPatient()">💾 Save</button>
       </div>
     </div>
 
-    <!-- VOICE FILL MODAL -->
-    <div id="voice-modal" class="no-print" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(2,6,23,.78);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:14px;">
-      <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;max-width:520px;width:100%;max-height:90vh;overflow:auto;padding:16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div style="font-weight:800;font-size:15px;color:var(--cyan);">🎤 Voice Fill</div>
-          <button class="btn" onclick="closeVoiceFill()" style="padding:4px 10px;">✕</button>
-        </div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-bottom:10px;">
-          Speak naturally. Examples:<br>
-          <em>"Patient name Ali Khan, age 45, MR number 12345, bed 7, diagnosis acute appendicitis, weight 70, allergy penicillin."</em><br>
-          <em>"BP 130 over 80, heart rate 92, RR 18, temp 37.8, SpO2 96, GCS 15, blood sugar 140, pain 6."</em><br>
-          <em>"Assessment improving, plan continue IV antibiotics and review tomorrow."</em>
-        </div>
-        <div id="voice-status" style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">Idle</div>
-        <div id="voice-transcript" style="min-height:90px;max-height:200px;overflow:auto;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px;font-size:12px;line-height:1.5;color:var(--text);white-space:pre-wrap;"></div>
-        <div id="voice-filled" style="margin-top:8px;font-size:11px;color:#22c55e;"></div>
-        <div class="btn-row" style="margin-top:12px;justify-content:space-between;">
-          <button class="btn" onclick="clearVoiceTranscript()">🗑 Clear</button>
-          <div style="display:flex;gap:6px;">
-            <button class="btn" id="voice-start-btn" onclick="startVoice()" style="background:#dc2626;color:#fff;border:none;">● Start</button>
-            <button class="btn" onclick="stopVoice()">■ Stop</button>
-            <button class="btn btn-green" onclick="applyVoiceFill()">✓ Apply &amp; Save</button>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <div class="credits-footer">
       <div class="c-name">Developed by Dr. Noorullah Ahmed</div>
@@ -1261,11 +1234,83 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 </div>
 
 <!-- BOTTOM NAV (global — list + activity + about) -->
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: AI IMAGING (X-ray / CT analysis)
+═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-imaging">
+  <div class="scroll-area" style="padding-bottom:90px">
+    <div class="list-header" style="margin-bottom:8px"><h2>🩻 AI Imaging Assist</h2></div>
+    <div class="card">
+      <div class="card-title"><span class="dot dot-cyan"></span>Upload X-ray / CT / MRI / Ultrasound</div>
+      <div id="ai-net-warn" style="display:none;background:rgba(255,92,122,.1);border:1px solid var(--red);color:var(--red);padding:10px;border-radius:8px;margin-bottom:10px;font-size:12px;">⚠️ No internet — AI analysis requires an internet connection.</div>
+      <div class="field"><label>Modality / View</label>
+        <select id="img-modality" style="width:100%">
+          <option>Chest X-ray PA</option><option>Chest X-ray AP</option>
+          <option>Abdominal X-ray (erect)</option><option>Abdominal X-ray (supine)</option>
+          <option>CT Brain (plain)</option><option>CT Brain (contrast)</option>
+          <option>CT Abdomen / Pelvis</option><option>CT Chest</option>
+          <option>MRI Brain</option><option>MRI Spine</option>
+          <option>Ultrasound Abdomen</option><option>Ultrasound FAST</option>
+          <option>X-ray Limb / Bone</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Patient context (optional)</label>
+        <textarea id="img-context" rows="2" placeholder="e.g. 45 y/o male, RUQ pain, fever, raised WBC" style="width:100%"></textarea>
+      </div>
+      <div class="field"><label>Specific question (optional)</label>
+        <input type="text" id="img-prompt" placeholder="e.g. rule out pneumoperitoneum" style="width:100%">
+      </div>
+      <div class="btn-row" style="margin:8px 0;gap:6px;flex-wrap:wrap;">
+        <input type="file" id="img-file" accept="image/*" capture="environment" style="display:none" onchange="onImgPicked(event)">
+        <button class="btn btn-accent" onclick="document.getElementById('img-file').click()">📁 Choose / 📸 Take Photo</button>
+        <button class="btn btn-green" id="img-analyze-btn" onclick="analyzeImage()" disabled>🔬 Analyze with AI</button>
+      </div>
+      <div id="img-preview-wrap" style="display:none;margin-top:8px;">
+        <img id="img-preview" alt="preview" style="max-width:100%;border-radius:8px;border:1px solid var(--border2);max-height:280px;display:block;margin:0 auto;">
+      </div>
+      <div id="img-result" style="margin-top:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;color:var(--text);"></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:10px;font-style:italic;">AI-assisted preliminary read only — formal radiology reporting & clinical correlation required.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: ASK AI (medical Q&A)
+═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-askai">
+  <div class="scroll-area" style="padding-bottom:120px" id="askai-scroll">
+    <div class="list-header" style="margin-bottom:8px"><h2>🤖 Ask AI (Clinical Q&amp;A)</h2></div>
+    <div id="askai-net-warn" style="display:none;background:rgba(255,92,122,.1);border:1px solid var(--red);color:var(--red);padding:10px;border-radius:8px;margin-bottom:10px;font-size:12px;">⚠️ No internet — AI assistant requires an internet connection.</div>
+    <div id="askai-messages" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+  <div style="position:fixed;bottom:56px;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border2);padding:8px 10px;display:flex;gap:6px;z-index:90;">
+    <textarea id="askai-input" rows="1" placeholder="Ask any clinical question…" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:8px 10px;font-family:var(--font);font-size:13px;resize:none;max-height:120px;"></textarea>
+    <button class="btn btn-green" id="askai-send" onclick="askAISend()">Send</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: COMMONLY USED DRUGS (Pakistan brand → generic)
+═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-drugs">
+  <div class="scroll-area" style="padding-bottom:90px">
+    <div class="list-header" style="margin-bottom:8px"><h2>💊 Commonly Used Drugs (Pakistan)</h2></div>
+    <input class="search-box" type="text" id="drug-search" placeholder="🔍 Search brand or generic (e.g. Tanzo, augmentin, omeprazole)…" oninput="renderDrugList()">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Local brand → generic / formula reference. Always verify dose with BNF / local formulary.</div>
+    <div id="drug-list"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV (global) -->
 <nav class="bottom-nav" id="global-nav" style="display:none">
   <button class="bnav-btn active" onclick="switchGlobalTab('list',this)" id="gnav-list"><span class="bnav-icon">🏥</span>Ward</button>
   <button class="bnav-btn" onclick="switchGlobalTab('activity',this)" id="gnav-activity"><span class="bnav-icon">⚡</span>Activity</button>
+  <button class="bnav-btn" onclick="switchGlobalTab('imaging',this)" id="gnav-imaging"><span class="bnav-icon">🩻</span>Imaging</button>
+  <button class="bnav-btn" onclick="switchGlobalTab('askai',this)" id="gnav-askai"><span class="bnav-icon">🤖</span>Ask AI</button>
+  <button class="bnav-btn" onclick="switchGlobalTab('drugs',this)" id="gnav-drugs"><span class="bnav-icon">💊</span>Drugs</button>
   <button class="bnav-btn" onclick="switchGlobalTab('about',this)" id="gnav-about"><span class="bnav-icon">ℹ️</span>About</button>
 </nav>
+
 
 <!-- ═══════════════════════════════════════════════════════
      MODALS
@@ -1644,22 +1689,23 @@ window.saveDoctorProfile = function(){
 };
 
 // ─── NAVIGATION ──────────────────────────────────────────────
+const GLOBAL_SCREENS = ['list','activity','imaging','askai','drugs','about'];
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const isDetail=id==='screen-detail';
-  const isActivity=id==='screen-activity';
-  const isList=id==='screen-list';
-  const isAbout=id==='screen-about';
+  const key = id.replace('screen-','');
+  const isGlobal = GLOBAL_SCREENS.includes(key);
+  const titles = {list:'Ward Follow-Up',activity:'Activity Feed',imaging:'AI Imaging',askai:'Ask AI',drugs:'Drug Reference',about:'About & Guide'};
   $('back-btn').style.display=isDetail?'flex':'none';
-  $('topbar-title').textContent=isDetail?'Patient Record':isActivity?'Activity Feed':isAbout?'About & Guide':'Ward Follow-Up';
+  $('topbar-title').textContent=isDetail?'Patient Record':(titles[key]||'Ward Follow-Up');
   $('detail-nav').style.display=isDetail?'flex':'none';
-  $('global-nav').style.display=(isList||isActivity||isAbout)?'flex':'none';
-  ['gnav-list','gnav-activity','gnav-about'].forEach(x=>{ const el=$(x); if(el) el.classList.remove('active'); });
-  if(isList) $('gnav-list').classList.add('active');
-  if(isActivity) $('gnav-activity').classList.add('active');
-  if(isAbout) $('gnav-about').classList.add('active');
+  $('global-nav').style.display=isGlobal?'flex':'none';
+  GLOBAL_SCREENS.forEach(k=>{ const el=$('gnav-'+k); if(el) el.classList.remove('active'); });
+  if(isGlobal){ const el=$('gnav-'+key); if(el) el.classList.add('active'); }
+  try{ updateAiNetWarnings(); }catch{}
 }
+
 
 window.goToList = function(){ showScreen('screen-list'); renderList(); };
 
@@ -1709,12 +1755,15 @@ window.switchGlobalTab = function(tab,btn){
   if(btn) btn.classList.add('active');
   if(tab==='list') showScreen('screen-list');
   else if(tab==='about') showScreen('screen-about');
+  else if(tab==='imaging') showScreen('screen-imaging');
+  else if(tab==='askai'){ showScreen('screen-askai'); setTimeout(()=>{ try{ $('askai-input').focus(); }catch{} },50); }
+  else if(tab==='drugs'){ showScreen('screen-drugs'); renderDrugList(); }
   else if(tab==='activity'){
     showScreen('screen-activity');
-    // load local activity if offline
     if(!isOnline){ try{ const a=JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]'); renderActivity(a); }catch{} }
   }
 };
+
 
 // ─── PATIENT LIST ─────────────────────────────────────────────
 function initials(name){
@@ -1870,105 +1919,8 @@ window.printConsent = function(){
   setTimeout(()=>window.print(),120);
 };
 
-// ─── VOICE FILL ───────────────────────────────────────────────
-let _vRecog=null, _vFinal='', _vInterim='';
-window.openVoiceFill = function(){
-  const m=$('voice-modal'); if(!m) return;
-  m.style.display='flex';
-  $('voice-filled').textContent='';
-};
-window.closeVoiceFill = function(){ stopVoice(); $('voice-modal').style.display='none'; };
-window.clearVoiceTranscript = function(){ _vFinal=''; _vInterim=''; $('voice-transcript').textContent=''; $('voice-filled').textContent=''; };
-function setVoiceStatus(s,color){ const el=$('voice-status'); if(el){ el.textContent=s; el.style.color=color||'var(--muted)'; } }
-function renderVoiceTranscript(){ $('voice-transcript').textContent=(_vFinal+' '+_vInterim).trim(); }
+// ─── (voice fill removed — replaced by AI Imaging + Ask AI tabs) ──
 
-window.startVoice = function(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ alert('Voice recognition is not supported in this browser.\nUse Chrome on Android or desktop.'); return; }
-  if(_vRecog){ try{_vRecog.stop();}catch(e){} }
-  const r=new SR();
-  r.lang='en-US'; r.continuous=true; r.interimResults=true;
-  r.onstart=()=>{ setVoiceStatus('● Listening...', '#ef4444'); $('voice-start-btn').textContent='● Listening'; };
-  r.onerror=(e)=>{ setVoiceStatus('Error: '+(e.error||'unknown'),'#ef4444'); };
-  r.onend=()=>{ setVoiceStatus('Stopped','var(--muted)'); $('voice-start-btn').textContent='● Start'; };
-  r.onresult=(ev)=>{
-    let interim='';
-    for(let i=ev.resultIndex;i<ev.results.length;i++){
-      const tr=ev.results[i][0].transcript;
-      if(ev.results[i].isFinal) _vFinal+=(_vFinal?' ':'')+tr.trim();
-      else interim+=tr;
-    }
-    _vInterim=interim;
-    renderVoiceTranscript();
-  };
-  try{ r.start(); _vRecog=r; }catch(e){ setVoiceStatus('Could not start: '+e.message,'#ef4444'); }
-};
-window.stopVoice = function(){ if(_vRecog){ try{_vRecog.stop();}catch(e){} _vRecog=null; } };
-
-// ── Smart parser: maps natural speech to form fields
-function parseVoiceText(raw){
-  if(!raw) return {filled:[]};
-  let t=' '+raw.toLowerCase().replace(/[,.;]/g,' ').replace(/\s+/g,' ')+' ';
-  // word-number normalization
-  const w2n={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15};
-  t=t.replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen)\b/g,(m,w)=>' '+w2n[w]+' ');
-  const out={}; const filled=[];
-  const set=(id,v,label)=>{ if(v===undefined||v===null||v==='') return; out[id]=String(v).trim(); filled.push(label||id); };
-  const grab=(re,grp)=>{ const m=t.match(re); return m?m[grp||1]:null; };
-  // ── Vitals
-  let bp=grab(/\bb\s*p\s*(?:is|of)?\s*(\d{2,3})\s*(?:over|\/|on)\s*(\d{2,3})/) || grab(/blood pressure\s*(?:is|of)?\s*(\d{2,3})\s*(?:over|\/|on)\s*(\d{2,3})/);
-  if(!bp){ const m=t.match(/\bb\s*p\s*(?:is|of)?\s*(\d{2,3})\s*(?:over|\/|on)\s*(\d{2,3})/); if(m) bp=m; }
-  { const m=t.match(/(?:\bbp|blood pressure)\s*(?:is|of)?\s*(\d{2,3})\s*(?:over|\/|on)\s*(\d{2,3})/); if(m) set('v-bp',m[1]+'/'+m[2],'BP'); }
-  { const m=t.match(/(?:heart rate|pulse|hr)\s*(?:is|of)?\s*(\d{2,3})/); if(m) set('v-hr',m[1],'HR'); }
-  { const m=t.match(/(?:respiratory rate|resp rate|\brr\b)\s*(?:is|of)?\s*(\d{1,2})/); if(m) set('v-rr',m[1],'RR'); }
-  { const m=t.match(/(?:temperature|temp)\s*(?:is|of)?\s*(\d{2,3}(?:\.\d)?)/); if(m) set('v-temp',m[1],'Temp'); }
-  { const m=t.match(/(?:spo2|sp o2|s p o2|saturation|sats?|oxygen sat\w*)\s*(?:is|of)?\s*(\d{2,3})/); if(m) set('v-spo2',m[1],'SpO2'); }
-  { const m=t.match(/\bgcs\s*(?:is|of)?\s*(\d{1,2})/); if(m) set('v-gcs',m[1],'GCS'); }
-  { const m=t.match(/(?:blood sugar|bsl|glucose|rbs|sugar)\s*(?:is|of)?\s*(\d{2,3})/); if(m) set('v-bsg',m[1],'Blood Sugar'); }
-  { const m=t.match(/(?:urine output|urine|uo)\s*(?:is|of)?\s*(\d{2,4})/); if(m) set('v-uo',m[1],'Urine Output'); }
-  { const m=t.match(/(?:drain output|drain)\s*(?:is|of)?\s*(\d{1,4})/); if(m) set('v-drain',m[1],'Drain'); }
-  { const m=t.match(/\bpain\s*(?:score|is|of)?\s*(\d{1,2})(?:\s*(?:out of|\/)\s*10)?/); if(m) set('v-pain',m[1],'Pain'); }
-  { const m=t.match(/\bweight\s*(?:is|of)?\s*(\d{2,3}(?:\.\d)?)/); if(m) set('pt-weight',m[1],'Weight'); }
-  // ── Patient demographics
-  { const m=t.match(/(?:patient name|name is|name)\s+([a-z][a-z\s'-]{1,40}?)(?=\s+(?:age|aged|mr|cr|bed|ward|diagnosis|diagnosed|weight|allergy|allergic|bp|blood pressure|heart|temp|spo2|sats?|pain|gcs|consultant|under|plan|assessment|complaint|exam|$))/); if(m) set('pt-name',titleCase(m[1].trim()),'Name'); }
-  { const m=t.match(/\bage(?:d)?\s*(?:is|of)?\s*(\d{1,3})/) || t.match(/(\d{1,3})\s*(?:year|yr|years|yrs)\s*old/); if(m) set('pt-age',m[1],'Age'); }
-  { const m=t.match(/(?:mr|m\s*r|cr|c\s*r|file)\s*(?:number|no\.?|#)?\s*(?:is|of)?\s*([a-z0-9-]{2,15})/); if(m) set('pt-cr',m[1].toUpperCase(),'MR No'); }
-  { const m=t.match(/\bbed\s*(?:number|no\.?)?\s*(?:is|of)?\s*([a-z0-9-]{1,6})/); if(m) set('pt-bed',m[1].toUpperCase(),'Bed'); }
-  { const m=t.match(/(?:consultant|under)\s+(?:dr\.?\s+)?([a-z][a-z\s'-]{1,40}?)(?=\s+(?:plan|diagnosis|age|mr|cr|bed|bp|$))/); if(m) set('pt-consult','Dr. '+titleCase(m[1].trim()),'Consultant'); }
-  { const m=t.match(/(?:diagnosis|diagnosed with|impression)\s+(?:is|of)?\s*(.+?)(?=\s+(?:procedure|plan|weight|allergy|bp|heart|temp|spo2|pain|gcs|assessment|complaint|exam|consultant|under|$))/); if(m) set('pt-diag',titleCase(m[1].trim()),'Diagnosis'); }
-  { const m=t.match(/(?:procedure|operation|surgery|plan(?:ned)? for)\s+(?:is|of)?\s*(.+?)(?=\s+(?:diagnosis|weight|allergy|bp|heart|temp|spo2|pain|gcs|assessment|complaint|exam|consultant|under|$))/); if(m) set('pt-proc',titleCase(m[1].trim()),'Procedure'); }
-  { const m=t.match(/(?:allergy|allergic to|allergies)\s+(?:is|to)?\s*(.+?)(?=\s+(?:diagnosis|procedure|weight|bp|heart|temp|spo2|pain|gcs|assessment|complaint|exam|consultant|under|$))/); if(m) set('pt-allergy',titleCase(m[1].trim()),'Allergy'); }
-  // ── Notes
-  { const m=t.match(/\b(?:complaint|complaints|symptoms|c\/o)\s+(.+?)(?=\s+(?:assessment|plan|exam|examination|diagnosis|bp|heart|temp|$))/); if(m) set('m-comp',cap(m[1].trim()),'Complaint'); }
-  { const m=t.match(/(?:examination|on exam|exam shows?)\s+(.+?)(?=\s+(?:assessment|plan|complaint|diagnosis|bp|heart|temp|$))/); if(m) set('m-exam',cap(m[1].trim()),'Examination'); }
-  { const m=t.match(/(?:assessment|impression is)\s+(.+?)(?=\s+(?:plan|complaint|exam|examination|diagnosis|bp|heart|temp|$))/); if(m) set('m-assess',cap(m[1].trim()),'Assessment'); }
-  { const m=t.match(/\bplan(?:\s+is)?\s+(?:to\s+)?(.+?)(?=\s+(?:assessment|complaint|exam|examination|diagnosis|bp|heart|temp|$))/); if(m && !out['pt-proc']) set('m-plan',cap(m[1].trim()),'Plan'); else if(m) set('m-plan',cap(m[1].trim()),'Plan'); }
-  return {data:out, filled};
-}
-function titleCase(s){ return s.replace(/\b([a-z])/g,c=>c.toUpperCase()); }
-function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
-
-window.applyVoiceFill = function(){
-  stopVoice();
-  const text=(_vFinal+' '+_vInterim).trim();
-  if(!text){ $('voice-filled').textContent='Nothing recorded yet.'; $('voice-filled').style.color='#f59e0b'; return; }
-  const {data,filled}=parseVoiceText(text);
-  if(!filled.length){ $('voice-filled').textContent='Could not extract any fields. Try phrases like "BP 120 over 80" or "diagnosis acute appendicitis".'; $('voice-filled').style.color='#f59e0b'; return; }
-  Object.keys(data).forEach(id=>{
-    const el=$(id); if(!el) return;
-    el.value=data[id];
-    el.dispatchEvent(new Event('input',{bubbles:true}));
-    el.dispatchEvent(new Event('change',{bubbles:true}));
-  });
-  // recompute derived UI
-  try{ ['hr','rr','temp','spo2'].forEach(k=>{ if(data['v-'+k]!==undefined) checkVital(k,data['v-'+k]); }); }catch(e){}
-  try{ calcNEWS2(); }catch(e){}
-  try{ if(data['v-pain']!==undefined) updatePain(data['v-pain']); }catch(e){}
-  saveCurrentPatient();
-  $('voice-filled').style.color='#22c55e';
-  $('voice-filled').textContent='✓ Filled: '+filled.join(', ');
-  setTimeout(()=>closeVoiceFill(), 1400);
-};
 
 // ─── DELETE PATIENT ───────────────────────────────────────────
 window.deletePatient = function(id){
@@ -3023,6 +2975,332 @@ window.autoSuggestGuidance = function(){
   $('guide-condition').value=pick;
   runGuidance();
 };
+
+// ═════════════════════════════════════════════════════════════
+// AI IMAGING + ASK AI + DRUG REFERENCE + OFFLINE SYNC + GESTURES
+// ═════════════════════════════════════════════════════════════
+
+const AI_BASE = (location.origin || '');
+
+function isNetOnline(){ return typeof navigator!=='undefined' ? navigator.onLine!==false : true; }
+window.updateAiNetWarnings = function(){
+  const off = !isNetOnline();
+  const a=document.getElementById('ai-net-warn'); if(a) a.style.display=off?'block':'none';
+  const b=document.getElementById('askai-net-warn'); if(b) b.style.display=off?'block':'none';
+};
+window.addEventListener('online',  ()=>{ updateAiNetWarnings(); flushOfflineSync(); });
+window.addEventListener('offline', ()=>{ updateAiNetWarnings(); });
+
+// ── IMAGING ──────────────────────────────────────────────────
+let _imgData = null;
+window.onImgPicked = function(ev){
+  const f = ev.target.files && ev.target.files[0]; if(!f) return;
+  if(f.size > 6*1024*1024){ alert('Image too large (max 6 MB). Please retake at lower resolution.'); return; }
+  const r = new FileReader();
+  r.onload = ()=>{
+    _imgData = { dataUrl: r.result, mime: f.type || 'image/jpeg' };
+    const img = document.getElementById('img-preview');
+    img.src = r.result;
+    document.getElementById('img-preview-wrap').style.display='block';
+    document.getElementById('img-analyze-btn').disabled = false;
+    document.getElementById('img-result').textContent='';
+  };
+  r.readAsDataURL(f);
+};
+window.analyzeImage = async function(){
+  if(!_imgData){ alert('Please pick an image first'); return; }
+  if(!isNetOnline()){ updateAiNetWarnings(); alert('No internet — AI analysis requires an internet connection.'); return; }
+  const btn = document.getElementById('img-analyze-btn');
+  const out = document.getElementById('img-result');
+  btn.disabled = true; const orig = btn.textContent; btn.textContent='⏳ Analyzing…';
+  out.textContent='Sending image to AI…';
+  try{
+    const base64 = _imgData.dataUrl.split(',')[1] || '';
+    const r = await fetch(AI_BASE + '/api/ai/vision', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        imageBase64: base64,
+        mimeType: _imgData.mime,
+        modality: document.getElementById('img-modality').value,
+        patientContext: document.getElementById('img-context').value,
+        prompt: document.getElementById('img-prompt').value
+      })
+    });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok){ out.textContent = '⚠️ AI error: ' + (j.error || r.status) + (j.detail?('\n'+j.detail):''); }
+    else { out.textContent = j.reply || '(empty response)'; }
+  }catch(e){ out.textContent = '⚠️ Network error reaching AI: ' + e.message; }
+  finally{ btn.disabled=false; btn.textContent=orig; }
+};
+
+// ── ASK AI (chat) ────────────────────────────────────────────
+const ASKAI_KEY='lumhs_askai_history_v1';
+let askaiHistory = [];
+try{ askaiHistory = JSON.parse(localStorage.getItem(ASKAI_KEY)||'[]'); }catch{ askaiHistory=[]; }
+function renderAskAI(){
+  const box = document.getElementById('askai-messages'); if(!box) return;
+  if(!askaiHistory.length){
+    box.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px;">Ask anything clinical — diagnosis, dosing, guidelines, calculations.</div>';
+    return;
+  }
+  box.innerHTML = askaiHistory.map(m=>{
+    const isU = m.role==='user';
+    return `<div style="align-self:${isU?'flex-end':'flex-start'};max-width:88%;background:${isU?'var(--cyan-dim)':'var(--surface2)'};border:1px solid ${isU?'var(--cyan)':'var(--border2)'};color:var(--text);padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.55;white-space:pre-wrap;">${escapeHtml(m.content)}</div>`;
+  }).join('');
+  const s = document.getElementById('askai-scroll'); if(s) s.scrollTop = s.scrollHeight;
+}
+function escapeHtml(s){ return String(s||'').replace(/[&<>]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+window.askAISend = async function(){
+  const inp = document.getElementById('askai-input');
+  const q = (inp.value||'').trim(); if(!q) return;
+  if(!isNetOnline()){ updateAiNetWarnings(); alert('No internet — AI assistant requires an internet connection.'); return; }
+  askaiHistory.push({role:'user', content:q});
+  inp.value=''; renderAskAI();
+  const btn = document.getElementById('askai-send'); btn.disabled=true; const o=btn.textContent; btn.textContent='…';
+  askaiHistory.push({role:'assistant', content:'⏳ thinking…'}); renderAskAI();
+  try{
+    const r = await fetch(AI_BASE + '/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ messages: askaiHistory.filter(m=>m.content!=='⏳ thinking…') })
+    });
+    const j = await r.json().catch(()=>({}));
+    askaiHistory.pop();
+    if(!r.ok) askaiHistory.push({role:'assistant', content:'⚠️ AI error: ' + (j.error||r.status)});
+    else      askaiHistory.push({role:'assistant', content: j.reply || '(empty response)'});
+  }catch(e){
+    askaiHistory.pop();
+    askaiHistory.push({role:'assistant', content:'⚠️ Network error: ' + e.message});
+  }finally{
+    btn.disabled=false; btn.textContent=o;
+    try{ localStorage.setItem(ASKAI_KEY, JSON.stringify(askaiHistory.slice(-40))); }catch{}
+    renderAskAI();
+  }
+};
+
+// ── DRUG REFERENCE (Pakistan brand → generic) ────────────────
+const PK_DRUGS = [
+  {brand:'Tanzo 4.5g', generic:'Piperacillin + Tazobactam', cls:'Antibiotic (β-lactam/BLI)', use:'Severe infections, sepsis, intra-abdominal, HAP'},
+  {brand:'Augmentin / Calamox', generic:'Amoxicillin + Clavulanate', cls:'Antibiotic', use:'RTI, UTI, skin infections'},
+  {brand:'Rocephin / Oxidil', generic:'Ceftriaxone', cls:'3rd-gen Cephalosporin', use:'Pneumonia, meningitis, sepsis, typhoid'},
+  {brand:'Maxipime', generic:'Cefepime', cls:'4th-gen Cephalosporin', use:'Neutropenic fever, HAP'},
+  {brand:'Meronem / Penro', generic:'Meropenem', cls:'Carbapenem', use:'Severe / resistant infections'},
+  {brand:'Tienam', generic:'Imipenem + Cilastatin', cls:'Carbapenem', use:'Severe infections'},
+  {brand:'Flagyl', generic:'Metronidazole', cls:'Nitroimidazole', use:'Anaerobic / amoebic infections'},
+  {brand:'Velosef', generic:'Cephradine', cls:'1st-gen Cephalosporin', use:'Surgical prophylaxis'},
+  {brand:'Velosef IV / Ancef', generic:'Cefazolin', cls:'1st-gen Cephalosporin', use:'Pre-op prophylaxis'},
+  {brand:'Cifran / Novidat', generic:'Ciprofloxacin', cls:'Fluoroquinolone', use:'UTI, gram-negative infections'},
+  {brand:'Tavanic / Leflox', generic:'Levofloxacin', cls:'Fluoroquinolone', use:'RTI, complicated UTI'},
+  {brand:'Klaricid', generic:'Clarithromycin', cls:'Macrolide', use:'Atypical pneumonia, H.pylori'},
+  {brand:'Zithromax', generic:'Azithromycin', cls:'Macrolide', use:'CAP, typhoid, STI'},
+  {brand:'Vibramycin', generic:'Doxycycline', cls:'Tetracycline', use:'Atypicals, rickettsia, acne'},
+  {brand:'Vancocin', generic:'Vancomycin', cls:'Glycopeptide', use:'MRSA, C.difficile (PO)'},
+  {brand:'Targocid', generic:'Teicoplanin', cls:'Glycopeptide', use:'MRSA, gram-positive'},
+  {brand:'Amikin', generic:'Amikacin', cls:'Aminoglycoside', use:'Gram-negative sepsis'},
+  {brand:'Garamycin', generic:'Gentamicin', cls:'Aminoglycoside', use:'Sepsis (with β-lactam)'},
+  {brand:'Linezolid / Zyvox', generic:'Linezolid', cls:'Oxazolidinone', use:'MRSA, VRE'},
+  {brand:'Risek / Nexum', generic:'Omeprazole', cls:'PPI', use:'PUD, GERD, stress ulcer prophylaxis'},
+  {brand:'Pantoprazole / Zopent', generic:'Pantoprazole', cls:'PPI', use:'PUD, GERD'},
+  {brand:'Esso / Esomez', generic:'Esomeprazole', cls:'PPI', use:'GERD, PUD'},
+  {brand:'Zantac', generic:'Ranitidine (withdrawn)', cls:'H2 blocker', use:'Historically PUD'},
+  {brand:'Famotin', generic:'Famotidine', cls:'H2 blocker', use:'PUD prophylaxis'},
+  {brand:'Maxolon', generic:'Metoclopramide', cls:'Prokinetic / antiemetic', use:'Nausea, gastroparesis'},
+  {brand:'Onset / Zofer', generic:'Ondansetron', cls:'5HT3 antagonist', use:'PONV, chemo'},
+  {brand:'Buscopan', generic:'Hyoscine butylbromide', cls:'Antispasmodic', use:'Abdominal cramps, biliary colic'},
+  {brand:'Voltral / Dyclo', generic:'Diclofenac', cls:'NSAID', use:'Pain, fever, post-op analgesia'},
+  {brand:'Brufen', generic:'Ibuprofen', cls:'NSAID', use:'Pain, fever'},
+  {brand:'Toradol', generic:'Ketorolac', cls:'NSAID', use:'Acute pain, post-op'},
+  {brand:'Panadol / Calpol', generic:'Paracetamol (Acetaminophen)', cls:'Analgesic / antipyretic', use:'Pain, fever'},
+  {brand:'Perfalgan', generic:'IV Paracetamol', cls:'Analgesic', use:'Post-op pain'},
+  {brand:'Nalbin', generic:'Nalbuphine', cls:'Opioid agonist-antagonist', use:'Moderate-severe pain'},
+  {brand:'Morphine sulphate', generic:'Morphine', cls:'Opioid', use:'Severe pain, MI'},
+  {brand:'Tramal', generic:'Tramadol', cls:'Opioid (weak)', use:'Moderate pain'},
+  {brand:'Pethidine', generic:'Pethidine (Meperidine)', cls:'Opioid', use:'Biliary / renal colic'},
+  {brand:'Fentanyl', generic:'Fentanyl', cls:'Opioid', use:'Anaesthesia, severe pain'},
+  {brand:'Heparin', generic:'Unfractionated Heparin', cls:'Anticoagulant', use:'VTE, ACS'},
+  {brand:'Clexane / Innohep', generic:'Enoxaparin (LMWH)', cls:'Anticoagulant', use:'VTE prophylaxis & treatment'},
+  {brand:'Warfarin / Orfarin', generic:'Warfarin', cls:'Vitamin K antagonist', use:'AF, VTE'},
+  {brand:'Xarelto', generic:'Rivaroxaban', cls:'DOAC', use:'AF, VTE'},
+  {brand:'Eliquis', generic:'Apixaban', cls:'DOAC', use:'AF, VTE'},
+  {brand:'Loprin / Ascard / Disprin', generic:'Aspirin', cls:'Antiplatelet / NSAID', use:'ACS, secondary prevention'},
+  {brand:'Plavix / Clopid', generic:'Clopidogrel', cls:'Antiplatelet', use:'ACS, stroke prevention'},
+  {brand:'Lasix', generic:'Furosemide', cls:'Loop diuretic', use:'CHF, oedema'},
+  {brand:'Aldactone', generic:'Spironolactone', cls:'K-sparing diuretic', use:'CHF, ascites'},
+  {brand:'Tenormin', generic:'Atenolol', cls:'β-blocker', use:'HTN, IHD'},
+  {brand:'Concor', generic:'Bisoprolol', cls:'β-blocker', use:'HTN, HF'},
+  {brand:'Inderal', generic:'Propranolol', cls:'β-blocker', use:'Tremor, thyrotoxicosis, varices'},
+  {brand:'Norvasc / Amlodac', generic:'Amlodipine', cls:'CCB', use:'HTN, angina'},
+  {brand:'Capoten / Capril', generic:'Captopril', cls:'ACE inhibitor', use:'HTN, HF'},
+  {brand:'Tritace', generic:'Ramipril', cls:'ACE inhibitor', use:'HTN, post-MI'},
+  {brand:'Exforge', generic:'Amlodipine + Valsartan', cls:'CCB + ARB', use:'HTN'},
+  {brand:'Glucophage', generic:'Metformin', cls:'Biguanide', use:'Type 2 DM'},
+  {brand:'Diamicron', generic:'Gliclazide', cls:'Sulfonylurea', use:'Type 2 DM'},
+  {brand:'Insulin (Humulin R / Novorapid / Lantus)', generic:'Insulin', cls:'Hormone', use:'DM, DKA'},
+  {brand:'Dexa / Decadron', generic:'Dexamethasone', cls:'Corticosteroid', use:'Cerebral oedema, PONV, COVID'},
+  {brand:'Solu-Medrol', generic:'Methylprednisolone', cls:'Corticosteroid', use:'Severe inflammation'},
+  {brand:'Hydrocortisone / Solu-Cortef', generic:'Hydrocortisone', cls:'Corticosteroid', use:'Adrenal crisis, anaphylaxis'},
+  {brand:'Adrenaline / Epinephrine', generic:'Epinephrine', cls:'Catecholamine', use:'Anaphylaxis, cardiac arrest'},
+  {brand:'Atropine sulphate', generic:'Atropine', cls:'Anticholinergic', use:'Bradycardia, OP poisoning'},
+  {brand:'Cordarone', generic:'Amiodarone', cls:'Class III antiarrhythmic', use:'AF, VT'},
+  {brand:'Lanoxin', generic:'Digoxin', cls:'Cardiac glycoside', use:'AF, HF'},
+  {brand:'Levipil / Keppra', generic:'Levetiracetam', cls:'Antiepileptic', use:'Seizures'},
+  {brand:'Epival', generic:'Sodium Valproate', cls:'Antiepileptic', use:'Seizures (avoid in pregnancy)'},
+  {brand:'Lexotanil', generic:'Bromazepam', cls:'Benzodiazepine', use:'Anxiety'},
+  {brand:'Valium', generic:'Diazepam', cls:'Benzodiazepine', use:'Status epilepticus, alcohol withdrawal'},
+  {brand:'Ativan', generic:'Lorazepam', cls:'Benzodiazepine', use:'Anxiety, seizures'},
+  {brand:'Stemetil', generic:'Prochlorperazine', cls:'Antiemetic', use:'Vertigo, N/V'},
+  {brand:'Avil', generic:'Pheniramine', cls:'Antihistamine', use:'Allergy'},
+  {brand:'Polyfax / Polyfax-N', generic:'Polymyxin/Neomycin', cls:'Topical antibiotic', use:'Wounds'},
+  {brand:'Pyodine', generic:'Povidone-Iodine', cls:'Antiseptic', use:'Wound prep'},
+  {brand:'KCl / Potcl', generic:'Potassium Chloride', cls:'Electrolyte', use:'Hypokalaemia'},
+  {brand:'Calcium gluconate', generic:'Calcium gluconate', cls:'Electrolyte', use:'Hyperkalaemia, hypocalcaemia'},
+  {brand:'Magnesium sulphate', generic:'Magnesium sulphate', cls:'Electrolyte', use:'Eclampsia, severe asthma, torsades'},
+  {brand:'Normal saline / RL / D5W', generic:'IV Fluids', cls:'Crystalloid', use:'Resuscitation, maintenance'},
+];
+window.renderDrugList = function(){
+  const el = document.getElementById('drug-list'); if(!el) return;
+  const q = ((document.getElementById('drug-search')||{}).value||'').toLowerCase().trim();
+  const list = PK_DRUGS.filter(d => !q || d.brand.toLowerCase().includes(q) || d.generic.toLowerCase().includes(q) || d.cls.toLowerCase().includes(q) || d.use.toLowerCase().includes(q));
+  if(!list.length){ el.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px;">No matches.</div>'; return; }
+  el.innerHTML = list.map(d=>`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;margin-bottom:8px;">
+    <div style="font-weight:700;color:var(--cyan);font-size:13px;">${d.brand}</div>
+    <div style="font-size:12px;color:var(--text);margin-top:2px;"><strong>Generic:</strong> ${d.generic}</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px;">${d.cls} · ${d.use}</div>
+  </div>`).join('');
+};
+
+// ── DRUG SAFETY WARNINGS ─────────────────────────────────────
+const SAFETY_RULES = [
+  {match:/\baspirin|loprin|ascard|disprin\b/i,  test:p=>ageYears(p)<16, msg:'⚠ Aspirin in a child / teenager — risk of REYE SYNDROME (encephalopathy + hepatic failure, especially during viral illness). Avoid unless specific indication (e.g. Kawasaki).'},
+  {match:/\btetracyc|doxycyc|vibramycin\b/i,    test:p=>ageYears(p)<8,  msg:'⚠ Tetracyclines / Doxycycline under 8 years — tooth discolouration and enamel hypoplasia. Use alternative.'},
+  {match:/\bciprofloxacin|levofloxacin|cifran|novidat|tavanic|leflox\b/i, test:p=>ageYears(p)<18, msg:'⚠ Fluoroquinolone in paediatric patient — risk of tendon/cartilage damage. Use only if no safer alternative.'},
+  {match:/\bcodeine|tramal|tramadol\b/i,        test:p=>ageYears(p)<12, msg:'⚠ Codeine / Tramadol under 12 years — risk of severe respiratory depression. Contraindicated.'},
+  {match:/\bmetoclopramide|maxolon\b/i,         test:p=>ageYears(p)<1,  msg:'⚠ Metoclopramide under 1 year — risk of extrapyramidal reactions. Avoid.'},
+  {match:/\bnsaid|diclofenac|ibuprofen|brufen|voltral|toradol|ketorolac\b/i, test:p=>/aki|ckd|renal|pregnan|peptic|gi bleed/i.test((p.diag||'')+' '+(p.data&&p.data['hx-pmh']||'')), msg:'⚠ NSAID with renal disease, peptic ulcer, GI bleed or pregnancy — high risk. Reconsider.'},
+  {match:/\bwarfarin|orfarin\b/i,               test:p=>/pregnan/i.test((p.diag||'')+' '+(p.data&&p.data['hx-pmh']||'')), msg:'⚠ Warfarin in pregnancy — teratogenic. Switch to LMWH.'},
+  {match:/\bmetformin|glucophage\b/i,           test:p=>/aki|ckd|renal failure|contrast/i.test((p.diag||'')+' '+(p.data&&p.data['hx-pmh']||'')), msg:'⚠ Metformin with renal impairment / IV contrast — lactic acidosis risk. Hold.'},
+  {match:/\bvalproate|epival\b/i,               test:p=>/pregnan/i.test((p.diag||'')+' '+(p.data&&p.data['hx-pmh']||'')) || (/female|f\b/i.test(p.data&&p.data['pt-sex']||'') && ageYears(p)>=12 && ageYears(p)<=50), msg:'⚠ Sodium valproate in pregnancy or women of childbearing age — major teratogen. Avoid.'},
+];
+function ageYears(p){ const a=parseInt(p&&p.age||'0',10); return isNaN(a)?99:a; }
+function _safetyWarn(drugName){
+  if(!currentId) return true;
+  const pt = patients.find(p=>p.id===currentId); if(!pt) return true;
+  for(const rule of SAFETY_RULES){
+    if(rule.match.test(drugName) && rule.test(pt)){
+      const key='warned_'+pt.id+'_'+rule.match.source;
+      if(sessionStorage.getItem(key)) return true; // single warning per session
+      sessionStorage.setItem(key,'1');
+      return confirm(rule.msg+'\n\nProceed anyway?');
+    }
+  }
+  return true;
+}
+// Patch addAntibiotic and addDrug to run safety check
+const _origAddAbx = window.addAntibiotic;
+window.addAntibiotic = function(){
+  const nm=(document.getElementById('abx-name')||{}).value||'';
+  if(!_safetyWarn(nm)) return;
+  return _origAddAbx && _origAddAbx.apply(this, arguments);
+};
+const _origAddDrug = window.addDrug;
+window.addDrug = function(){
+  const nm=(document.getElementById('dr-name')||{}).value||'';
+  if(!_safetyWarn(nm)) return;
+  return _origAddDrug && _origAddDrug.apply(this, arguments);
+};
+
+// ── OFFLINE SYNC QUEUE ───────────────────────────────────────
+const PENDING_KEY='lumhs_pending_sync_v1';
+function markPendingSync(){ try{ localStorage.setItem(PENDING_KEY,'1'); }catch{} }
+async function flushOfflineSync(){
+  if(!isNetOnline()) return;
+  if(typeof sb==='undefined' || !sb) return;
+  if(!doctorProfile || !doctorProfile.wardCode) return;
+  if(!localStorage.getItem(PENDING_KEY)) return;
+  try{
+    await sb.from('wards').upsert({ code: doctorProfile.wardCode, patients, updated_at: new Date().toISOString() });
+    localStorage.removeItem(PENDING_KEY);
+    if(typeof showToast==='function') showToast('☁️ Offline changes synced');
+  }catch(e){ console.warn('flush sync fail',e); }
+}
+// Patch pushToFirebase: when offline, flag pending
+const _origPush = window.pushToFirebase || pushToFirebase;
+window.pushToFirebase = async function(action, detail){
+  if(!isOnline || !isNetOnline()) markPendingSync();
+  return _origPush && _origPush.apply(this, arguments);
+};
+// Poll: when isOnline flips true, flush
+setInterval(()=>{ if(isOnline && isNetOnline() && localStorage.getItem(PENDING_KEY)) flushOfflineSync(); }, 5000);
+
+// ── SWIPE BETWEEN TABS ───────────────────────────────────────
+function swipeNav(direction){
+  // Determine active context: detail subpages or global tabs
+  const detailActive = document.getElementById('screen-detail').classList.contains('active');
+  if(detailActive){
+    const order = ['patient','vitals','followup','inv','transcript','guide','consent'];
+    const curBtn = document.querySelector('#detail-nav .bnav-btn.active');
+    if(!curBtn) return;
+    const id = curBtn.id.replace('bnav-','');
+    let i = order.indexOf(id); if(i<0) return;
+    i += direction;
+    if(i<0 || i>=order.length) return;
+    const nextBtn = document.getElementById('bnav-'+order[i]);
+    if(nextBtn){ nextBtn.click(); }
+  } else {
+    const order = GLOBAL_SCREENS;
+    const cur = order.find(k=>{ const el=document.getElementById('gnav-'+k); return el && el.classList.contains('active'); });
+    if(!cur) return;
+    let i = order.indexOf(cur) + direction;
+    if(i<0 || i>=order.length) return;
+    const nb = document.getElementById('gnav-'+order[i]);
+    if(nb) nb.click();
+  }
+}
+let _tx=0,_ty=0,_tt=0,_pullY=0,_pullActive=false;
+document.addEventListener('touchstart', e=>{
+  if(e.touches.length!==1) return;
+  _tx=e.touches[0].clientX; _ty=e.touches[0].clientY; _tt=Date.now();
+  const sc = document.querySelector('.screen.active .scroll-area');
+  _pullActive = sc && sc.scrollTop<=0;
+  _pullY = _ty;
+}, {passive:true});
+document.addEventListener('touchmove', e=>{
+  if(!_pullActive) return;
+  const dy = e.touches[0].clientY - _pullY;
+  if(dy>60){
+    const ind = document.getElementById('pull-ind'); if(ind) ind.style.opacity='1';
+  }
+},{passive:true});
+document.addEventListener('touchend', e=>{
+  const dx = (e.changedTouches[0].clientX - _tx);
+  const dy = (e.changedTouches[0].clientY - _ty);
+  const dt = Date.now() - _tt;
+  const ind = document.getElementById('pull-ind'); if(ind) ind.style.opacity='0';
+  // Pull to refresh
+  if(_pullActive && dy>80 && Math.abs(dx)<60 && dt<1500){
+    if(typeof refreshAllData==='function') refreshAllData();
+    _pullActive=false;
+    return;
+  }
+  _pullActive=false;
+  // Horizontal swipe
+  if(Math.abs(dx)>70 && Math.abs(dx)>Math.abs(dy)*1.5 && dt<600){
+    swipeNav(dx<0 ? 1 : -1);
+  }
+},{passive:true});
+
+// Pull-to-refresh indicator
+(function(){
+  const d=document.createElement('div');
+  d.id='pull-ind';
+  d.textContent='↻ Release to refresh';
+  d.style.cssText='position:fixed;top:50px;left:50%;transform:translateX(-50%);background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;z-index:200;opacity:0;transition:opacity .2s;pointer-events:none;';
+  document.body.appendChild(d);
+})();
+
+// Initial render
+try{ renderAskAI(); }catch{}
+try{ updateAiNetWarnings(); }catch{}
+
 </script>
 
 </body>
