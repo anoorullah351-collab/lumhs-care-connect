@@ -2975,6 +2975,332 @@ window.autoSuggestGuidance = function(){
   $('guide-condition').value=pick;
   runGuidance();
 };
+
+// ═════════════════════════════════════════════════════════════
+// AI IMAGING + ASK AI + DRUG REFERENCE + OFFLINE SYNC + GESTURES
+// ═════════════════════════════════════════════════════════════
+
+const AI_BASE = (location.origin || '');
+
+function isNetOnline(){ return typeof navigator!=='undefined' ? navigator.onLine!==false : true; }
+window.updateAiNetWarnings = function(){
+  const off = !isNetOnline();
+  const a=document.getElementById('ai-net-warn'); if(a) a.style.display=off?'block':'none';
+  const b=document.getElementById('askai-net-warn'); if(b) b.style.display=off?'block':'none';
+};
+window.addEventListener('online',  ()=>{ updateAiNetWarnings(); flushOfflineSync(); });
+window.addEventListener('offline', ()=>{ updateAiNetWarnings(); });
+
+// ── IMAGING ──────────────────────────────────────────────────
+let _imgData = null;
+window.onImgPicked = function(ev){
+  const f = ev.target.files && ev.target.files[0]; if(!f) return;
+  if(f.size > 6*1024*1024){ alert('Image too large (max 6 MB). Please retake at lower resolution.'); return; }
+  const r = new FileReader();
+  r.onload = ()=>{
+    _imgData = { dataUrl: r.result, mime: f.type || 'image/jpeg' };
+    const img = document.getElementById('img-preview');
+    img.src = r.result;
+    document.getElementById('img-preview-wrap').style.display='block';
+    document.getElementById('img-analyze-btn').disabled = false;
+    document.getElementById('img-result').textContent='';
+  };
+  r.readAsDataURL(f);
+};
+window.analyzeImage = async function(){
+  if(!_imgData){ alert('Please pick an image first'); return; }
+  if(!isNetOnline()){ updateAiNetWarnings(); alert('No internet — AI analysis requires an internet connection.'); return; }
+  const btn = document.getElementById('img-analyze-btn');
+  const out = document.getElementById('img-result');
+  btn.disabled = true; const orig = btn.textContent; btn.textContent='⏳ Analyzing…';
+  out.textContent='Sending image to AI…';
+  try{
+    const base64 = _imgData.dataUrl.split(',')[1] || '';
+    const r = await fetch(AI_BASE + '/api/ai/vision', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        imageBase64: base64,
+        mimeType: _imgData.mime,
+        modality: document.getElementById('img-modality').value,
+        patientContext: document.getElementById('img-context').value,
+        prompt: document.getElementById('img-prompt').value
+      })
+    });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok){ out.textContent = '⚠️ AI error: ' + (j.error || r.status) + (j.detail?('\n'+j.detail):''); }
+    else { out.textContent = j.reply || '(empty response)'; }
+  }catch(e){ out.textContent = '⚠️ Network error reaching AI: ' + e.message; }
+  finally{ btn.disabled=false; btn.textContent=orig; }
+};
+
+// ── ASK AI (chat) ────────────────────────────────────────────
+const ASKAI_KEY='lumhs_askai_history_v1';
+let askaiHistory = [];
+try{ askaiHistory = JSON.parse(localStorage.getItem(ASKAI_KEY)||'[]'); }catch{ askaiHistory=[]; }
+function renderAskAI(){
+  const box = document.getElementById('askai-messages'); if(!box) return;
+  if(!askaiHistory.length){
+    box.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px;">Ask anything clinical — diagnosis, dosing, guidelines, calculations.</div>';
+    return;
+  }
+  box.innerHTML = askaiHistory.map(m=>{
+    const isU = m.role==='user';
+    return `<div style="align-self:${isU?'flex-end':'flex-start'};max-width:88%;background:${isU?'var(--cyan-dim)':'var(--surface2)'};border:1px solid ${isU?'var(--cyan)':'var(--border2)'};color:var(--text);padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.55;white-space:pre-wrap;">${escapeHtml(m.content)}</div>`;
+  }).join('');
+  const s = document.getElementById('askai-scroll'); if(s) s.scrollTop = s.scrollHeight;
+}
+function escapeHtml(s){ return String(s||'').replace(/[&<>]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+window.askAISend = async function(){
+  const inp = document.getElementById('askai-input');
+  const q = (inp.value||'').trim(); if(!q) return;
+  if(!isNetOnline()){ updateAiNetWarnings(); alert('No internet — AI assistant requires an internet connection.'); return; }
+  askaiHistory.push({role:'user', content:q});
+  inp.value=''; renderAskAI();
+  const btn = document.getElementById('askai-send'); btn.disabled=true; const o=btn.textContent; btn.textContent='…';
+  askaiHistory.push({role:'assistant', content:'⏳ thinking…'}); renderAskAI();
+  try{
+    const r = await fetch(AI_BASE + '/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ messages: askaiHistory.filter(m=>m.content!=='⏳ thinking…') })
+    });
+    const j = await r.json().catch(()=>({}));
+    askaiHistory.pop();
+    if(!r.ok) askaiHistory.push({role:'assistant', content:'⚠️ AI error: ' + (j.error||r.status)});
+    else      askaiHistory.push({role:'assistant', content: j.reply || '(empty response)'});
+  }catch(e){
+    askaiHistory.pop();
+    askaiHistory.push({role:'assistant', content:'⚠️ Network error: ' + e.message});
+  }finally{
+    btn.disabled=false; btn.textContent=o;
+    try{ localStorage.setItem(ASKAI_KEY, JSON.stringify(askaiHistory.slice(-40))); }catch{}
+    renderAskAI();
+  }
+};
+
+// ── DRUG REFERENCE (Pakistan brand → generic) ────────────────
+const PK_DRUGS = [
+  {brand:'Tanzo 4.5g', generic:'Piperacillin + Tazobactam', cls:'Antibiotic (β-lactam/BLI)', use:'Severe infections, sepsis, intra-abdominal, HAP'},
+  {brand:'Augmentin / Calamox', generic:'Amoxicillin + Clavulanate', cls:'Antibiotic', use:'RTI, UTI, skin infections'},
+  {brand:'Rocephin / Oxidil', generic:'Ceftriaxone', cls:'3rd-gen Cephalosporin', use:'Pneumonia, meningitis, sepsis, typhoid'},
+  {brand:'Maxipime', generic:'Cefepime', cls:'4th-gen Cephalosporin', use:'Neutropenic fever, HAP'},
+  {brand:'Meronem / Penro', generic:'Meropenem', cls:'Carbapenem', use:'Severe / resistant infections'},
+  {brand:'Tienam', generic:'Imipenem + Cilastatin', cls:'Carbapenem', use:'Severe infections'},
+  {brand:'Flagyl', generic:'Metronidazole', cls:'Nitroimidazole', use:'Anaerobic / amoebic infections'},
+  {brand:'Velosef', generic:'Cephradine', cls:'1st-gen Cephalosporin', use:'Surgical prophylaxis'},
+  {brand:'Velosef IV / Ancef', generic:'Cefazolin', cls:'1st-gen Cephalosporin', use:'Pre-op prophylaxis'},
+  {brand:'Cifran / Novidat', generic:'Ciprofloxacin', cls:'Fluoroquinolone', use:'UTI, gram-negative infections'},
+  {brand:'Tavanic / Leflox', generic:'Levofloxacin', cls:'Fluoroquinolone', use:'RTI, complicated UTI'},
+  {brand:'Klaricid', generic:'Clarithromycin', cls:'Macrolide', use:'Atypical pneumonia, H.pylori'},
+  {brand:'Zithromax', generic:'Azithromycin', cls:'Macrolide', use:'CAP, typhoid, STI'},
+  {brand:'Vibramycin', generic:'Doxycycline', cls:'Tetracycline', use:'Atypicals, rickettsia, acne'},
+  {brand:'Vancocin', generic:'Vancomycin', cls:'Glycopeptide', use:'MRSA, C.difficile (PO)'},
+  {brand:'Targocid', generic:'Teicoplanin', cls:'Glycopeptide', use:'MRSA, gram-positive'},
+  {brand:'Amikin', generic:'Amikacin', cls:'Aminoglycoside', use:'Gram-negative sepsis'},
+  {brand:'Garamycin', generic:'Gentamicin', cls:'Aminoglycoside', use:'Sepsis (with β-lactam)'},
+  {brand:'Linezolid / Zyvox', generic:'Linezolid', cls:'Oxazolidinone', use:'MRSA, VRE'},
+  {brand:'Risek / Nexum', generic:'Omeprazole', cls:'PPI', use:'PUD, GERD, stress ulcer prophylaxis'},
+  {brand:'Pantoprazole / Zopent', generic:'Pantoprazole', cls:'PPI', use:'PUD, GERD'},
+  {brand:'Esso / Esomez', generic:'Esomeprazole', cls:'PPI', use:'GERD, PUD'},
+  {brand:'Zantac', generic:'Ranitidine (withdrawn)', cls:'H2 blocker', use:'Historically PUD'},
+  {brand:'Famotin', generic:'Famotidine', cls:'H2 blocker', use:'PUD prophylaxis'},
+  {brand:'Maxolon', generic:'Metoclopramide', cls:'Prokinetic / antiemetic', use:'Nausea, gastroparesis'},
+  {brand:'Onset / Zofer', generic:'Ondansetron', cls:'5HT3 antagonist', use:'PONV, chemo'},
+  {brand:'Buscopan', generic:'Hyoscine butylbromide', cls:'Antispasmodic', use:'Abdominal cramps, biliary colic'},
+  {brand:'Voltral / Dyclo', generic:'Diclofenac', cls:'NSAID', use:'Pain, fever, post-op analgesia'},
+  {brand:'Brufen', generic:'Ibuprofen', cls:'NSAID', use:'Pain, fever'},
+  {brand:'Toradol', generic:'Ketorolac', cls:'NSAID', use:'Acute pain, post-op'},
+  {brand:'Panadol / Calpol', generic:'Paracetamol (Acetaminophen)', cls:'Analgesic / antipyretic', use:'Pain, fever'},
+  {brand:'Perfalgan', generic:'IV Paracetamol', cls:'Analgesic', use:'Post-op pain'},
+  {brand:'Nalbin', generic:'Nalbuphine', cls:'Opioid agonist-antagonist', use:'Moderate-severe pain'},
+  {brand:'Morphine sulphate', generic:'Morphine', cls:'Opioid', use:'Severe pain, MI'},
+  {brand:'Tramal', generic:'Tramadol', cls:'Opioid (weak)', use:'Moderate pain'},
+  {brand:'Pethidine', generic:'Pethidine (Meperidine)', cls:'Opioid', use:'Biliary / renal colic'},
+  {brand:'Fentanyl', generic:'Fentanyl', cls:'Opioid', use:'Anaesthesia, severe pain'},
+  {brand:'Heparin', generic:'Unfractionated Heparin', cls:'Anticoagulant', use:'VTE, ACS'},
+  {brand:'Clexane / Innohep', generic:'Enoxaparin (LMWH)', cls:'Anticoagulant', use:'VTE prophylaxis & treatment'},
+  {brand:'Warfarin / Orfarin', generic:'Warfarin', cls:'Vitamin K antagonist', use:'AF, VTE'},
+  {brand:'Xarelto', generic:'Rivaroxaban', cls:'DOAC', use:'AF, VTE'},
+  {brand:'Eliquis', generic:'Apixaban', cls:'DOAC', use:'AF, VTE'},
+  {brand:'Loprin / Ascard / Disprin', generic:'Aspirin', cls:'Antiplatelet / NSAID', use:'ACS, secondary prevention'},
+  {brand:'Plavix / Clopid', generic:'Clopidogrel', cls:'Antiplatelet', use:'ACS, stroke prevention'},
+  {brand:'Lasix', generic:'Furosemide', cls:'Loop diuretic', use:'CHF, oedema'},
+  {brand:'Aldactone', generic:'Spironolactone', cls:'K-sparing diuretic', use:'CHF, ascites'},
+  {brand:'Tenormin', generic:'Atenolol', cls:'β-blocker', use:'HTN, IHD'},
+  {brand:'Concor', generic:'Bisoprolol', cls:'β-blocker', use:'HTN, HF'},
+  {brand:'Inderal', generic:'Propranolol', cls:'β-blocker', use:'Tremor, thyrotoxicosis, varices'},
+  {brand:'Norvasc / Amlodac', generic:'Amlodipine', cls:'CCB', use:'HTN, angina'},
+  {brand:'Capoten / Capril', generic:'Captopril', cls:'ACE inhibitor', use:'HTN, HF'},
+  {brand:'Tritace', generic:'Ramipril', cls:'ACE inhibitor', use:'HTN, post-MI'},
+  {brand:'Exforge', generic:'Amlodipine + Valsartan', cls:'CCB + ARB', use:'HTN'},
+  {brand:'Glucophage', generic:'Metformin', cls:'Biguanide', use:'Type 2 DM'},
+  {brand:'Diamicron', generic:'Gliclazide', cls:'Sulfonylurea', use:'Type 2 DM'},
+  {brand:'Insulin (Humulin R / Novorapid / Lantus)', generic:'Insulin', cls:'Hormone', use:'DM, DKA'},
+  {brand:'Dexa / Decadron', generic:'Dexamethasone', cls:'Corticosteroid', use:'Cerebral oedema, PONV, COVID'},
+  {brand:'Solu-Medrol', generic:'Methylprednisolone', cls:'Corticosteroid', use:'Severe inflammation'},
+  {brand:'Hydrocortisone / Solu-Cortef', generic:'Hydrocortisone', cls:'Corticosteroid', use:'Adrenal crisis, anaphylaxis'},
+  {brand:'Adrenaline / Epinephrine', generic:'Epinephrine', cls:'Catecholamine', use:'Anaphylaxis, cardiac arrest'},
+  {brand:'Atropine sulphate', generic:'Atropine', cls:'Anticholinergic', use:'Bradycardia, OP poisoning'},
+  {brand:'Cordarone', generic:'Amiodarone', cls:'Class III antiarrhythmic', use:'AF, VT'},
+  {brand:'Lanoxin', generic:'Digoxin', cls:'Cardiac glycoside', use:'AF, HF'},
+  {brand:'Levipil / Keppra', generic:'Levetiracetam', cls:'Antiepileptic', use:'Seizures'},
+  {brand:'Epival', generic:'Sodium Valproate', cls:'Antiepileptic', use:'Seizures (avoid in pregnancy)'},
+  {brand:'Lexotanil', generic:'Bromazepam', cls:'Benzodiazepine', use:'Anxiety'},
+  {brand:'Valium', generic:'Diazepam', cls:'Benzodiazepine', use:'Status epilepticus, alcohol withdrawal'},
+  {brand:'Ativan', generic:'Lorazepam', cls:'Benzodiazepine', use:'Anxiety, seizures'},
+  {brand:'Stemetil', generic:'Prochlorperazine', cls:'Antiemetic', use:'Vertigo, N/V'},
+  {brand:'Avil', generic:'Pheniramine', cls:'Antihistamine', use:'Allergy'},
+  {brand:'Polyfax / Polyfax-N', generic:'Polymyxin/Neomycin', cls:'Topical antibiotic', use:'Wounds'},
+  {brand:'Pyodine', generic:'Povidone-Iodine', cls:'Antiseptic', use:'Wound prep'},
+  {brand:'KCl / Potcl', generic:'Potassium Chloride', cls:'Electrolyte', use:'Hypokalaemia'},
+  {brand:'Calcium gluconate', generic:'Calcium gluconate', cls:'Electrolyte', use:'Hyperkalaemia, hypocalcaemia'},
+  {brand:'Magnesium sulphate', generic:'Magnesium sulphate', cls:'Electrolyte', use:'Eclampsia, severe asthma, torsades'},
+  {brand:'Normal saline / RL / D5W', generic:'IV Fluids', cls:'Crystalloid', use:'Resuscitation, maintenance'},
+];
+window.renderDrugList = function(){
+  const el = document.getElementById('drug-list'); if(!el) return;
+  const q = ((document.getElementById('drug-search')||{}).value||'').toLowerCase().trim();
+  const list = PK_DRUGS.filter(d => !q || d.brand.toLowerCase().includes(q) || d.generic.toLowerCase().includes(q) || d.cls.toLowerCase().includes(q) || d.use.toLowerCase().includes(q));
+  if(!list.length){ el.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px;">No matches.</div>'; return; }
+  el.innerHTML = list.map(d=>`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;margin-bottom:8px;">
+    <div style="font-weight:700;color:var(--cyan);font-size:13px;">${d.brand}</div>
+    <div style="font-size:12px;color:var(--text);margin-top:2px;"><strong>Generic:</strong> ${d.generic}</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px;">${d.cls} · ${d.use}</div>
+  </div>`).join('');
+};
+
+// ── DRUG SAFETY WARNINGS ─────────────────────────────────────
+const SAFETY_RULES = [
+  {match:/\baspirin|loprin|ascard|disprin\b/i,  test:p=>ageYears(p)<16, msg:'⚠ Aspirin in a child / teenager — risk of REYE SYNDROME (encephalopathy + hepatic failure, especially during viral illness). Avoid unless specific indication (e.g. Kawasaki).'},
+  {match:/\btetracyc|doxycyc|vibramycin\b/i,    test:p=>ageYears(p)<8,  msg:'⚠ Tetracyclines / Doxycycline under 8 years — tooth discolouration and enamel hypoplasia. Use alternative.'},
+  {match:/\bciprofloxacin|levofloxacin|cifran|novidat|tavanic|leflox\b/i, test:p=>ageYears(p)<18, msg:'⚠ Fluoroquinolone in paediatric patient — risk of tendon/cartilage damage. Use only if no safer alternative.'},
+  {match:/\bcodeine|tramal|tramadol\b/i,        test:p=>ageYears(p)<12, msg:'⚠ Codeine / Tramadol under 12 years — risk of severe respiratory depression. Contraindicated.'},
+  {match:/\bmetoclopramide|maxolon\b/i,         test:p=>ageYears(p)<1,  msg:'⚠ Metoclopramide under 1 year — risk of extrapyramidal reactions. Avoid.'},
+  {match:/\bnsaid|diclofenac|ibuprofen|brufen|voltral|toradol|ketorolac\b/i, test:p=>/aki|ckd|renal|pregnan|peptic|gi bleed/i.test((p.diag||'')+' '+(p.data&&p.data['hx-pmh']||'')), msg:'⚠ NSAID with renal disease, peptic ulcer, GI bleed or pregnancy — high risk. Reconsider.'},
+  {match:/\bwarfarin|orfarin\b/i,               test:p=>/pregnan/i.test((p.diag||'')+' '+(p.data&&p.data['hx-pmh']||'')), msg:'⚠ Warfarin in pregnancy — teratogenic. Switch to LMWH.'},
+  {match:/\bmetformin|glucophage\b/i,           test:p=>/aki|ckd|renal failure|contrast/i.test((p.diag||'')+' '+(p.data&&p.data['hx-pmh']||'')), msg:'⚠ Metformin with renal impairment / IV contrast — lactic acidosis risk. Hold.'},
+  {match:/\bvalproate|epival\b/i,               test:p=>/pregnan/i.test((p.diag||'')+' '+(p.data&&p.data['hx-pmh']||'')) || (/female|f\b/i.test(p.data&&p.data['pt-sex']||'') && ageYears(p)>=12 && ageYears(p)<=50), msg:'⚠ Sodium valproate in pregnancy or women of childbearing age — major teratogen. Avoid.'},
+];
+function ageYears(p){ const a=parseInt(p&&p.age||'0',10); return isNaN(a)?99:a; }
+function _safetyWarn(drugName){
+  if(!currentId) return true;
+  const pt = patients.find(p=>p.id===currentId); if(!pt) return true;
+  for(const rule of SAFETY_RULES){
+    if(rule.match.test(drugName) && rule.test(pt)){
+      const key='warned_'+pt.id+'_'+rule.match.source;
+      if(sessionStorage.getItem(key)) return true; // single warning per session
+      sessionStorage.setItem(key,'1');
+      return confirm(rule.msg+'\n\nProceed anyway?');
+    }
+  }
+  return true;
+}
+// Patch addAntibiotic and addDrug to run safety check
+const _origAddAbx = window.addAntibiotic;
+window.addAntibiotic = function(){
+  const nm=(document.getElementById('abx-name')||{}).value||'';
+  if(!_safetyWarn(nm)) return;
+  return _origAddAbx && _origAddAbx.apply(this, arguments);
+};
+const _origAddDrug = window.addDrug;
+window.addDrug = function(){
+  const nm=(document.getElementById('dr-name')||{}).value||'';
+  if(!_safetyWarn(nm)) return;
+  return _origAddDrug && _origAddDrug.apply(this, arguments);
+};
+
+// ── OFFLINE SYNC QUEUE ───────────────────────────────────────
+const PENDING_KEY='lumhs_pending_sync_v1';
+function markPendingSync(){ try{ localStorage.setItem(PENDING_KEY,'1'); }catch{} }
+async function flushOfflineSync(){
+  if(!isNetOnline()) return;
+  if(typeof sb==='undefined' || !sb) return;
+  if(!doctorProfile || !doctorProfile.wardCode) return;
+  if(!localStorage.getItem(PENDING_KEY)) return;
+  try{
+    await sb.from('wards').upsert({ code: doctorProfile.wardCode, patients, updated_at: new Date().toISOString() });
+    localStorage.removeItem(PENDING_KEY);
+    if(typeof showToast==='function') showToast('☁️ Offline changes synced');
+  }catch(e){ console.warn('flush sync fail',e); }
+}
+// Patch pushToFirebase: when offline, flag pending
+const _origPush = window.pushToFirebase || pushToFirebase;
+window.pushToFirebase = async function(action, detail){
+  if(!isOnline || !isNetOnline()) markPendingSync();
+  return _origPush && _origPush.apply(this, arguments);
+};
+// Poll: when isOnline flips true, flush
+setInterval(()=>{ if(isOnline && isNetOnline() && localStorage.getItem(PENDING_KEY)) flushOfflineSync(); }, 5000);
+
+// ── SWIPE BETWEEN TABS ───────────────────────────────────────
+function swipeNav(direction){
+  // Determine active context: detail subpages or global tabs
+  const detailActive = document.getElementById('screen-detail').classList.contains('active');
+  if(detailActive){
+    const order = ['patient','vitals','followup','inv','transcript','guide','consent'];
+    const curBtn = document.querySelector('#detail-nav .bnav-btn.active');
+    if(!curBtn) return;
+    const id = curBtn.id.replace('bnav-','');
+    let i = order.indexOf(id); if(i<0) return;
+    i += direction;
+    if(i<0 || i>=order.length) return;
+    const nextBtn = document.getElementById('bnav-'+order[i]);
+    if(nextBtn){ nextBtn.click(); }
+  } else {
+    const order = GLOBAL_SCREENS;
+    const cur = order.find(k=>{ const el=document.getElementById('gnav-'+k); return el && el.classList.contains('active'); });
+    if(!cur) return;
+    let i = order.indexOf(cur) + direction;
+    if(i<0 || i>=order.length) return;
+    const nb = document.getElementById('gnav-'+order[i]);
+    if(nb) nb.click();
+  }
+}
+let _tx=0,_ty=0,_tt=0,_pullY=0,_pullActive=false;
+document.addEventListener('touchstart', e=>{
+  if(e.touches.length!==1) return;
+  _tx=e.touches[0].clientX; _ty=e.touches[0].clientY; _tt=Date.now();
+  const sc = document.querySelector('.screen.active .scroll-area');
+  _pullActive = sc && sc.scrollTop<=0;
+  _pullY = _ty;
+}, {passive:true});
+document.addEventListener('touchmove', e=>{
+  if(!_pullActive) return;
+  const dy = e.touches[0].clientY - _pullY;
+  if(dy>60){
+    const ind = document.getElementById('pull-ind'); if(ind) ind.style.opacity='1';
+  }
+},{passive:true});
+document.addEventListener('touchend', e=>{
+  const dx = (e.changedTouches[0].clientX - _tx);
+  const dy = (e.changedTouches[0].clientY - _ty);
+  const dt = Date.now() - _tt;
+  const ind = document.getElementById('pull-ind'); if(ind) ind.style.opacity='0';
+  // Pull to refresh
+  if(_pullActive && dy>80 && Math.abs(dx)<60 && dt<1500){
+    if(typeof refreshAllData==='function') refreshAllData();
+    _pullActive=false;
+    return;
+  }
+  _pullActive=false;
+  // Horizontal swipe
+  if(Math.abs(dx)>70 && Math.abs(dx)>Math.abs(dy)*1.5 && dt<600){
+    swipeNav(dx<0 ? 1 : -1);
+  }
+},{passive:true});
+
+// Pull-to-refresh indicator
+(function(){
+  const d=document.createElement('div');
+  d.id='pull-ind';
+  d.textContent='↻ Release to refresh';
+  d.style.cssText='position:fixed;top:50px;left:50%;transform:translateX(-50%);background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;z-index:200;opacity:0;transition:opacity .2s;pointer-events:none;';
+  document.body.appendChild(d);
+})();
+
+// Initial render
+try{ renderAskAI(); }catch{}
+try{ updateAiNetWarnings(); }catch{}
+
 </script>
 
 </body>
