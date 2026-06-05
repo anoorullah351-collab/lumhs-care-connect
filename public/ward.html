@@ -1427,6 +1427,7 @@ let suppressNextRemote = false;
 // ─── DOM HELPERS ─────────────────────────────────────────────
 const $  = id => document.getElementById(id);
 const $m = id => document.getElementById(id);
+window.$ = $; window.$m = $m;
 const val = id => $(id) ? $(id).value.trim() : '';
 
 // ─── TOAST ───────────────────────────────────────────────────
@@ -3300,6 +3301,7 @@ document.addEventListener('touchend', e=>{
 // Initial render
 try{ renderAskAI(); }catch{}
 try{ updateAiNetWarnings(); }catch{}
+try{ showScreen('screen-list'); }catch{}
 
 </script>
 
