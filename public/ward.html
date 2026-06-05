@@ -3157,7 +3157,7 @@ const PK_DRUGS = [
   {brand:'Magnesium sulphate', generic:'Magnesium sulphate', cls:'Electrolyte', use:'Eclampsia, severe asthma, torsades'},
   {brand:'Normal saline / RL / D5W', generic:'IV Fluids', cls:'Crystalloid', use:'Resuscitation, maintenance'},
 ];
-window.renderDrugList = function(){
+function renderDrugList(){
   const el = document.getElementById('drug-list'); if(!el) return;
   const q = ((document.getElementById('drug-search')||{}).value||'').toLowerCase().trim();
   const list = PK_DRUGS.filter(d => !q || d.brand.toLowerCase().includes(q) || d.generic.toLowerCase().includes(q) || d.cls.toLowerCase().includes(q) || d.use.toLowerCase().includes(q));
@@ -3167,7 +3167,8 @@ window.renderDrugList = function(){
     <div style="font-size:12px;color:var(--text);margin-top:2px;"><strong>Generic:</strong> ${d.generic}</div>
     <div style="font-size:11px;color:var(--muted);margin-top:2px;">${d.cls} · ${d.use}</div>
   </div>`).join('');
-};
+}
+window.renderDrugList = renderDrugList;
 
 // ── DRUG SAFETY WARNINGS ─────────────────────────────────────
 const SAFETY_RULES = [
