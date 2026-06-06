@@ -1297,7 +1297,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     <div class="list-header" style="margin-bottom:8px"><h2>💊 Commonly Used Drugs (Pakistan)</h2></div>
     <input class="search-box" type="text" id="drug-search" placeholder="🔍 Search brand or generic (e.g. Tanzo, augmentin, omeprazole)…" oninput="renderDrugList()">
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Local brand → generic / formula reference. Always verify dose with BNF / local formulary.</div>
-    <div id="drug-list"></div>
+    <div id="pk-drug-list"></div>
   </div>
 </div>
 
@@ -3158,7 +3158,7 @@ const PK_DRUGS = [
   {brand:'Normal saline / RL / D5W', generic:'IV Fluids', cls:'Crystalloid', use:'Resuscitation, maintenance'},
 ];
 function renderDrugList(){
-  const el = document.getElementById('drug-list'); if(!el) return;
+  const el = document.getElementById('pk-drug-list'); if(!el) return;
   const q = ((document.getElementById('drug-search')||{}).value||'').toLowerCase().trim();
   const list = PK_DRUGS.filter(d => !q || d.brand.toLowerCase().includes(q) || d.generic.toLowerCase().includes(q) || d.cls.toLowerCase().includes(q) || d.use.toLowerCase().includes(q));
   if(!list.length){ el.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px;">No matches.</div>'; return; }
