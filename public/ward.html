@@ -3101,6 +3101,174 @@ window.askAISend = async function(){
   }
 };
 
+// ── VOICE FILL (AI-powered) ──────────────────────────────────
+let vfRec = null;
+let vfRecActive = false;
+window.openVoiceFill = function(){
+  const m = document.getElementById('modal-voicefill'); if(!m) return;
+  m.classList.add('show');
+  const warn = document.getElementById('vf-warn');
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    warn.style.display='block';
+    warn.textContent='⚠️ Your browser does not support live speech recognition. You can still type/paste the patient summary and tap "Fill with AI".';
+    const btn = document.getElementById('vf-rec-btn'); if(btn){ btn.disabled=true; btn.style.opacity='0.5'; }
+  } else { warn.style.display='none'; }
+};
+window.vfToggleRec = function(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return;
+  if(vfRecActive){ vfStopRec(); return; }
+  try{
+    vfRec = new SR();
+    vfRec.lang = 'en-US';
+    vfRec.continuous = true;
+    vfRec.interimResults = true;
+    const ta = document.getElementById('vf-transcript');
+    const status = document.getElementById('vf-rec-status');
+    let finalText = ta.value ? ta.value.trim() + ' ' : '';
+    vfRec.onresult = (e)=>{
+      let interim = '';
+      for(let i=e.resultIndex; i<e.results.length; i++){
+        const r = e.results[i];
+        if(r.isFinal) finalText += r[0].transcript + ' ';
+        else interim += r[0].transcript;
+      }
+      ta.value = (finalText + interim).trim();
+    };
+    vfRec.onerror = (ev)=>{ status.textContent = '⚠️ ' + (ev.error||'error'); };
+    vfRec.onend = ()=>{ vfRecActive=false; document.getElementById('vf-rec-btn').textContent='🎙️ Start recording'; status.textContent='Stopped.'; };
+    vfRec.start();
+    vfRecActive = true;
+    document.getElementById('vf-rec-btn').textContent='⏹️ Stop recording';
+    status.textContent='● Listening…';
+  }catch(err){
+    document.getElementById('vf-rec-status').textContent='⚠️ ' + err.message;
+  }
+};
+window.vfStopRec = function(){
+  if(vfRec && vfRecActive){ try{ vfRec.stop(); }catch{} }
+  vfRecActive=false;
+};
+// Field metadata so the AI knows what each ID means
+const VF_FIELD_INFO = {
+  'pt-name':'Patient full name',
+  'pt-age':'Age and sex (format: "35y / M" or "60y / F")',
+  'pt-cr':'CR or MR number',
+  'pt-bed':'Ward and bed (e.g. "Male Surgical / Bed 7")',
+  'pt-admdate':'Admission date (YYYY-MM-DD)',
+  'pt-consult':'Consultant name',
+  'pt-diag':'Diagnosis / working diagnosis',
+  'pt-proc':'Procedure done',
+  'pt-weight':'Weight in kg (number only)',
+  'pt-allergy':'Allergies (or NKDA)',
+  'hx-pmh':'Past medical history',
+  'hx-surgical':'Past surgical history',
+  'hx-comorbid':'Comorbidities (short tags)',
+  'hx-smoking':'Smoking status',
+  'hx-alcohol':'Alcohol use',
+  'hx-packyears':'Pack-years (number)',
+  'hx-drugs':'Recreational drug use',
+  'hx-meds':'Home medications',
+  'hx-family':'Family history',
+  'hx-functional':'Functional status / baseline',
+  'op-procedure':'Operation performed',
+  'op-diag':'Pre-op diagnosis',
+  'op-surgeon':'Surgeon name',
+  'op-assist':'Assistant',
+  'op-anaesth':'Anaesthetist',
+  'op-anaesth-type':'Anaesthesia type (GA/SA/LA)',
+  'op-findings':'Intra-op findings',
+  'op-steps':'Steps performed',
+  'op-bloodloss':'Estimated blood loss',
+  'op-complications':'Intra-op complications',
+  'op-postop':'Post-op orders',
+  'v-bp':'Blood pressure (e.g. "120/80")',
+  'v-hr':'Heart rate (number)',
+  'v-rr':'Respiratory rate (number)',
+  'v-temp':'Temperature in °C (number)',
+  'v-spo2':'SpO2 % (number)',
+  'v-gcs':'GCS (number)',
+  'v-bsg':'Blood sugar (number)',
+  'v-uo':'Urine output (mL)',
+  'v-drain':'Drain output (mL)',
+  'v-pain':'Pain score 0-10 (number)',
+  'm-comp':'Morning complaints',
+  'm-exam':'Morning examination',
+  'm-assess':'Morning assessment',
+  'm-plan':'Morning plan',
+  'e-comp':'Evening complaints','e-exam':'Evening examination','e-plan':'Evening plan',
+  'n-comp':'Night complaints','n-exam':'Night examination','n-plan':'Night plan',
+  'inv-labs':'Lab investigations',
+  'inv-img':'Imaging investigations',
+  'inv-pending':'Pending investigations',
+  'meds':'Current medications',
+  'wound-status':'Wound status',
+  'drain-char':'Drain character',
+};
+window.vfSubmit = async function(){
+  const ta = document.getElementById('vf-transcript');
+  const text = (ta.value||'').trim();
+  if(!text){ alert('Please dictate or type a patient summary first.'); return; }
+  if(!isNetOnline()){ updateAiNetWarnings(); alert('No internet — AI Voice Fill requires an internet connection.'); return; }
+  vfStopRec();
+  const btn = document.getElementById('vf-submit-btn');
+  const orig = btn.textContent; btn.disabled=true; btn.textContent='✨ Analyzing…';
+  try{
+    const fieldList = Object.entries(VF_FIELD_INFO).map(([id,desc])=>`- ${id}: ${desc}`).join('\n');
+    const system = `You are a clinical data extraction assistant for a surgical ward app. The physician will give you a free-form spoken summary about a patient. Extract any values they mention and map them to the listed form field IDs. Rules:
+- Return ONLY a single JSON object. No prose, no markdown fences.
+- Keys MUST be field IDs from the list. Omit fields that are not mentioned — do NOT guess or invent.
+- Values must be plain strings matching the format hint for that field.
+- For vitals, extract the number only unless the field is BP.
+- Do not include any field with an empty / unknown value.`;
+    const user = `FIELD LIST:\n${fieldList}\n\nPHYSICIAN NOTE:\n"""${text}"""\n\nReturn the JSON now.`;
+    const r = await fetch(AI_BASE + '/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ system, messages:[{role:'user', content:user}] })
+    });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok){ alert('⚠️ AI error: ' + (j.error||r.status)); return; }
+    let reply = (j.reply||'').trim();
+    // strip markdown fences if present
+    reply = reply.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
+    // try to locate JSON object
+    const start = reply.indexOf('{'); const end = reply.lastIndexOf('}');
+    let parsed = null;
+    if(start>=0 && end>start){
+      try{ parsed = JSON.parse(reply.slice(start,end+1)); }catch{}
+    }
+    if(!parsed || typeof parsed!=='object'){
+      alert('⚠️ AI did not return valid JSON. Raw reply:\n\n'+reply.slice(0,400));
+      return;
+    }
+    let filled = 0;
+    Object.entries(parsed).forEach(([id,v])=>{
+      if(v===null || v===undefined || v==='') return;
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.value = String(v);
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+      el.dispatchEvent(new Event('change',{bubbles:true}));
+      filled++;
+    });
+    try{ updateBanner(); }catch{}
+    try{ calcNEWS2(); }catch{}
+    try{ calcDrugDoses(); }catch{}
+    try{ saveCurrentPatient(); }catch{}
+    document.getElementById('modal-voicefill').classList.remove('show');
+    const t = document.getElementById('toast');
+    if(t){ t.textContent = `✨ Voice Fill: ${filled} field${filled===1?'':'s'} populated by AI`; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+    else alert(`Filled ${filled} field(s).`);
+  }catch(e){
+    alert('⚠️ Network error reaching AI: '+e.message);
+  }finally{
+    btn.disabled=false; btn.textContent=orig;
+  }
+};
+
+
+
 // ── DRUG REFERENCE (Pakistan brand → generic) ────────────────
 const PK_DRUGS = [
   {brand:'Tanzo 4.5g', generic:'Piperacillin + Tazobactam', cls:'Antibiotic (β-lactam/BLI)', use:'Severe infections, sepsis, intra-abdominal, HAP'},
