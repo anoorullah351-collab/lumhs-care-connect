@@ -1395,8 +1395,28 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
   </div>
 </div>
 
+<!-- Voice Fill Modal -->
+<div class="modal-overlay" id="modal-voicefill">
+  <div class="modal" style="max-width:520px">
+    <h3>🎤 Voice Fill (AI)</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Dictate or type a summary of the patient. AI will extract the relevant fields and fill them in. You can edit transcript before submitting.</p>
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+      <button type="button" class="btn btn-accent" id="vf-rec-btn" onclick="vfToggleRec()" style="justify-content:center">🎙️ Start recording</button>
+      <button type="button" class="btn btn-outline" onclick="document.getElementById('vf-transcript').value=''" style="justify-content:center">Clear</button>
+      <span id="vf-rec-status" style="font-size:11px;color:var(--muted);align-self:center"></span>
+    </div>
+    <textarea id="vf-transcript" placeholder="e.g. 45 year old male, CR 12345, ward male surgical bed 7, diagnosis perforated appendix, post lap appendectomy day 1. BP 110/70, HR 88, temp 37.8, SpO2 98 on room air. PMH diabetic on metformin. Allergic to penicillin. Pain score 4. Plan: continue tazocin, encourage mobilization." style="width:100%;min-height:140px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+    <div id="vf-warn" style="font-size:11px;color:var(--amber);margin-top:6px;display:none"></div>
+    <div class="modal-btns" style="margin-top:12px">
+      <button class="btn btn-outline" onclick="$m('modal-voicefill').classList.remove('show'); vfStopRec();" style="justify-content:center">Cancel</button>
+      <button class="btn btn-accent" id="vf-submit-btn" onclick="vfSubmit()" style="justify-content:center">✨ Fill with AI</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
+
 
 <script type="module">
 // ══════════════════════════════════════════════════════════════
