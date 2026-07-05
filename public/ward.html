@@ -506,6 +506,8 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
           <div class="field"><label>Ward / Bed</label><input type="text" id="pt-bed" placeholder="Male Surgical / Bed 7"></div>
           <div class="field"><label>Admission Date</label><input type="date" id="pt-admdate"></div>
           <div class="field"><label>Consultant</label><input type="text" id="pt-consult" placeholder="Prof. Dr. ..."></div>
+          <div class="field full"><label>Chief Complaint / Presenting</label><input type="text" id="pt-cc" placeholder="e.g. chest pain, shortness of breath, abdominal pain" oninput="scheduleClinicalAssist()"></div>
+          <div class="field full"><label>History of Presenting Complaint (HPI)</label><textarea id="pt-hpi" placeholder="Onset, character, radiation, duration, aggravating/relieving factors, associated symptoms..." style="min-height:55px" oninput="scheduleClinicalAssist()"></textarea></div>
           <div class="field full"><label>Diagnosis / Working Dx</label><input type="text" id="pt-diag" placeholder="e.g. Perforated appendix, post-lap appy D1" oninput="updateBanner()"></div>
           <div class="field full"><label>Procedure Done</label><input type="text" id="pt-proc" placeholder="e.g. Laparoscopic appendectomy"></div>
           <div class="field"><label>Weight (kg)</label><input type="number" id="pt-weight" placeholder="70" oninput="calcDrugDoses()"></div>
