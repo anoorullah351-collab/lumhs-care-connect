@@ -2633,6 +2633,7 @@ window.addAntibiotic = function(){
   renderAntibiotics(pt);
   saveStore && saveStore();
   pushToFirebase('abx_add',`started ${abx.name} ${abx.dose} ${abx.freq} for ${pt.name||'patient'} (${abx.indication||'no indication'})`);
+  runInteractionCheck(pt, abx, 'abx');
 };
 
 window.toggleAntibioticStop = function(abxId){
