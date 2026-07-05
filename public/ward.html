@@ -506,6 +506,8 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
           <div class="field"><label>Ward / Bed</label><input type="text" id="pt-bed" placeholder="Male Surgical / Bed 7"></div>
           <div class="field"><label>Admission Date</label><input type="date" id="pt-admdate"></div>
           <div class="field"><label>Consultant</label><input type="text" id="pt-consult" placeholder="Prof. Dr. ..."></div>
+          <div class="field full"><label>Chief Complaint / Presenting</label><input type="text" id="pt-cc" placeholder="e.g. chest pain, shortness of breath, abdominal pain" oninput="scheduleClinicalAssist()"></div>
+          <div class="field full"><label>History of Presenting Complaint (HPI)</label><textarea id="pt-hpi" placeholder="Onset, character, radiation, duration, aggravating/relieving factors, associated symptoms..." style="min-height:55px" oninput="scheduleClinicalAssist()"></textarea></div>
           <div class="field full"><label>Diagnosis / Working Dx</label><input type="text" id="pt-diag" placeholder="e.g. Perforated appendix, post-lap appy D1" oninput="updateBanner()"></div>
           <div class="field full"><label>Procedure Done</label><input type="text" id="pt-proc" placeholder="e.g. Laparoscopic appendectomy"></div>
           <div class="field"><label>Weight (kg)</label><input type="number" id="pt-weight" placeholder="70" oninput="calcDrugDoses()"></div>
@@ -556,6 +558,24 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
           </div>
         </div>
       </div>
+
+      <!-- ── AI CLINICAL ASSIST (History → DDx) ── -->
+      <div class="card" id="ai-assist-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <div class="card-title" style="margin:0;flex:1"><span class="dot" style="background:#9b8cff"></span>🧠 AI Clinical Assist</div>
+          <button type="button" class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="toggleClinicalAssist()"><span id="ai-assist-toggle-label">Hide</span></button>
+          <button type="button" class="btn btn-accent" style="font-size:11px;padding:5px 10px" onclick="runClinicalAssist(true)">🔄 Analyze</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Auto-updates as you fill Chief Complaint & HPI. Suggestions only — not a substitute for clinical judgment.</div>
+        <div id="ai-assist-body">
+          <div id="ai-assist-status" style="font-size:12px;color:var(--muted);padding:8px 0">Enter a chief complaint to begin.</div>
+          <div id="ai-assist-redflags"></div>
+          <div id="ai-assist-questions"></div>
+          <div id="ai-assist-ddx"></div>
+        </div>
+      </div>
+
+
 
       <!-- ── OPERATIVE NOTE ── -->
       <div class="card">
@@ -839,6 +859,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         </div>
         <button class="btn btn-accent" style="width:100%" onclick="addAntibiotic()">＋ Add Antibiotic</button>
         <div id="abx-list" style="margin-top:12px"></div>
+        <div id="rx-interaction-abx" style="margin-top:10px"></div>
       </div>
 
       <!-- ── STRUCTURED DRUG CHART ── -->
@@ -867,6 +888,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         </div>
         <button class="btn btn-accent" style="width:100%" onclick="addDrug()">＋ Add Drug</button>
         <div id="drug-list" style="margin-top:12px"></div>
+        <div id="rx-interaction-drug" style="margin-top:10px"></div>
         <div style="margin-top:14px">
           <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Free-text notes (optional fallback)</div>
           <textarea id="meds" style="min-height:60px" placeholder="Anything not captured above..."></textarea>
@@ -1857,7 +1879,7 @@ window.newPatient = function(){
 };
 
 // ─── FIELDS LIST ─────────────────────────────────────────────
-const FIELDS=['pt-name','pt-age','pt-cr','pt-bed','pt-admdate','pt-consult','pt-diag','pt-proc','pt-weight','pt-allergy',
+const FIELDS=['pt-name','pt-age','pt-cr','pt-bed','pt-admdate','pt-consult','pt-cc','pt-hpi','pt-diag','pt-proc','pt-weight','pt-allergy',
   'hx-pmh','hx-surgical','hx-comorbid','hx-smoking','hx-alcohol','hx-packyears','hx-drugs','hx-meds','hx-family','hx-functional',
   'op-date','op-time','op-procedure','op-diag','op-surgeon','op-assist','op-anaesth','op-anaesth-type','op-incision','op-position','op-findings','op-steps','op-bloodloss','op-fluids','op-drains','op-specimens','op-complications','op-postop',
   'v-bp','v-hr','v-rr','v-temp','v-spo2','v-gcs','v-bsg','v-uo','v-drain','v-pain',
@@ -2611,6 +2633,7 @@ window.addAntibiotic = function(){
   renderAntibiotics(pt);
   saveStore && saveStore();
   pushToFirebase('abx_add',`started ${abx.name} ${abx.dose} ${abx.freq} for ${pt.name||'patient'} (${abx.indication||'no indication'})`);
+  runInteractionCheck(pt, abx, 'abx');
 };
 
 window.toggleAntibioticStop = function(abxId){
@@ -2684,6 +2707,7 @@ window.addDrug = function(){
   renderDrugChart(pt);
   saveStore && saveStore();
   pushToFirebase('drug_add',`added ${d.name} ${d.dose} ${d.freq} for ${pt.name||'patient'}`);
+  runInteractionCheck(pt, d, 'drug');
 };
 
 window.toggleDrugStop = function(id){
@@ -3495,7 +3519,288 @@ try{ renderAskAI(); }catch{}
 try{ updateAiNetWarnings(); }catch{}
 try{ showScreen('screen-list'); }catch{}
 
+// ═════════════════════════════════════════════════════════════════════
+//  AI CLINICAL ASSIST — Follow-up Qs, DDx, Red flags
+// ═════════════════════════════════════════════════════════════════════
+let clinicalAssistTimer = null;
+let clinicalAssistBusy = false;
+let clinicalAssistLastKey = '';
+
+window.toggleClinicalAssist = function(){
+  const body = document.getElementById('ai-assist-body');
+  const lbl = document.getElementById('ai-assist-toggle-label');
+  if(!body||!lbl) return;
+  const hidden = body.style.display === 'none';
+  body.style.display = hidden ? '' : 'none';
+  lbl.textContent = hidden ? 'Hide' : 'Show';
+};
+
+window.scheduleClinicalAssist = function(){
+  clearTimeout(clinicalAssistTimer);
+  clinicalAssistTimer = setTimeout(()=>runClinicalAssist(false), 1500);
+};
+
+function buildClinicalContext(){
+  const g = id => (document.getElementById(id)||{}).value || '';
+  return {
+    cc: g('pt-cc').trim(),
+    hpi: g('pt-hpi').trim(),
+    age: g('pt-age').trim(),
+    pmh: g('hx-pmh').trim(),
+    comorbid: g('hx-comorbid').trim(),
+    meds: g('hx-meds').trim(),
+    allergies: g('pt-allergy').trim(),
+    vitals: {
+      bp:g('v-bp'), hr:g('v-hr'), rr:g('v-rr'), temp:g('v-temp'),
+      spo2:g('v-spo2'), gcs:g('v-gcs'), bsg:g('v-bsg'), pain:g('v-pain')
+    }
+  };
+}
+
+window.runClinicalAssist = async function(force){
+  const ctx = buildClinicalContext();
+  const statusEl = document.getElementById('ai-assist-status');
+  const rfEl = document.getElementById('ai-assist-redflags');
+  const qEl = document.getElementById('ai-assist-questions');
+  const dxEl = document.getElementById('ai-assist-ddx');
+  if(!statusEl||!rfEl||!qEl||!dxEl) return;
+  if(!ctx.cc){
+    statusEl.textContent = 'Enter a chief complaint to begin.';
+    rfEl.innerHTML = qEl.innerHTML = dxEl.innerHTML = '';
+    return;
+  }
+  const key = JSON.stringify(ctx);
+  if(!force && key === clinicalAssistLastKey) return;
+  if(clinicalAssistBusy) return;
+  if(!isNetOnline()){ statusEl.textContent = '⚠ Offline — cannot query AI.'; return; }
+  clinicalAssistBusy = true;
+  clinicalAssistLastKey = key;
+  statusEl.innerHTML = '<span style="display:inline-block;width:10px;height:10px;border:2px solid var(--cyan);border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Thinking…';
+  try {
+    const vitalsStr = Object.entries(ctx.vitals).filter(([,v])=>v).map(([k,v])=>`${k}:${v}`).join(', ') || 'not recorded';
+    const userMsg =
+`Chief complaint: ${ctx.cc}
+HPI: ${ctx.hpi || '(none)'}
+Age/Sex: ${ctx.age || '(unknown)'}
+PMH: ${ctx.pmh || '(none)'}
+Comorbidities: ${ctx.comorbid || '(none)'}
+Home meds: ${ctx.meds || '(none)'}
+Allergies: ${ctx.allergies || '(NKDA)'}
+Vitals: ${vitalsStr}
+
+Return ONLY valid JSON (no markdown, no prose) with this exact shape:
+{
+  "questions": ["short focused follow-up question", ...],   // 5-8 items
+  "differentials": [
+    {"dx":"name","probability":"high|medium|low","reasoning":"one short sentence"}
+  ],                                                        // 3-6 items, ranked
+  "redFlags": ["urgent finding to rule out", ...]           // 0-5 items; empty array if none
+}`;
+    const sys = "You are a senior physician assistant helping a Pakistani hospital doctor take a focused clinical history and build a differential. Base reasoning on standard guidelines (NICE, WHO, IDSA, BNF). Be concise, ranked, and clinically pragmatic. Respond with ONLY valid JSON — no code fences, no commentary.";
+    const r = await fetch(AI_BASE + '/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ system: sys, messages: [{role:'user', content: userMsg}] })
+    });
+    const data = await r.json();
+    if(!r.ok){ throw new Error(data.error||'AI error'); }
+    let reply = String(data.reply||'').trim();
+    reply = reply.replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
+    const m = reply.match(/\{[\s\S]*\}/);
+    if(m) reply = m[0];
+    let parsed;
+    try { parsed = JSON.parse(reply); } catch { throw new Error('AI returned non-JSON'); }
+    renderClinicalAssist(parsed);
+    statusEl.textContent = 'Updated · ' + new Date().toLocaleTimeString();
+  } catch(e){
+    statusEl.textContent = '⚠ ' + (e.message||'AI failed');
+  } finally {
+    clinicalAssistBusy = false;
+  }
+};
+
+function renderClinicalAssist(p){
+  const rfEl = document.getElementById('ai-assist-redflags');
+  const qEl = document.getElementById('ai-assist-questions');
+  const dxEl = document.getElementById('ai-assist-ddx');
+  const rf = Array.isArray(p.redFlags)?p.redFlags:[];
+  if(rf.length){
+    rfEl.innerHTML = `<div style="border:1px solid #ff5577;background:rgba(255,85,119,0.10);border-radius:8px;padding:10px;margin:8px 0">
+      <div style="font-weight:700;color:#ff5577;font-size:13px;margin-bottom:6px">🚨 Red Flags — rule out</div>
+      <ul style="margin:0;padding-left:18px;font-size:12px;color:var(--text);line-height:1.6">${rf.map(x=>`<li>${escapeHtml(String(x))}</li>`).join('')}</ul>
+    </div>`;
+  } else rfEl.innerHTML = '';
+  const qs = Array.isArray(p.questions)?p.questions:[];
+  if(qs.length){
+    qEl.innerHTML = `<div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin:8px 0;background:rgba(255,255,255,0.02)">
+      <div style="font-weight:700;font-size:12px;color:var(--cyan);margin-bottom:6px">💬 Ask the patient</div>
+      <ul style="margin:0;padding-left:18px;font-size:12px;color:var(--text);line-height:1.7">${qs.map(x=>`<li>${escapeHtml(String(x))}</li>`).join('')}</ul>
+    </div>`;
+  } else qEl.innerHTML = '';
+  const dx = Array.isArray(p.differentials)?p.differentials:[];
+  if(dx.length){
+    const probCol = {high:'#ff5577', medium:'#ffaa44', low:'#8be38b'};
+    dxEl.innerHTML = `<div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin:8px 0;background:rgba(255,255,255,0.02)">
+      <div style="font-weight:700;font-size:12px;color:#9b8cff;margin-bottom:8px">🧬 Differential Diagnoses</div>
+      ${dx.map(d=>{
+        const p=(d.probability||'').toLowerCase();
+        const col=probCol[p]||'#a0adc7';
+        return `<div style="border-left:3px solid ${col};padding:6px 10px;margin-bottom:6px;background:rgba(255,255,255,0.03);border-radius:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <div style="font-weight:600;font-size:13px;color:var(--text)">${escapeHtml(String(d.dx||'—'))}</div>
+            <span style="font-family:var(--mono);font-size:10px;color:${col};border:1px solid ${col};padding:2px 7px;border-radius:10px;text-transform:uppercase">${escapeHtml(p||'—')}</span>
+          </div>
+          ${d.reasoning?`<div style="font-size:11px;color:var(--muted);margin-top:3px">${escapeHtml(String(d.reasoning))}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  } else dxEl.innerHTML = '';
+}
+
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+// spin keyframe
+(function injectSpin(){
+  if(document.getElementById('ai-spin-style')) return;
+  const st = document.createElement('style');
+  st.id='ai-spin-style';
+  st.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+  document.head.appendChild(st);
+})();
+
+// ═════════════════════════════════════════════════════════════════════
+//  AI DRUG INTERACTION CHECKER
+// ═════════════════════════════════════════════════════════════════════
+function collectPatientMeds(pt, exclude){
+  const items = [];
+  (pt.antibiotics||[]).forEach(a=>{ if(!a.stopped && a.id!==exclude) items.push(`${a.name} ${a.dose||''} ${a.freq||''}`.trim()); });
+  (pt.drugChart||[]).forEach(d=>{ if(!d.stopped && d.id!==exclude) items.push(`${d.name} ${d.dose||''} ${d.freq||''}`.trim()); });
+  const home = ((document.getElementById('hx-meds')||{}).value||'').split(/\n+/).map(s=>s.trim()).filter(Boolean);
+  home.forEach(m=>items.push(m + ' (home med)'));
+  return items;
+}
+
+window.runInteractionCheck = async function(pt, newRx, kind){
+  const containerId = kind==='abx' ? 'rx-interaction-abx' : 'rx-interaction-drug';
+  const el = document.getElementById(containerId); if(!el) return;
+  const others = collectPatientMeds(pt, newRx.id);
+  if(!others.length){ el.innerHTML=''; return; }
+  const allergies = ((document.getElementById('pt-allergy')||{}).value||'').trim();
+  const newLine = `${newRx.name} ${newRx.dose||''} ${newRx.route||''} ${newRx.freq||''}`.trim();
+  el.innerHTML = `<div style="border:1px dashed var(--border);border-radius:8px;padding:10px;font-size:12px;color:var(--muted)">
+    <span style="display:inline-block;width:10px;height:10px;border:2px solid var(--cyan);border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>
+    Checking interactions for <b>${escapeHtml(newRx.name)}</b> against ${others.length} other med(s)…
+  </div>`;
+  if(!isNetOnline()){
+    el.innerHTML = `<div style="border:1px solid var(--amber);background:rgba(255,170,60,0.08);border-radius:8px;padding:10px;font-size:12px;color:var(--amber)">⚠ Offline — interaction check skipped for <b>${escapeHtml(newRx.name)}</b>. Verify manually.</div>`;
+    return;
+  }
+  try {
+    const userMsg =
+`Newly prescribed drug: ${newLine}
+Existing medications:
+${others.map(m=>'- '+m).join('\n')}
+Patient allergies: ${allergies||'NKDA'}
+
+Analyze potential drug-drug interactions AND allergy conflicts between the NEW drug and each existing medication. Return ONLY valid JSON (no markdown) with this exact shape:
+{
+  "interactions": [
+    {
+      "with": "existing drug name",
+      "severity": "contraindicated|major|moderate|minor",
+      "mechanism": "brief mechanism",
+      "consequence": "clinical consequence",
+      "action": "avoid|monitor|adjust dose|separate timing — with specifics"
+    }
+  ]
+}
+If no clinically significant interaction exists, return {"interactions": []}. Do NOT invent interactions.`;
+    const sys = "You are a hospital clinical pharmacologist. Evaluate drug-drug and drug-allergy interactions rigorously using BNF, Stockley's, and Lexicomp reasoning. Never fabricate. Prefer 'minor' or omit rather than exaggerate.";
+    const r = await fetch(AI_BASE + '/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ system: sys, messages: [{role:'user', content: userMsg}] })
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.error||'AI error');
+    let reply = String(data.reply||'').trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
+    const m = reply.match(/\{[\s\S]*\}/); if(m) reply = m[0];
+    const parsed = JSON.parse(reply);
+    renderInteractions(el, newRx, parsed.interactions||[]);
+  } catch(e){
+    el.innerHTML = `<div style="border:1px solid var(--amber);background:rgba(255,170,60,0.08);border-radius:8px;padding:10px;font-size:12px;color:var(--amber)">⚠ Interaction check failed for <b>${escapeHtml(newRx.name)}</b>: ${escapeHtml(e.message||'')}. Verify manually.</div>`;
+  }
+};
+
+function sevMeta(sev){
+  const s = String(sev||'').toLowerCase();
+  if(s.startsWith('contra')) return {icon:'🔴', label:'CONTRAINDICATED', color:'#ff2d55', bg:'rgba(255,45,85,0.12)'};
+  if(s==='major') return {icon:'🟠', label:'MAJOR', color:'#ff8a3d', bg:'rgba(255,138,61,0.10)'};
+  if(s==='moderate') return {icon:'🟡', label:'MODERATE', color:'#ffcc33', bg:'rgba(255,204,51,0.08)'};
+  return {icon:'🟢', label:'MINOR', color:'#8be38b', bg:'rgba(139,227,139,0.06)'};
+}
+
+function renderInteractions(el, newRx, items){
+  if(!items.length){
+    el.innerHTML = `<div style="border:1px solid var(--green);background:rgba(139,227,139,0.06);border-radius:8px;padding:10px;font-size:12px;color:var(--green)">✅ No significant interactions detected for <b>${escapeHtml(newRx.name)}</b>.</div>`;
+    return;
+  }
+  const needsOverride = items.some(i=>{
+    const s=String(i.severity||'').toLowerCase();
+    return s.startsWith('contra')||s==='major';
+  });
+  const rows = items.map((i,idx)=>{
+    const m = sevMeta(i.severity);
+    return `<div style="border:1px solid ${m.color};background:${m.bg};border-radius:8px;padding:9px 11px;margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">
+        <div style="font-weight:700;font-size:13px;color:var(--text)">${m.icon} ${escapeHtml(newRx.name)} + ${escapeHtml(String(i.with||'?'))}</div>
+        <span style="font-family:var(--mono);font-size:10px;color:${m.color};border:1px solid ${m.color};padding:2px 8px;border-radius:10px">${m.label}</span>
+      </div>
+      ${i.mechanism?`<div style="font-size:11px;color:var(--muted)"><b style="color:var(--text)">Mechanism:</b> ${escapeHtml(String(i.mechanism))}</div>`:''}
+      ${i.consequence?`<div style="font-size:11px;color:var(--muted)"><b style="color:var(--text)">Consequence:</b> ${escapeHtml(String(i.consequence))}</div>`:''}
+      ${i.action?`<div style="font-size:11px;color:var(--muted)"><b style="color:var(--text)">Action:</b> ${escapeHtml(String(i.action))}</div>`:''}
+    </div>`;
+  }).join('');
+  const overrideBox = needsOverride ? `
+    <div style="border-top:1px dashed var(--border);margin-top:8px;padding-top:8px">
+      <div style="font-size:11px;color:#ff5577;font-weight:700;margin-bottom:6px">⚠ MAJOR/CONTRAINDICATED interaction detected. Override requires justification.</div>
+      <textarea id="rx-just-${newRx.id}" placeholder="Clinical justification for continuing this prescription (required)…" style="width:100%;min-height:48px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:8px;font-size:12px;font-family:inherit"></textarea>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="acknowledgeInteraction('${newRx.id}','${escapeHtml(newRx.name)}','${escapeHtml(el.id)}',true)">✓ Override with justification</button>
+        <button class="btn btn-outline" style="font-size:11px;padding:5px 10px;border-color:#ff5577;color:#ff5577" onclick="removeRxAfterInteraction('${newRx.id}','${escapeHtml(el.id)}')">🗑 Remove this drug</button>
+      </div>
+    </div>` : `
+    <div style="display:flex;justify-content:flex-end;margin-top:6px">
+      <button class="btn btn-outline" style="font-size:11px;padding:4px 10px" onclick="document.getElementById('${el.id}').innerHTML=''">Dismiss</button>
+    </div>`;
+  el.innerHTML = `<div style="border:1px solid var(--border);border-radius:8px;padding:10px;background:rgba(255,255,255,0.02)">
+    <div style="font-weight:700;font-size:12px;color:var(--text);margin-bottom:8px">🧪 Interaction check — ${escapeHtml(newRx.name)}</div>
+    ${rows}
+    ${overrideBox}
+  </div>`;
+}
+
+window.acknowledgeInteraction = function(rxId, rxName, elId, requireJust){
+  const ta = document.getElementById('rx-just-'+rxId);
+  const just = (ta && ta.value.trim()) || '';
+  if(requireJust && just.length < 5){ alert('Justification required (min 5 chars).'); return; }
+  const pt = patients.find(p=>p.id===currentId);
+  pushToFirebase('rx_override', `overrode interaction warning for ${rxName}${pt&&pt.name?' ('+pt.name+')':''} — justification: ${just}`);
+  const el = document.getElementById(elId);
+  if(el) el.innerHTML = `<div style="border:1px solid var(--amber);background:rgba(255,170,60,0.08);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--amber)">⚠ Override logged for <b>${rxName}</b>. Justification saved to activity log.</div>`;
+};
+
+window.removeRxAfterInteraction = function(rxId, elId){
+  const pt = patients.find(p=>p.id===currentId); if(!pt) return;
+  if(pt.antibiotics) pt.antibiotics = pt.antibiotics.filter(a=>a.id!==rxId);
+  if(pt.drugChart) pt.drugChart = pt.drugChart.filter(d=>d.id!==rxId);
+  try{ renderAntibiotics && renderAntibiotics(pt); }catch{}
+  try{ renderDrugChart && renderDrugChart(pt); }catch{}
+  saveStore && saveStore();
+  pushToFirebase('rx_cancel','removed drug after interaction warning');
+  const el = document.getElementById(elId); if(el) el.innerHTML='';
+};
+
 </script>
+
 
 </body>
 </html>
