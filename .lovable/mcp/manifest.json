@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "ward-navigator-mcp",
+      "version": "0.1.0",
+      "title": "Ward Navigator MCP"
+    },
+    "tools": [
+      {
+        "name": "search_drugs",
+        "title": "Search Pakistan drug reference",
+        "description": "Search the LUMHS Ward Navigator's Pakistan brand-name drug reference by brand, generic, class, or indication keyword. Returns dosing summaries for common inpatient drugs.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Search term: brand name, generic name, class, or clinical use (case-insensitive)."
+            },
+            "limit": {
+              "description": "Maximum number of results to return (default 10).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "clinical_lookup",
+        "title": "Ask clinical reference assistant",
+        "description": "Ask the Ward Navigator's clinical reference assistant a concise, evidence-based question (differentials, red flags, investigations, management). Backed by the same AI used inside the app.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "question": {
+              "type": "string",
+              "minLength": 3,
+              "description": "The clinical question, e.g. 'management of acute cholangitis in an adult'."
+            }
+          },
+          "required": [
+            "question"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
