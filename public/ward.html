@@ -2707,6 +2707,7 @@ window.addDrug = function(){
   renderDrugChart(pt);
   saveStore && saveStore();
   pushToFirebase('drug_add',`added ${d.name} ${d.dose} ${d.freq} for ${pt.name||'patient'}`);
+  runInteractionCheck(pt, d, 'drug');
 };
 
 window.toggleDrugStop = function(id){
