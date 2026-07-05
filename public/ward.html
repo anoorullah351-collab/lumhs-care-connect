@@ -559,6 +559,24 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         </div>
       </div>
 
+      <!-- ── AI CLINICAL ASSIST (History → DDx) ── -->
+      <div class="card" id="ai-assist-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <div class="card-title" style="margin:0;flex:1"><span class="dot" style="background:#9b8cff"></span>🧠 AI Clinical Assist</div>
+          <button type="button" class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="toggleClinicalAssist()"><span id="ai-assist-toggle-label">Hide</span></button>
+          <button type="button" class="btn btn-accent" style="font-size:11px;padding:5px 10px" onclick="runClinicalAssist(true)">🔄 Analyze</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Auto-updates as you fill Chief Complaint & HPI. Suggestions only — not a substitute for clinical judgment.</div>
+        <div id="ai-assist-body">
+          <div id="ai-assist-status" style="font-size:12px;color:var(--muted);padding:8px 0">Enter a chief complaint to begin.</div>
+          <div id="ai-assist-redflags"></div>
+          <div id="ai-assist-questions"></div>
+          <div id="ai-assist-ddx"></div>
+        </div>
+      </div>
+
+
+
       <!-- ── OPERATIVE NOTE ── -->
       <div class="card">
         <div class="card-title"><span class="dot dot-red"></span>Operative Note</div>
