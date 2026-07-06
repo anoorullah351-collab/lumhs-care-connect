@@ -706,6 +706,12 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         </div>
       </div>
 
+      <!-- Clinical Risk Scores -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-purple"></span>Clinical Risk Scores</div>
+        <div id="risk-scores-box" style="font-size:12px;color:var(--muted);padding:4px 0">Enter vitals and patient history to auto-calculate scores.</div>
+      </div>
+
       <!-- Fluid Balance -->
       <div class="card">
         <div class="card-title"><span class="dot dot-cyan"></span>Fluid Balance</div>
@@ -1179,6 +1185,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
       <div class="btn-row" style="margin-top:10px">
         <button class="btn btn-accent" onclick="generateHandover()">🔄 Refresh</button>
         <button class="btn btn-green" onclick="copyHandover()">📋 Copy All</button>
+        <button class="btn btn-purple" id="btn-ai-handover" onclick="enhanceHandoverWithAI()">🤖 AI Enhance</button>
       </div>
     </div>
   </div>
@@ -1904,7 +1911,7 @@ function loadPatientIntoForm(id){
   FIELDS.forEach(f=>{ const el=$(f); if(!el) return; el.value=data[f]!==undefined?data[f]:(f==='v-pain'?'0':''); });
   updatePain(data['v-pain']||0);
   ['hr','rr','temp','spo2'].forEach(k=>checkVital(k,data['v-'+k]||''));
-  calcNEWS2(); calcFluid(); calcDrugDoses(); updateBanner();
+  calcNEWS2(); calcFluid(); calcDrugDoses(); updateBanner(); renderRiskScores();
   document.querySelectorAll('.status-btn').forEach(b=>b.className='status-btn');
   if(pt.status){
     const btn=document.querySelector(`.status-btn[onclick*="${pt.status}"]`);
@@ -2222,7 +2229,72 @@ window.calcNEWS2 = function(){
   $('news2-score').textContent=score; $('news2-score').style.color=color;
   $('news2-risk').textContent=risk; $('news2-risk').style.color=color;
   $('news2-fill').style.width=pct+'%'; $('news2-fill').style.background=color;
+  renderRiskScores();
   return score;
+};
+
+// ─── CLINICAL RISK SCORES ─────────────────────────────────────
+window.calcQSOFA = function(){
+  const rr=parseFloat(val('v-rr')), gcs=parseFloat(val('v-gcs')), bp=val('v-bp');
+  const sbp=bp?parseFloat(bp.split('/')[0]):NaN;
+  let score=0, items=[];
+  if(!isNaN(rr)&&rr>=22){score++; items.push('RR ≥22');}
+  if(!isNaN(gcs)&&gcs<15){score++; items.push('GCS <15');}
+  if(!isNaN(sbp)&&sbp<=100){score++; items.push('SBP ≤100');}
+  return {score, items, risk: score>=2?'High risk of sepsis — consider ICU review':score===1?'Possible organ dysfunction — monitor closely':'Low risk'};
+};
+
+window.calcCURB65 = function(){
+  const ageStr=val('pt-age'), rr=parseFloat(val('v-rr')), bp=val('v-bp'), pmh=val('hx-pmh')+' '+val('hx-comorbid');
+  const ageMatch=ageStr.match(/\d+/); const age=ageMatch?parseInt(ageMatch[0],10):NaN;
+  const sbp=bp?parseFloat(bp.split('/')[0]):NaN; const dbpStr=bp?bp.split('/')[1]:''; const dbp=dbpStr?parseFloat(dbpStr):NaN;
+  const labs=val('inv-labs').toLowerCase();
+  let score=0, items=[];
+  const confused=/confus|alter|dement|encephalop|deliri/i.test(pmh);
+  if(confused){score++; items.push('Confusion');}
+  const ureaMatch=labs.match(/urea[\s:]?(\d+\.?\d*)/); const bunMatch=labs.match(/bun[\s:]?(\d+\.?\d*)/);
+  if(ureaMatch){const u=parseFloat(ureaMatch[1]); if(u>7){score++; items.push('Urea >7');}}
+  else if(bunMatch){const b=parseFloat(bunMatch[1]); if(b>20){score++; items.push('BUN >20');}}
+  if(!isNaN(rr)&&rr>=30){score++; items.push('RR ≥30');}
+  if((!isNaN(sbp)&&sbp<90)||(!isNaN(dbp)&&dbp<=60)){score++; items.push('Low BP');}
+  if(!isNaN(age)&&age>=65){score++; items.push('Age ≥65');}
+  let riskText='Low risk (0.6–1.5% mortality) — consider outpatient';
+  if(score===1) riskText='Low risk (1.5–2.7%) — consider short hospital stay';
+  else if(score===2) riskText='Moderate risk (6.8–14%) — hospitalize';
+  else if(score===3) riskText='Severe risk (14.5–28%) — consider HDU/ICU';
+  else if(score>=4) riskText='Very severe risk (>28%) — ICU + senior review';
+  return {score, items, risk: riskText};
+};
+
+window.calcRCRI = function(){
+  const proc=val('pt-proc').toLowerCase(), pmh=val('hx-pmh').toLowerCase(), comorb=val('hx-comorbid').toLowerCase();
+  const text=pmh+' '+comorb+' '+val('pt-diag').toLowerCase();
+  let score=0, items=[];
+  const highRisk=/laparo|thorac|aort|vascular|intraperitoneal|intrathoracic|suprainguinal|major|whipple|esophag|pancreatic|liver resection/i.test(proc);
+  if(highRisk){score++; items.push('High-risk surgery');}
+  if(/ischemic heart|ihd|mi |myocardial infarction|angina|cabg|pci|stent/i.test(text)){score++; items.push('IHD');}
+  if(/heart failure|chf|congestive cardiac|ccf|lvef|ef |cardiomyopathy/i.test(text)){score++; items.push('Heart failure');}
+  if(/cva |stroke|cerebrovasc|tia |transient ischaemic/i.test(text)){score++; items.push('Cerebrovascular disease');}
+  if(/diabetes.*insulin|insulin.*diabetes|type 1 dm|t1dm/i.test(text)){score++; items.push('Diabetes on insulin');}
+  if(/ckd|chronic kidney|renal failure|creatinine|cr |esrd|dialysis/i.test(text)){score++; items.push('CKD / renal impairment');}
+  let risk='Low cardiac risk (0.4–0.9%)';
+  if(score===1) risk='Low–moderate risk (1.3%)';
+  else if(score===2) risk='Moderate risk (3.6%)';
+  else if(score>=3) risk='High risk (5.2–11%) — cardiology review advised';
+  return {score, items, risk};
+};
+
+window.renderRiskScores = function(){
+  const box=$('risk-scores-box'); if(!box) return;
+  const q=calcQSOFA(), c=calcCURB65(), r=calcRCRI();
+  const hasAny=q.score>0||c.score>0||r.score>0||!isNaN(parseFloat(val('v-rr')))||!isNaN(parseFloat(val('v-hr')));
+  if(!hasAny){ box.innerHTML='<span style="color:var(--muted)">Enter vitals and patient history to auto-calculate scores.</span>'; return; }
+  const chip=(label,score,items,risk,color)=>`<div style="margin-bottom:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="font-weight:700;font-size:13px;">${label}</span><span style="margin-left:auto;font-size:20px;font-weight:700;font-family:var(--mono);color:${color};">${score}</span></div>${items.length?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-family:var(--mono);">${items.map(i=>`• ${i}`).join(' ')}</div>`:''}<div style="font-size:11px;color:${color};font-weight:600;">${risk}</div></div>`;
+  let html='';
+  html+=chip('qSOFA (Sepsis)', q.score, q.items, q.risk, q.score>=2?'var(--red)':q.score===1?'var(--amber)':'var(--green)');
+  html+=chip('CURB-65 (Pneumonia)', c.score, c.items, c.risk, c.score>=3?'var(--red)':c.score>=2?'var(--amber)':'var(--green)');
+  html+=chip('RCRI (Peri-op Cardiac)', r.score, r.items, r.risk, r.score>=2?'var(--red)':r.score>=1?'var(--amber)':'var(--green)');
+  box.innerHTML=html;
 };
 
 // ─── FLUID BALANCE ────────────────────────────────────────────
@@ -2475,6 +2547,32 @@ window.generateHandover = function(){
 };
 
 window.copyHandover = function(){ navigator.clipboard.writeText($('handover-content').textContent).then(()=>showToast('📋 Handover copied!')); };
+
+window.enhanceHandoverWithAI = async function(){
+  const content = $('handover-content').textContent;
+  if(!content || content.includes('No patients') || content.includes('Generating...')){ showToast('Generate handover first'); return; }
+  const btn = document.getElementById('btn-ai-handover');
+  if(!btn) return;
+  const original = btn.textContent;
+  btn.textContent = '⏳ Thinking...'; btn.disabled = true;
+  if(!isNetOnline()){ showToast('⚠ Offline — AI unavailable'); btn.textContent = original; btn.disabled = false; return; }
+  try {
+    const sys = "You are a senior surgical ward registrar preparing a structured handover for the incoming team. Keep all patient data accurate. Add a 'CLINICAL PRIORITIES' section at the top listing patients who need review first (sickest, pending discharges, urgent tasks). Add a 'SAFETY FLAGS' section noting any high NEWS2, overdue antibiotics, or pending critical results. Preserve every patient's name, bed, diagnosis, NEWS2, and pending tasks. Use concise bullet points. Do not invent data.";
+    const r = await fetch(AI_BASE + '/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ system: sys, messages: [{role:'user', content: 'Enhance this ward handover:\n\n' + content}] })
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.error||'AI error');
+    const reply = String(data.reply||'').trim();
+    if(reply){ $('handover-content').textContent = reply; showToast('✨ Handover enhanced by AI'); }
+    else throw new Error('Empty AI response');
+  } catch(e){
+    showToast('AI failed: ' + (e.message||'unknown error'));
+  } finally {
+    btn.textContent = original; btn.disabled = false;
+  }
+};
 
 // ─── AUTH GATE ───────────────────────────────────────────────
 let authMode = 'signin';
