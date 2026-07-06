@@ -1910,7 +1910,7 @@ function loadPatientIntoForm(id){
   FIELDS.forEach(f=>{ const el=$(f); if(!el) return; el.value=data[f]!==undefined?data[f]:(f==='v-pain'?'0':''); });
   updatePain(data['v-pain']||0);
   ['hr','rr','temp','spo2'].forEach(k=>checkVital(k,data['v-'+k]||''));
-  calcNEWS2(); calcFluid(); calcDrugDoses(); updateBanner();
+  calcNEWS2(); calcFluid(); calcDrugDoses(); updateBanner(); renderRiskScores();
   document.querySelectorAll('.status-btn').forEach(b=>b.className='status-btn');
   if(pt.status){
     const btn=document.querySelector(`.status-btn[onclick*="${pt.status}"]`);
