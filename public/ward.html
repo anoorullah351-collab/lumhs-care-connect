@@ -2548,6 +2548,32 @@ window.generateHandover = function(){
 
 window.copyHandover = function(){ navigator.clipboard.writeText($('handover-content').textContent).then(()=>showToast('📋 Handover copied!')); };
 
+window.enhanceHandoverWithAI = async function(){
+  const content = $('handover-content').textContent;
+  if(!content || content.includes('No patients') || content.includes('Generating...')){ showToast('Generate handover first'); return; }
+  const btn = document.getElementById('btn-ai-handover');
+  if(!btn) return;
+  const original = btn.textContent;
+  btn.textContent = '⏳ Thinking...'; btn.disabled = true;
+  if(!isNetOnline()){ showToast('⚠ Offline — AI unavailable'); btn.textContent = original; btn.disabled = false; return; }
+  try {
+    const sys = "You are a senior surgical ward registrar preparing a structured handover for the incoming team. Keep all patient data accurate. Add a 'CLINICAL PRIORITIES' section at the top listing patients who need review first (sickest, pending discharges, urgent tasks). Add a 'SAFETY FLAGS' section noting any high NEWS2, overdue antibiotics, or pending critical results. Preserve every patient's name, bed, diagnosis, NEWS2, and pending tasks. Use concise bullet points. Do not invent data.";
+    const r = await fetch(AI_BASE + '/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ system: sys, messages: [{role:'user', content: 'Enhance this ward handover:\n\n' + content}] })
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.error||'AI error');
+    const reply = String(data.reply||'').trim();
+    if(reply){ $('handover-content').textContent = reply; showToast('✨ Handover enhanced by AI'); }
+    else throw new Error('Empty AI response');
+  } catch(e){
+    showToast('AI failed: ' + (e.message||'unknown error'));
+  } finally {
+    btn.textContent = original; btn.disabled = false;
+  }
+};
+
 // ─── AUTH GATE ───────────────────────────────────────────────
 let authMode = 'signin';
 function showAuthOverlay(show){
