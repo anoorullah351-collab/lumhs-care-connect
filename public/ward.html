@@ -1326,9 +1326,16 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 ═══════════════════════════════════════════════════════════ -->
 <div class="screen" id="screen-drugs">
   <div class="scroll-area" style="padding-bottom:90px">
-    <div class="list-header" style="margin-bottom:8px"><h2>💊 Commonly Used Drugs (Pakistan)</h2></div>
-    <input class="search-box" type="text" id="drug-search" placeholder="🔍 Search brand or generic (e.g. Tanzo, augmentin, omeprazole)…" oninput="renderDrugList()">
-    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Local brand → generic / formula reference. Always verify dose with BNF / local formulary.</div>
+    <div class="list-header" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+      <h2>💊 Ward Formulary (Pakistan)</h2>
+      <span id="pk-drug-count" style="font-family:var(--mono);font-size:10px;color:var(--muted)"></span>
+    </div>
+    <input class="search-box" type="text" id="drug-search" placeholder="🔍 Search brand, generic, class or indication…" oninput="renderDrugList()">
+    <div id="pk-drug-cats" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 6px 0"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:11px;color:var(--muted)">Tap a card for dosing, ADRs, renal &amp; pregnancy notes. Always verify against BNF / local formulary.</div>
+      <button class="btn btn-outline" style="font-size:10px;padding:4px 8px;white-space:nowrap" onclick="toggleFavOnlyDrugs()" id="pk-drug-fav-toggle">⭐ Favs</button>
+    </div>
     <div id="pk-drug-list"></div>
   </div>
 </div>
