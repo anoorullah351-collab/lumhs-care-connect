@@ -3477,16 +3477,216 @@ const PK_DRUGS = [
   {brand:'Magnesium sulphate', generic:'Magnesium sulphate', cls:'Electrolyte', use:'Eclampsia, severe asthma, torsades'},
   {brand:'Normal saline / RL / D5W', generic:'IV Fluids', cls:'Crystalloid', use:'Resuscitation, maintenance'},
 ];
+// Category taxonomy (derived from class/use)
+const DRUG_CATS = [
+  {id:'abx',    label:'🦠 Antibiotics',   color:'#5ac8fa', re:/antibiotic|cephalospor|penicillin|carbapenem|macrolide|fluoroquinolone|glycopept|aminogly|tetracyc|oxazolid|nitroimid|β-lactam|topical antibiotic/i},
+  {id:'analg',  label:'💉 Analgesia',     color:'#ffd066', re:/analgesic|nsaid|opioid|antipyretic/i},
+  {id:'gi',     label:'🍽 GI',            color:'#8be38b', re:/ppi|h2 blocker|prokinetic|antiemetic|antispasmodic|5ht3/i},
+  {id:'anticoag',label:'🩸 Anticoag/AP',  color:'#ff8fa3', re:/anticoagulant|antiplatelet|vitamin k|doac|lmwh/i},
+  {id:'cardiac',label:'❤ Cardiac',       color:'#ff5577', re:/diuretic|β-blocker|beta.?blocker|ccb|ace inhibitor|arb|antiarrhythmic|glycoside|catecholamine|anticholinergic/i},
+  {id:'endo',   label:'🧬 Endocrine',     color:'#ffb84d', re:/biguanide|sulfonylurea|hormone|insulin|corticosteroid/i},
+  {id:'neuro',  label:'🧠 Neuro/Psych',   color:'#c89bff', re:/antiepileptic|benzodiazepine|antihistamine/i},
+  {id:'fluid',  label:'💧 Fluids/Lytes',  color:'#7fd1ff', re:/electrolyte|crystalloid/i},
+  {id:'topical',label:'🧴 Topical',       color:'#a0adc7', re:/antiseptic/i},
+];
+function drugCat(d){
+  for(const c of DRUG_CATS) if(c.re.test(d.cls||'')||c.re.test(d.use||'')) return c;
+  return {id:'other', label:'💊 Other', color:'#a0adc7', re:/./};
+}
+
+// Concise clinical extras keyed by generic substring (adult inpatient).
+const DRUG_EXTRA = {
+  'piperacillin':{dose:'4.5 g IV q8h (extended infusion in sepsis)',renal:'CrCl<20: 4.5 g q12h',adr:'Rash, cholestasis, thrombocytopenia',preg:'B'},
+  'amoxicillin + clav':{dose:'1 g PO q12h or 1.2 g IV q8h',renal:'CrCl<30: reduce',adr:'Diarrhoea, cholestatic hepatitis',preg:'B'},
+  'ceftriaxone':{dose:'1–2 g IV/IM q24h (2 g q12h meningitis)',renal:'No adjustment',adr:'Biliary sludging, C.diff',preg:'B'},
+  'cefepime':{dose:'1–2 g IV q8–12h',renal:'Adjust if CrCl<60 (neurotoxicity)',adr:'Encephalopathy in renal failure',preg:'B'},
+  'meropenem':{dose:'1 g IV q8h (2 g q8h meningitis)',renal:'Reduce if CrCl<50',adr:'Seizures, C.diff',preg:'B'},
+  'imipenem':{dose:'500 mg–1 g IV q6–8h',renal:'Reduce',adr:'Seizures at high dose',preg:'C'},
+  'metronidazole':{dose:'500 mg IV/PO q8h',renal:'No adjust',adr:'Metallic taste, neuropathy, disulfiram reaction',preg:'B (avoid 1st trim)'},
+  'cephradine':{dose:'500 mg PO q6h; 1 g IV q6h',renal:'Adjust',adr:'Rash',preg:'B'},
+  'cefazolin':{dose:'1–2 g IV pre-op; 1 g q8h',renal:'Adjust',adr:'Rash',preg:'B'},
+  'ciprofloxacin':{dose:'500 mg PO q12h; 400 mg IV q12h',renal:'CrCl<30: q24h',adr:'QT prolong, tendonitis, C.diff',preg:'Avoid'},
+  'levofloxacin':{dose:'500–750 mg PO/IV q24h',renal:'Adjust',adr:'QT, tendon rupture',preg:'Avoid'},
+  'clarithromycin':{dose:'500 mg PO q12h',renal:'Reduce if CrCl<30',adr:'QT, CYP3A4 inhibitor',preg:'C'},
+  'azithromycin':{dose:'500 mg PO/IV q24h × 3–5 d',renal:'No adjust',adr:'QT prolong',preg:'B'},
+  'doxycycline':{dose:'100 mg PO q12h',renal:'No adjust',adr:'Photosensitivity, oesophagitis',preg:'Avoid'},
+  'vancomycin':{dose:'15–20 mg/kg IV q8–12h (trough 15–20)',renal:'Adjust per level',adr:'Nephrotox, red-man syndrome',preg:'C'},
+  'teicoplanin':{dose:'400 mg IV q12h × 3 loads, then q24h',renal:'Reduce',adr:'Rash, thrombocytopenia',preg:'C'},
+  'amikacin':{dose:'15 mg/kg IV q24h',renal:'Adjust per level',adr:'Nephro/ototoxicity',preg:'D'},
+  'gentamicin':{dose:'5–7 mg/kg IV q24h',renal:'Adjust per level',adr:'Nephro/ototoxicity',preg:'D'},
+  'linezolid':{dose:'600 mg PO/IV q12h',renal:'No adjust',adr:'Thrombocytopenia, serotonin syndrome (with SSRIs), lactic acidosis',preg:'C'},
+  'omeprazole':{dose:'20–40 mg PO q24h; 40 mg IV',renal:'No adjust',adr:'Long-term: ↓B12/Mg, C.diff, fracture',preg:'C'},
+  'pantoprazole':{dose:'40 mg PO/IV q24h',renal:'No adjust',adr:'PPI class effects',preg:'B'},
+  'esomeprazole':{dose:'40 mg PO/IV q24h',renal:'No adjust',adr:'PPI class effects',preg:'B'},
+  'famotidine':{dose:'20–40 mg PO/IV q12h',renal:'Reduce',adr:'Headache, rare thrombocytopenia',preg:'B'},
+  'metoclopramide':{dose:'10 mg PO/IV q8h (max 5 days)',renal:'Reduce',adr:'EPS, tardive dyskinesia',preg:'B'},
+  'ondansetron':{dose:'4–8 mg IV/PO q8h',renal:'No adjust',adr:'QT prolongation, constipation',preg:'B'},
+  'hyoscine':{dose:'20 mg IV/IM/PO q6h',renal:'—',adr:'Anticholinergic effects',preg:'C'},
+  'diclofenac':{dose:'50 mg PO q8h; 75 mg IM',renal:'Avoid in AKI/CKD',adr:'GI bleed, AKI, CV risk',preg:'Avoid (esp 3rd trim)'},
+  'ibuprofen':{dose:'400 mg PO q6–8h (max 2.4 g)',renal:'Avoid in AKI',adr:'GI, AKI',preg:'Avoid 3rd trim'},
+  'ketorolac':{dose:'10–30 mg IV/IM q6h (max 5 days)',renal:'Avoid',adr:'GI, AKI, bleeding',preg:'Avoid'},
+  'paracetamol':{dose:'1 g PO/IV q6h (max 4 g/24h; 3 g if <50 kg or hepatic)',renal:'No adjust',adr:'Hepatotoxicity in overdose',preg:'Safe'},
+  'nalbuphine':{dose:'10–20 mg IV/IM/SC q4–6h',renal:'Reduce',adr:'Sedation, respiratory depression',preg:'B'},
+  'morphine':{dose:'2.5–10 mg IV/SC q4h',renal:'Avoid/reduce (M6G accumulates)',adr:'Resp depression, constipation, itch',preg:'C'},
+  'tramadol':{dose:'50–100 mg PO/IV q6h (max 400 mg/day)',renal:'Reduce',adr:'Seizures, serotonin syndrome',preg:'C'},
+  'fentanyl':{dose:'25–100 mcg IV titrated',renal:'Preferred in renal failure',adr:'Chest rigidity, resp depression',preg:'C'},
+  'pethidine':{dose:'25–100 mg IM/SC q4h',renal:'AVOID (norpethidine → seizures)',adr:'Seizures, serotonin syndrome',preg:'C'},
+  'heparin':{dose:'80 U/kg IV bolus, then 18 U/kg/h — titrate APTT',renal:'No adjust',adr:'HIT, bleeding',preg:'Safe'},
+  'enoxaparin':{dose:'40 mg SC q24h (prophylaxis); 1 mg/kg SC q12h (treatment)',renal:'CrCl<30: 1 mg/kg q24h',adr:'Bleeding, HIT (rare)',preg:'Safe'},
+  'warfarin':{dose:'Start 5 mg PO OD; titrate INR 2–3 (2.5–3.5 mech valve)',renal:'No adjust',adr:'Bleeding, skin necrosis',preg:'Teratogenic — switch to LMWH'},
+  'rivaroxaban':{dose:'20 mg PO OD (AF); 15 mg BD × 21 d then 20 mg (VTE)',renal:'Avoid if CrCl<15',adr:'Bleeding',preg:'Avoid'},
+  'apixaban':{dose:'5 mg PO BD (AF); 10 mg BD × 7 d then 5 mg BD (VTE)',renal:'Reduce if 2 of: age≥80, wt≤60 kg, Cr≥133',adr:'Bleeding',preg:'Avoid'},
+  'aspirin':{dose:'75–150 mg PO OD; 300 mg loading in ACS',renal:'Caution',adr:'GI bleed, Reye in children',preg:'Low-dose OK'},
+  'clopidogrel':{dose:'75 mg PO OD (300–600 mg load in ACS)',renal:'No adjust',adr:'Bleeding, TTP (rare)',preg:'B'},
+  'furosemide':{dose:'20–80 mg PO/IV; infusion 5–20 mg/h in refractory',renal:'Higher doses required',adr:'HypoK, hypoNa, ototoxicity',preg:'C'},
+  'spironolactone':{dose:'25–100 mg PO OD',renal:'Avoid if CrCl<30',adr:'HyperK, gynaecomastia',preg:'C'},
+  'atenolol':{dose:'25–100 mg PO OD',renal:'Reduce',adr:'Bradycardia, bronchospasm',preg:'D'},
+  'bisoprolol':{dose:'1.25 → 10 mg PO OD (up-titrate in HF)',renal:'Reduce if CrCl<20',adr:'Bradycardia, fatigue',preg:'C'},
+  'propranolol':{dose:'40–160 mg PO BD–TDS',renal:'No adjust',adr:'Bronchospasm, bradycardia',preg:'C'},
+  'amlodipine':{dose:'5–10 mg PO OD',renal:'No adjust',adr:'Ankle oedema, flushing',preg:'C'},
+  'captopril':{dose:'6.25 → 50 mg PO TDS',renal:'Reduce',adr:'Cough, hyperK, AKI, angioedema',preg:'Avoid'},
+  'ramipril':{dose:'2.5–10 mg PO OD',renal:'Reduce',adr:'ACEi class',preg:'Avoid'},
+  'metformin':{dose:'500 mg BD → 1 g BD',renal:'STOP if CrCl<30; hold 48h with contrast',adr:'GI, lactic acidosis, ↓B12',preg:'Safe'},
+  'gliclazide':{dose:'40–160 mg PO BD',renal:'Reduce',adr:'Hypoglycaemia, weight gain',preg:'Avoid'},
+  'insulin':{dose:'Basal-bolus per glycaemia; DKA 0.1 U/kg/h IV',renal:'Reduce dose in CKD',adr:'Hypoglycaemia, hypoK',preg:'Safe'},
+  'dexamethasone':{dose:'4–8 mg IV/PO q6–12h; 6 mg OD × 10 d (COVID)',renal:'No adjust',adr:'Hyperglycaemia, immunosuppression',preg:'C'},
+  'methylprednisolone':{dose:'40–125 mg IV q6h',renal:'No adjust',adr:'Steroid class effects',preg:'C'},
+  'hydrocortisone':{dose:'100 mg IV q6–8h; 200 mg/24h infusion (septic shock)',renal:'No adjust',adr:'Hyperglycaemia, Na retention',preg:'Safe'},
+  'epinephrine':{dose:'0.5 mg (0.5 mL 1:1000) IM anaphylaxis; 1 mg IV q3–5min arrest',renal:'—',adr:'Arrhythmia, HTN, ischaemia',preg:'C'},
+  'atropine':{dose:'0.5 mg IV q3–5 min (max 3 mg) for bradycardia',renal:'—',adr:'Anticholinergic',preg:'C'},
+  'amiodarone':{dose:'300 mg IV over 20–60 min → 900 mg/24h; PO load 200 mg TDS × 1 wk',renal:'No adjust',adr:'Thyroid, pulm fibrosis, hepatitis, corneal, QT',preg:'D'},
+  'digoxin':{dose:'Load 500 mcg PO/IV, repeat 250 mcg q6h × 2; maintain 62.5–250 mcg OD',renal:'Reduce',adr:'N/V, arrhythmia, xanthopsia',preg:'C'},
+  'levetiracetam':{dose:'500 mg PO/IV BD → up to 1.5 g BD',renal:'Reduce',adr:'Irritability, somnolence',preg:'C'},
+  'valproate':{dose:'400–800 mg PO BD',renal:'No adjust',adr:'Hepatotox, thrombocytopenia, weight gain',preg:'Teratogen — avoid in WOCBP'},
+  'diazepam':{dose:'5–10 mg IV/PR (status)',renal:'Reduce',adr:'Resp depression, sedation',preg:'D'},
+  'lorazepam':{dose:'4 mg IV (status); 0.5–2 mg PO',renal:'Reduce',adr:'Sedation',preg:'D'},
+  'bromazepam':{dose:'3–6 mg PO BD–TDS',renal:'Reduce',adr:'Sedation, dependence',preg:'D'},
+  'prochlorperazine':{dose:'12.5 mg IM; 5–10 mg PO q8h',renal:'—',adr:'EPS, sedation',preg:'C'},
+  'pheniramine':{dose:'22.75 mg IV/IM',renal:'—',adr:'Sedation, anticholinergic',preg:'C'},
+  'potassium chloride':{dose:'Oral 40–80 mmol/day; IV peripheral ≤10 mmol/h, central ≤20 mmol/h',renal:'CAUTION',adr:'Arrhythmia, phlebitis',preg:'Safe'},
+  'calcium gluconate':{dose:'10 mL 10% IV over 10 min (hyperK cardio-protect)',renal:'—',adr:'Extravasation (less than CaCl₂)',preg:'Safe'},
+  'magnesium sulphate':{dose:'4 g IV over 20 min (eclampsia load); 2 g IV asthma / torsades',renal:'Reduce',adr:'Areflexia, resp depression, hypotension',preg:'Safe'},
+  'iv fluids':{dose:'Resus 500 mL bolus; maintenance 25–30 mL/kg/day',renal:'Watch overload',adr:'NS → hyperchloraemic acidosis; RL → avoid in hyperK/liver',preg:'Safe'},
+};
+function drugExtra(g){
+  const k=(g||'').toLowerCase();
+  for(const key in DRUG_EXTRA){ if(k.includes(key)) return DRUG_EXTRA[key]; }
+  return null;
+}
+
+let PK_DRUG_ACTIVE_CAT = 'all';
+let PK_DRUG_FAV_ONLY = false;
+const PK_DRUG_EXPANDED = new Set();
+function getDrugFavs(){ try{ return JSON.parse(localStorage.getItem('pk_drug_favs')||'[]'); }catch{ return []; } }
+function isDrugFav(k){ return getDrugFavs().includes(k); }
+window.toggleDrugFav = function(k){
+  const f=getDrugFavs(); const i=f.indexOf(k);
+  if(i>=0) f.splice(i,1); else f.push(k);
+  localStorage.setItem('pk_drug_favs', JSON.stringify(f));
+  renderDrugList();
+};
+window.toggleFavOnlyDrugs = function(){
+  PK_DRUG_FAV_ONLY=!PK_DRUG_FAV_ONLY;
+  const b=document.getElementById('pk-drug-fav-toggle');
+  if(b){ b.style.background = PK_DRUG_FAV_ONLY?'#ffd066':''; b.style.color = PK_DRUG_FAV_ONLY?'#111':''; }
+  renderDrugList();
+};
+window.setDrugCat = function(id){ PK_DRUG_ACTIVE_CAT=id; renderDrugList(); };
+window.toggleDrugExpand = function(k){
+  if(PK_DRUG_EXPANDED.has(k)) PK_DRUG_EXPANDED.delete(k); else PK_DRUG_EXPANDED.add(k);
+  renderDrugList();
+};
+window.copyDrugName = function(g){
+  const t=g; if(navigator.clipboard){ navigator.clipboard.writeText(t).then(()=>showToast('📋 Copied: '+t)); } else showToast(t);
+};
+window.aiDrugBrief = async function(k){
+  const d = PK_DRUGS.find(x=>(x.brand+'|'+x.generic)===k); if(!d) return;
+  const target = document.getElementById('pk-ai-'+CSS.escape(k));
+  if(!target) return;
+  target.innerHTML='<div style="font-size:11px;color:var(--muted)">⏳ Consulting AI…</div>';
+  if(!isNetOnline()){ target.innerHTML='<div style="font-size:11px;color:#ff8fa3">Offline — AI unavailable</div>'; return; }
+  let ptCtx='';
+  const pt = currentId ? patients.find(p=>p.id===currentId) : null;
+  if(pt){
+    const age=pt.age||'?', sex=(pt.data&&pt.data['pt-sex'])||'?', wt=(pt.data&&pt.data['pt-weight'])||'?', cr=pt.cr||'?', dx=pt.diag||'?';
+    const pmh=(pt.data&&pt.data['hx-pmh'])||'';
+    ptCtx=`\nCurrent patient context: ${age}y ${sex}, ${wt} kg, Cr ${cr}, dx: ${dx}. PMH: ${pmh||'nil recorded'}.`;
+  }
+  try{
+    const sys="You are a clinical pharmacologist. Give a concise, ward-ready brief for the specified drug in <=120 words. Structure exactly: Indication • Adult dose • Renal/hepatic adjustment • Key ADRs / monitoring • 1 major interaction to remember. If patient context is given, tailor dose and cautions to it. Do not invent data.";
+    const r = await fetch(AI_BASE + '/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ system: sys, messages:[{role:'user', content:`Drug: ${d.brand} (${d.generic}) — ${d.cls}. Common use: ${d.use}.${ptCtx}`}] })
+    });
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.error||'AI error');
+    target.innerHTML='<div style="white-space:pre-wrap;font-size:11.5px;color:var(--text);line-height:1.5;background:rgba(155,140,255,.08);border:1px solid rgba(155,140,255,.3);border-radius:8px;padding:8px 10px;margin-top:6px">'+(data.reply||'').replace(/</g,'&lt;')+'</div>';
+  }catch(e){
+    target.innerHTML='<div style="font-size:11px;color:#ff8fa3">AI failed: '+(e.message||'unknown')+'</div>';
+  }
+};
+
 function renderDrugList(){
   const el = document.getElementById('pk-drug-list'); if(!el) return;
+  // Category chips
+  const catsEl = document.getElementById('pk-drug-cats');
+  if(catsEl){
+    const chips=[{id:'all',label:'All',color:'#7b8aa8'}].concat(DRUG_CATS.map(c=>({id:c.id,label:c.label,color:c.color})));
+    catsEl.innerHTML = chips.map(c=>{
+      const active = PK_DRUG_ACTIVE_CAT===c.id;
+      return `<button onclick="setDrugCat('${c.id}')" style="font-family:var(--mono);font-size:10px;padding:4px 9px;border-radius:12px;border:1px solid ${c.color};background:${active?c.color:'transparent'};color:${active?'#111':c.color};cursor:pointer;font-weight:600">${c.label}</button>`;
+    }).join('');
+  }
+  const favs = getDrugFavs();
   const q = ((document.getElementById('drug-search')||{}).value||'').toLowerCase().trim();
-  const list = PK_DRUGS.filter(d => !q || d.brand.toLowerCase().includes(q) || d.generic.toLowerCase().includes(q) || d.cls.toLowerCase().includes(q) || d.use.toLowerCase().includes(q));
-  if(!list.length){ el.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px;">No matches.</div>'; return; }
-  el.innerHTML = list.map(d=>`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;margin-bottom:8px;">
-    <div style="font-weight:700;color:var(--cyan);font-size:13px;">${d.brand}</div>
-    <div style="font-size:12px;color:var(--text);margin-top:2px;"><strong>Generic:</strong> ${d.generic}</div>
-    <div style="font-size:11px;color:var(--muted);margin-top:2px;">${d.cls} · ${d.use}</div>
-  </div>`).join('');
+  const list = PK_DRUGS.filter(d=>{
+    const key=d.brand+'|'+d.generic;
+    if(PK_DRUG_FAV_ONLY && !favs.includes(key)) return false;
+    if(PK_DRUG_ACTIVE_CAT!=='all' && drugCat(d).id!==PK_DRUG_ACTIVE_CAT) return false;
+    if(q && !(d.brand.toLowerCase().includes(q)||d.generic.toLowerCase().includes(q)||d.cls.toLowerCase().includes(q)||d.use.toLowerCase().includes(q))) return false;
+    return true;
+  });
+  const cnt=document.getElementById('pk-drug-count');
+  if(cnt) cnt.textContent = list.length + ' / ' + PK_DRUGS.length;
+  if(!list.length){ el.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:24px;">No matches. Try a broader term or clear filters.</div>'; return; }
+  el.innerHTML = list.map(d=>{
+    const cat=drugCat(d);
+    const key=d.brand+'|'+d.generic;
+    const fav=favs.includes(key);
+    const open=PK_DRUG_EXPANDED.has(key);
+    const ex=drugExtra(d.generic);
+    const keySafe=key.replace(/'/g,"\\'");
+    return `<div style="background:var(--surface);border:1px solid var(--border2);border-left:3px solid ${cat.color};border-radius:10px;padding:10px 12px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1;min-width:0;cursor:pointer" onclick="toggleDrugExpand('${keySafe}')">
+          <div style="font-weight:700;color:var(--cyan);font-size:13px;">${d.brand} <span style="color:var(--muted);font-weight:500;font-size:11px">${open?'▾':'▸'}</span></div>
+          <div style="font-size:12px;color:var(--text);margin-top:2px;"><strong>Generic:</strong> ${d.generic}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${d.cls} · ${d.use}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+          <span style="font-family:var(--mono);font-size:9px;color:${cat.color};border:1px solid ${cat.color};padding:2px 6px;border-radius:8px;white-space:nowrap">${cat.label}</span>
+          <button onclick="toggleDrugFav('${keySafe}')" title="Favourite" style="background:none;border:none;font-size:15px;cursor:pointer;padding:0;color:${fav?'#ffd066':'#4a5568'}">${fav?'★':'☆'}</button>
+        </div>
+      </div>
+      ${open?`
+        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">
+          ${ex?`
+            <div style="display:grid;grid-template-columns:1fr;gap:5px;font-size:11.5px;line-height:1.45">
+              <div><span style="color:var(--muted);font-family:var(--mono);font-size:10px">DOSE</span><br><span style="color:var(--text)">${ex.dose}</span></div>
+              <div><span style="color:var(--muted);font-family:var(--mono);font-size:10px">RENAL</span> <span style="color:var(--text)">${ex.renal}</span></div>
+              <div><span style="color:var(--muted);font-family:var(--mono);font-size:10px">ADR / MONITOR</span> <span style="color:var(--text)">${ex.adr}</span></div>
+              <div><span style="color:var(--muted);font-family:var(--mono);font-size:10px">PREG</span> <span style="color:var(--text)">${ex.preg}</span></div>
+            </div>
+          `:`<div style="font-size:11px;color:var(--muted);font-style:italic">No stored dosing card — use 🤖 AI brief for a tailored summary.</div>`}
+          <div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap">
+            <button class="btn btn-purple" style="font-size:11px;padding:5px 10px" onclick="aiDrugBrief('${keySafe}')">🤖 AI brief${currentId?' (for this patient)':''}</button>
+            <button class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="copyDrugName('${d.generic.replace(/'/g,"\\'")}')">📋 Copy generic</button>
+          </div>
+          <div id="pk-ai-${key}"></div>
+        </div>
+      `:''}
+    </div>`;
+  }).join('');
 }
 window.renderDrugList = renderDrugList;
 
