@@ -2190,7 +2190,7 @@ window.openBlood = function(){
   if(!val('bf-date')){ $('bf-date').value=new Date().toISOString().split('T')[0]; }
   if(!val('bf-doctor') && window.doctorProfile && doctorProfile.name){ $('bf-doctor').value=doctorProfile.name; }
   // pre-fill vitals from latest vitals card if empty
-  const map={'bf-pre-bp':'v-bp','bf-pre-pulse':'v-pulse','bf-pre-temp':'v-temp','bf-pre-rr':'v-rr'};
+  const map={'bf-pre-bp':'v-bp','bf-pre-pulse':'v-hr','bf-pre-temp':'v-temp','bf-pre-rr':'v-rr'};
   Object.entries(map).forEach(([b,v])=>{ if(!val(b)){ const s=val(v); if(s) $(b).value=s; }});
   BLOOD_FIELDS.forEach(id=>{
     const el=$(id); if(el && !el._bfBound){ el.addEventListener('input',refreshBloodPreview); el._bfBound=true; }
