@@ -221,6 +221,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
   .subpage{display:none !important;}
   .subpage#sub-consent{display:block !important;}
   #sub-consent > .card.no-print{display:none !important;}
+  body.print-blood .subpage#sub-consent{display:none !important;}
+  body.print-blood .subpage#sub-blood{display:block !important;}
+  body.print-blood #sub-blood > .card.no-print{display:none !important;}
   .scroll-area,#detail-scroll{overflow:visible !important;padding:0 !important;max-width:none !important;}
   .consent-doc{border:none !important;box-shadow:none !important;padding:0 !important;margin:0 !important;max-width:none !important;font-size:11.5px;}
   .consent-doc .cd-h-en{color:#000 !important;}
