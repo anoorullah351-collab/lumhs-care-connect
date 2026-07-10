@@ -1124,7 +1124,176 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 
         <div class="cd-footer">
           LUMHS Care Connect · Developed by Dr. Noorullah Ahmed, House Officer, Surgery Dept., LUMHS Jamshoro
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SUBPAGE: BLOOD TRANSFUSION CONSENT + MONITORING
+    ═══════════════════════════════════════════════════════════ -->
+    <div class="subpage" id="sub-blood">
+      <div class="card no-print" style="border-color:#5a1f1f;background:linear-gradient(180deg,rgba(255,80,80,0.10),rgba(255,80,80,0.02))">
+        <div class="card-title"><span class="dot" style="background:#ff5c5c;box-shadow:0 0 8px #ff5c5c"></span>Blood Transfusion Form</div>
+        <div style="background:rgba(255,170,60,0.10);border:1px solid rgba(255,170,60,0.35);border-radius:8px;padding:10px;font-size:11px;color:#ffd089;line-height:1.5;margin-bottom:12px">
+          Bilingual (English / اردو) consent + pre/post vitals + reaction log. Auto-fills from patient. Print / Save as PDF for the chart.
         </div>
+        <div class="grid2" style="gap:10px">
+          <div class="field"><label>Blood Group</label><input type="text" id="bf-group" placeholder="e.g. B+ve"></div>
+          <div class="field"><label>Unit No / Bag No</label><input type="text" id="bf-unit" placeholder="Bag serial number"></div>
+          <div class="field"><label>Component</label>
+            <select id="bf-component">
+              <option value="Whole Blood">Whole Blood</option>
+              <option value="Packed Red Cells" selected>Packed Red Cells</option>
+              <option value="Fresh Frozen Plasma (FFP)">Fresh Frozen Plasma (FFP)</option>
+              <option value="Platelets">Platelets</option>
+              <option value="Cryoprecipitate">Cryoprecipitate</option>
+            </select>
+          </div>
+          <div class="field"><label>No. of Units Required</label><input type="text" id="bf-units" placeholder="e.g. 2"></div>
+          <div class="field"><label>Date</label><input type="date" id="bf-date"></div>
+          <div class="field"><label>Attendant / Donor Name</label><input type="text" id="bf-donor" placeholder="Name"></div>
+          <div class="field"><label>CNIC</label><input type="text" id="bf-cnic" placeholder="00000-0000000-0"></div>
+          <div class="field"><label>Relation</label><input type="text" id="bf-relation" placeholder="Father / Brother / etc."></div>
+        </div>
+
+        <div style="margin-top:14px;font-size:12px;font-weight:700;color:#ffb0b0;letter-spacing:.05em">PRE-TRANSFUSION VITALS</div>
+        <div class="grid2" style="gap:10px;margin-top:6px">
+          <div class="field"><label>BP</label><input type="text" id="bf-pre-bp" placeholder="120/80"></div>
+          <div class="field"><label>Pulse</label><input type="text" id="bf-pre-pulse" placeholder="/min"></div>
+          <div class="field"><label>Temp</label><input type="text" id="bf-pre-temp" placeholder="°F"></div>
+          <div class="field"><label>Resp Rate</label><input type="text" id="bf-pre-rr" placeholder="/min"></div>
+          <div class="field full"><label>Other</label><input type="text" id="bf-pre-other" placeholder="SpO₂, GCS, etc."></div>
+        </div>
+
+        <div style="margin-top:14px;font-size:12px;font-weight:700;color:#ffb0b0;letter-spacing:.05em">POST-TRANSFUSION VITALS</div>
+        <div class="grid2" style="gap:10px;margin-top:6px">
+          <div class="field"><label>BP</label><input type="text" id="bf-post-bp"></div>
+          <div class="field"><label>Pulse</label><input type="text" id="bf-post-pulse"></div>
+          <div class="field"><label>Temp</label><input type="text" id="bf-post-temp"></div>
+          <div class="field"><label>Resp Rate</label><input type="text" id="bf-post-rr"></div>
+          <div class="field full"><label>Other</label><input type="text" id="bf-post-other"></div>
+        </div>
+
+        <div style="margin-top:14px;font-size:12px;font-weight:700;color:#ffb0b0;letter-spacing:.05em">TRANSFUSION TIMING</div>
+        <div class="grid2" style="gap:10px;margin-top:6px">
+          <div class="field"><label>Started at</label><input type="time" id="bf-start"></div>
+          <div class="field"><label>Finished at</label><input type="time" id="bf-finish"></div>
+          <div class="field full"><label>Stopped at (if applicable)</label><input type="time" id="bf-stopped"></div>
+        </div>
+
+        <div style="margin-top:14px;font-size:12px;font-weight:700;color:#ffb0b0;letter-spacing:.05em">REACTION LOG</div>
+        <div class="grid2" style="gap:10px;margin-top:6px">
+          <div class="field full"><label>Immediate reaction (during / within 24 h)</label>
+            <textarea id="bf-imm" placeholder="Fever, chills, urticaria, hypotension, dyspnoea, haemoglobinuria, none…" style="min-height:50px"></textarea></div>
+          <div class="field full"><label>Late reaction (&gt; 24 h)</label>
+            <textarea id="bf-late" placeholder="Delayed haemolysis, TRALI, iron overload, alloimmunisation, none…" style="min-height:50px"></textarea></div>
+          <div class="field full"><label>Action taken</label>
+            <textarea id="bf-action" placeholder="Stopped transfusion, IV fluids, antihistamine, steroid, reported to blood bank…" style="min-height:50px"></textarea></div>
+          <div class="field"><label>Doctor Name</label><input type="text" id="bf-doctor" placeholder="Attending doctor"></div>
+        </div>
+
+        <div class="btn-row" style="margin-top:14px">
+          <button class="btn btn-outline" onclick="refreshBloodPreview()">🔄 Refresh Preview</button>
+          <button class="btn btn-accent" onclick="printBlood()">🖨️ Print / Save as PDF</button>
+        </div>
+      </div>
+
+      <!-- Printable transfusion document -->
+      <div id="blood-printable" class="consent-doc">
+        <div class="cd-header">
+          <div class="cd-hospital">
+            <div class="cd-h-en">SURGICAL UNIT III, WARD 2 — LIAQUAT UNIVERSITY HOSPITAL, JAMSHORO</div>
+          </div>
+          <div class="cd-title">
+            <span>Blood Transfusion Consent &amp; Monitoring</span>
+            <span class="urdu"> / رضا نامہ برائے خون</span>
+          </div>
+        </div>
+
+        <table class="cd-info">
+          <tr><td class="lbl">Date <span class="urdu">/ تاریخ</span></td><td class="val" id="bd-date" colspan="3"></td></tr>
+          <tr><td class="lbl">Patient Name <span class="urdu">/ نام</span></td><td class="val" id="bd-name"></td>
+              <td class="lbl">Father/Husband <span class="urdu">/ والد یا شوہر</span></td><td class="val" id="bd-guardian"></td></tr>
+          <tr><td class="lbl">Age <span class="urdu">/ عمر</span></td><td class="val" id="bd-age"></td>
+              <td class="lbl">Sex <span class="urdu">/ جنس</span></td><td class="val" id="bd-sex"></td></tr>
+          <tr><td class="lbl">Blood Group / Unit No <span class="urdu">/ بلڈ گروپ</span></td><td class="val" id="bd-group"></td>
+              <td class="lbl">Component</td><td class="val" id="bd-comp"></td></tr>
+          <tr><td class="lbl">No. of Units Required <span class="urdu">/ تعداد</span></td><td class="val" id="bd-units" colspan="3"></td></tr>
+        </table>
+
+        <div class="cd-section">
+          <div class="cd-section-title">Consent Statement</div>
+          <p class="cd-para"><strong>English:</strong> We confirm that all necessary pre-transfusion tests and blood group cross-matching have been carried out. Blood has been cross-matched, arranged, and screened for HBsAg, HCV, HIV, VDRL &amp; Malaria from the <strong>Regional Blood Centre, Jamshoro</strong>. The blood is safe for transfusion. Risks including transfusion reactions (haemolysis), transmission of infections (Hepatitis B/C, HIV/AIDS) have been explained.</p>
+          <p class="cd-para urdu" dir="rtl" style="text-align:right;font-size:14px;line-height:2"><strong>اردو:</strong> ہم تصدیق کرتے ہیں کہ مریض کو خون لگانے سے پہلے تمام ضروری ٹیسٹ کر لیے گئے ہیں اور خون کا گروپ میچ کر لیا گیا ہے۔ کسی بھی قسم کے ری ایکشن (Hemolysis) یا کسی بھی قسم کی بیماری جیسے ہیپاٹائٹس بی، سی (HIV/AIDS) وغیرہ کے ٹیسٹ کر لیے گئے ہیں اور خون بالکل محفوظ ہے۔</p>
+        </div>
+
+        <div class="cd-section">
+          <div class="cd-section-title">Attendant / Donor Declaration</div>
+          <table class="cd-sign">
+            <tr><td class="lbl">Name <span class="urdu">/ نام</span></td><td class="val" id="bd-donor"></td>
+                <td class="lbl">Relation</td><td class="val" id="bd-relation"></td></tr>
+            <tr><td class="lbl">CNIC</td><td class="val" id="bd-cnic" colspan="3"></td></tr>
+            <tr><td class="lbl">Signature / Thumb <span class="urdu">/ دستخط</span></td><td class="val sigbox" colspan="3">&nbsp;</td></tr>
+          </table>
+        </div>
+
+        <div class="cd-section">
+          <div class="cd-section-title">Vital Signs</div>
+          <table class="cd-info">
+            <tr><td class="lbl" style="width:16%">&nbsp;</td>
+                <td class="lbl" style="text-align:center">BP</td>
+                <td class="lbl" style="text-align:center">Pulse</td>
+                <td class="lbl" style="text-align:center">Temp</td>
+                <td class="lbl" style="text-align:center">R/R</td>
+                <td class="lbl" style="text-align:center">Other</td></tr>
+            <tr><td class="lbl">Before Transfusion</td>
+                <td class="val" id="bd-pre-bp"></td><td class="val" id="bd-pre-pulse"></td>
+                <td class="val" id="bd-pre-temp"></td><td class="val" id="bd-pre-rr"></td>
+                <td class="val" id="bd-pre-other"></td></tr>
+            <tr><td class="lbl">After Transfusion</td>
+                <td class="val" id="bd-post-bp"></td><td class="val" id="bd-post-pulse"></td>
+                <td class="val" id="bd-post-temp"></td><td class="val" id="bd-post-rr"></td>
+                <td class="val" id="bd-post-other"></td></tr>
+          </table>
+        </div>
+
+        <div class="cd-section">
+          <div class="cd-section-title">Transfusion Timing</div>
+          <table class="cd-info">
+            <tr><td class="lbl">Started at</td><td class="val" id="bd-start"></td>
+                <td class="lbl">Finished at</td><td class="val" id="bd-finish"></td>
+                <td class="lbl">Stopped at</td><td class="val" id="bd-stopped"></td></tr>
+          </table>
+        </div>
+
+        <div class="cd-section">
+          <div class="cd-section-title">Any Reaction</div>
+          <table class="cd-info">
+            <tr><td class="lbl" style="width:18%">Immediate</td><td class="val" id="bd-imm" style="white-space:pre-wrap;min-height:34px"></td></tr>
+            <tr><td class="lbl">Late</td><td class="val" id="bd-late" style="white-space:pre-wrap;min-height:34px"></td></tr>
+            <tr><td class="lbl">Action Taken</td><td class="val" id="bd-action" style="white-space:pre-wrap;min-height:34px"></td></tr>
+          </table>
+        </div>
+
+        <table class="cd-sign" style="margin-top:8px">
+          <tr>
+            <td style="width:50%;vertical-align:top;padding:8px 10px">
+              <div class="lbl">Doctor Signature</div>
+              <div class="cd-sigline"></div>
+              <div style="font-size:10px;color:#444;margin-top:2px">Name: <span id="bd-doctor"></span></div>
+            </td>
+            <td style="width:50%;vertical-align:top;padding:8px 10px">
+              <div class="lbl">Blood cross-matched &amp; screened at</div>
+              <div style="font-size:11px;color:#111;padding-top:6px">Regional Blood Centre, Jamshoro</div>
+              <div style="font-size:10px;color:#444;margin-top:2px">HBsAg · HCV · HIV · VDRL · Malaria</div>
+            </td>
+          </tr>
+        </table>
+
+        <div class="cd-footer">
+          LUMHS Care Connect · Surgical Unit III, Ward 2 · Developed by Dr. Noorullah Ahmed
+        </div>
+      </div>
+    </div>
+
       </div>
     </div>
 
