@@ -2152,6 +2152,61 @@ window.printConsent = function(){
   setTimeout(()=>window.print(),120);
 };
 
+// ─── BLOOD TRANSFUSION FORM ───────────────────────────────────
+const BLOOD_FIELDS=['bf-group','bf-unit','bf-component','bf-units','bf-date','bf-donor','bf-cnic','bf-relation',
+  'bf-pre-bp','bf-pre-pulse','bf-pre-temp','bf-pre-rr','bf-pre-other',
+  'bf-post-bp','bf-post-pulse','bf-post-temp','bf-post-rr','bf-post-other',
+  'bf-start','bf-finish','bf-stopped','bf-imm','bf-late','bf-action','bf-doctor'];
+window.refreshBloodPreview = function(){
+  setText('bd-date', val('bf-date'));
+  setText('bd-name', val('pt-name'));
+  setText('bd-guardian', val('pt-guardian') || val('pt-father') || '');
+  setText('bd-age', val('pt-age'));
+  setText('bd-sex', val('pt-sex') || val('pt-gender') || '');
+  setText('bd-group', (val('bf-group')||val('pt-blood')||'') + (val('bf-unit')?(' · Unit '+val('bf-unit')):''));
+  setText('bd-comp', val('bf-component'));
+  setText('bd-units', val('bf-units'));
+  setText('bd-donor', val('bf-donor'));
+  setText('bd-relation', val('bf-relation'));
+  setText('bd-cnic', val('bf-cnic'));
+  ['pre-bp','pre-pulse','pre-temp','pre-rr','pre-other','post-bp','post-pulse','post-temp','post-rr','post-other',
+   'start','finish','stopped','imm','late','action','doctor'].forEach(k=>{
+    setText('bd-'+k, val('bf-'+k));
+  });
+  setText('bd-doctor', val('bf-doctor') || (window.currentDoctor && currentDoctor.name) || (window.doctorProfile && doctorProfile.name) || '');
+  // persist to patient record
+  const pt=patients.find(p=>p.id===currentId);
+  if(pt){
+    if(!pt.blood) pt.blood={};
+    BLOOD_FIELDS.forEach(id=>{ const el=$(id); if(el) pt.blood[id]=el.value; });
+  }
+};
+window.openBlood = function(){
+  const pt=patients.find(p=>p.id===currentId);
+  // restore saved values
+  if(pt && pt.blood){
+    BLOOD_FIELDS.forEach(id=>{ const el=$(id); if(el && pt.blood[id]!=null && el.value==='') el.value=pt.blood[id]; });
+  }
+  if(!val('bf-date')){ $('bf-date').value=new Date().toISOString().split('T')[0]; }
+  if(!val('bf-doctor') && window.doctorProfile && doctorProfile.name){ $('bf-doctor').value=doctorProfile.name; }
+  // pre-fill vitals from latest vitals card if empty
+  const map={'bf-pre-bp':'v-bp','bf-pre-pulse':'v-pulse','bf-pre-temp':'v-temp','bf-pre-rr':'v-rr'};
+  Object.entries(map).forEach(([b,v])=>{ if(!val(b)){ const s=val(v); if(s) $(b).value=s; }});
+  BLOOD_FIELDS.forEach(id=>{
+    const el=$(id); if(el && !el._bfBound){ el.addEventListener('input',refreshBloodPreview); el._bfBound=true; }
+  });
+  refreshBloodPreview();
+};
+window.printBlood = function(){
+  refreshBloodPreview();
+  saveCurrentPatient();
+  document.body.classList.add('print-blood');
+  const cleanup=()=>{ document.body.classList.remove('print-blood'); window.removeEventListener('afterprint',cleanup); };
+  window.addEventListener('afterprint',cleanup);
+  try{ pushToFirebase && pushToFirebase('blood_print',`printed blood transfusion form for ${(patients.find(p=>p.id===currentId)||{}).name||'patient'}`); }catch{}
+  setTimeout(()=>window.print(),120);
+};
+
 // ─── (voice fill removed — replaced by AI Imaging + Ask AI tabs) ──
 
 
