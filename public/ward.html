@@ -1124,6 +1124,8 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 
         <div class="cd-footer">
           LUMHS Care Connect · Developed by Dr. Noorullah Ahmed, House Officer, Surgery Dept., LUMHS Jamshoro
+        </div>
+      </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
@@ -1291,9 +1293,6 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         <div class="cd-footer">
           LUMHS Care Connect · Surgical Unit III, Ward 2 · Developed by Dr. Noorullah Ahmed
         </div>
-      </div>
-    </div>
-
       </div>
     </div>
 
@@ -2133,14 +2132,14 @@ window.refreshConsentPreview = function(){
   setText('cd-date', val('cf-date'));
   setText('cd-time', val('cf-time'));
   setText('cd-witness', val('cf-witness'));
-  setText('cd-doctor', val('cf-doctor') || (window.currentDoctor && currentDoctor.name) || '');
+  setText('cd-doctor', val('cf-doctor') || doctorProfile.name || '');
 };
 window.openConsent = function(){
   // sensible defaults on first open
   if(!val('cf-date')){ const d=new Date(); $('cf-date').value=d.toISOString().split('T')[0]; }
   if(!val('cf-time')){ const d=new Date(); $('cf-time').value=d.toTimeString().slice(0,5); }
   if(!val('cf-risks')){ $('cf-risks').value='Bleeding, infection, wound complications, anaesthetic reaction, DVT / PE, injury to adjacent structures, conversion to open surgery, need for further procedures, recurrence of disease.'; }
-  if(!val('cf-doctor') && window.currentDoctor && currentDoctor.name){ $('cf-doctor').value=currentDoctor.name; }
+  if(!val('cf-doctor') && doctorProfile.name){ $('cf-doctor').value=doctorProfile.name; }
   ['cf-risks','cf-guardian','cf-relation','cf-date','cf-time','cf-witness','cf-doctor'].forEach(id=>{
     const el=$(id); if(el && !el._cfBound){ el.addEventListener('input',refreshConsentPreview); el._cfBound=true; }
   });
@@ -2173,7 +2172,7 @@ window.refreshBloodPreview = function(){
    'start','finish','stopped','imm','late','action','doctor'].forEach(k=>{
     setText('bd-'+k, val('bf-'+k));
   });
-  setText('bd-doctor', val('bf-doctor') || (window.currentDoctor && currentDoctor.name) || (window.doctorProfile && doctorProfile.name) || '');
+  setText('bd-doctor', val('bf-doctor') || doctorProfile.name || '');
   // persist to patient record
   const pt=patients.find(p=>p.id===currentId);
   if(pt){
@@ -2183,12 +2182,15 @@ window.refreshBloodPreview = function(){
 };
 window.openBlood = function(){
   const pt=patients.find(p=>p.id===currentId);
-  // restore saved values
-  if(pt && pt.blood){
-    BLOOD_FIELDS.forEach(id=>{ const el=$(id); if(el && pt.blood[id]!=null && el.value==='') el.value=pt.blood[id]; });
-  }
+  // reset/restore per patient so values from a previously opened patient never leak across
+  BLOOD_FIELDS.forEach(id=>{
+    const el=$(id); if(!el) return;
+    if(pt && pt.blood && pt.blood[id]!=null) el.value=pt.blood[id];
+    else if(id==='bf-component') el.value='Packed Red Cells';
+    else el.value='';
+  });
   if(!val('bf-date')){ $('bf-date').value=new Date().toISOString().split('T')[0]; }
-  if(!val('bf-doctor') && window.doctorProfile && doctorProfile.name){ $('bf-doctor').value=doctorProfile.name; }
+  if(!val('bf-doctor') && doctorProfile.name){ $('bf-doctor').value=doctorProfile.name; }
   // pre-fill vitals from latest vitals card if empty
   const map={'bf-pre-bp':'v-bp','bf-pre-pulse':'v-hr','bf-pre-temp':'v-temp','bf-pre-rr':'v-rr'};
   Object.entries(map).forEach(([b,v])=>{ if(!val(b)){ const s=val(v); if(s) $(b).value=s; }});
@@ -3827,9 +3829,10 @@ window.toggleDrugExpand = function(k){
 window.copyDrugName = function(g){
   const t=g; if(navigator.clipboard){ navigator.clipboard.writeText(t).then(()=>showToast('📋 Copied: '+t)); } else showToast(t);
 };
+function drugAiTargetId(k){ return 'pk-ai-' + encodeURIComponent(k).replace(/%/g,'_'); }
 window.aiDrugBrief = async function(k){
   const d = PK_DRUGS.find(x=>(x.brand+'|'+x.generic)===k); if(!d) return;
-  const target = document.getElementById('pk-ai-'+CSS.escape(k));
+  const target = document.getElementById(drugAiTargetId(k));
   if(!target) return;
   target.innerHTML='<div style="font-size:11px;color:var(--muted)">⏳ Consulting AI…</div>';
   if(!isNetOnline()){ target.innerHTML='<div style="font-size:11px;color:#ff8fa3">Offline — AI unavailable</div>'; return; }
@@ -3910,7 +3913,7 @@ function renderDrugList(){
             <button class="btn btn-purple" style="font-size:11px;padding:5px 10px" onclick="aiDrugBrief('${keySafe}')">🤖 AI brief${currentId?' (for this patient)':''}</button>
             <button class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="copyDrugName('${d.generic.replace(/'/g,"\\'")}')">📋 Copy generic</button>
           </div>
-          <div id="pk-ai-${key}"></div>
+          <div id="${drugAiTargetId(key)}"></div>
         </div>
       `:''}
     </div>`;
