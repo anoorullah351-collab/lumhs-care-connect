@@ -3829,9 +3829,10 @@ window.toggleDrugExpand = function(k){
 window.copyDrugName = function(g){
   const t=g; if(navigator.clipboard){ navigator.clipboard.writeText(t).then(()=>showToast('📋 Copied: '+t)); } else showToast(t);
 };
+function drugAiTargetId(k){ return 'pk-ai-' + encodeURIComponent(k).replace(/%/g,'_'); }
 window.aiDrugBrief = async function(k){
   const d = PK_DRUGS.find(x=>(x.brand+'|'+x.generic)===k); if(!d) return;
-  const target = document.getElementById('pk-ai-'+CSS.escape(k));
+  const target = document.getElementById(drugAiTargetId(k));
   if(!target) return;
   target.innerHTML='<div style="font-size:11px;color:var(--muted)">⏳ Consulting AI…</div>';
   if(!isNetOnline()){ target.innerHTML='<div style="font-size:11px;color:#ff8fa3">Offline — AI unavailable</div>'; return; }
@@ -3912,7 +3913,7 @@ function renderDrugList(){
             <button class="btn btn-purple" style="font-size:11px;padding:5px 10px" onclick="aiDrugBrief('${keySafe}')">🤖 AI brief${currentId?' (for this patient)':''}</button>
             <button class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="copyDrugName('${d.generic.replace(/'/g,"\\'")}')">📋 Copy generic</button>
           </div>
-          <div id="pk-ai-${key}"></div>
+          <div id="${drugAiTargetId(key)}"></div>
         </div>
       `:''}
     </div>`;
