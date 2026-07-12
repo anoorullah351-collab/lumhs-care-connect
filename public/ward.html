@@ -2046,7 +2046,7 @@ window.submitLogin = function(){
   $('doc-name-badge').textContent = name.substring(0,14);
   updateAcctHead();
   hideLoginGate();
-  unsubFns.forEach(fn=>{ try{fn();}catch{} }); unsubFns=[];
+  teardownRealtime();
   isOnline=false;
   const fbCfg=getSavedFirebaseConfig();
   if(fbCfg) initFirebase(fbCfg);
@@ -2057,7 +2057,7 @@ window.submitLogin = function(){
 window.logoutDoctor = function(){
   if(!confirm('Sign out of this ward? Your local patient data stays on this device.')) return;
   // Tear down realtime subscriptions
-  unsubFns.forEach(fn=>{ try{fn();}catch{} }); unsubFns=[];
+  teardownRealtime();
   isOnline=false;
   try{ setSyncStatus('offline'); }catch{}
   const prevName = doctorProfile.name;
@@ -2070,7 +2070,7 @@ window.logoutDoctor = function(){
 
 window.switchWard = function(){
   // Keep name/role, clear ward, tear down realtime, show login gate to pick another ward
-  unsubFns.forEach(fn=>{ try{fn();}catch{} }); unsubFns=[];
+  teardownRealtime();
   isOnline=false;
   try{ setSyncStatus('offline'); }catch{}
   const keptName = doctorProfile.name;
@@ -2116,7 +2116,7 @@ window.saveDoctorProfile = function(){
   updateAcctHead();
   $m('modal-doctor').classList.remove('show');
   if(wardChanged){
-    unsubFns.forEach(fn=>{ try{fn();}catch{} }); unsubFns=[];
+    teardownRealtime();
     isOnline=false;
     const fbCfg=getSavedFirebaseConfig();
     if(fbCfg) initFirebase(fbCfg);
