@@ -1970,18 +1970,125 @@ window.clearActivityLocal = function(){
   $('activity-feed').innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Feed cleared locally</div>';
 };
 
-// ─── DOCTOR PROFILE ──────────────────────────────────────────
+// ─── DOCTOR PROFILE / LOGIN ──────────────────────────────────
+const RECENT_WARDS_KEY = 'wardfu_recent_wards_v1';
+function getRecentWards(){ try{ return JSON.parse(localStorage.getItem(RECENT_WARDS_KEY))||[]; }catch{ return []; } }
+function pushRecentWard(code){
+  if(!code) return;
+  let list = getRecentWards().filter(c=>c!==code);
+  list.unshift(code);
+  list = list.slice(0,5);
+  localStorage.setItem(RECENT_WARDS_KEY, JSON.stringify(list));
+}
+function removeRecentWard(code){
+  const list = getRecentWards().filter(c=>c!==code);
+  localStorage.setItem(RECENT_WARDS_KEY, JSON.stringify(list));
+  renderRecentWards();
+}
+window.removeRecentWard = removeRecentWard;
+function renderRecentWards(){
+  const wrap = $('login-recent'); const chips = $('login-recent-chips');
+  if(!wrap||!chips) return;
+  const list = getRecentWards();
+  if(!list.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  chips.innerHTML = list.map(c=>`<span class="recent-chip" onclick="document.getElementById('login-ward').value='${c}'"><span>🏥 ${c}</span><span class="rx" onclick="event.stopPropagation();removeRecentWard('${c}')">×</span></span>`).join('');
+}
+
+function showLoginGate(prefillName){
+  const g = $('login-gate'); if(!g) return;
+  $('login-name').value = prefillName || doctorProfile.name || '';
+  $('login-role').value = doctorProfile.role || 'House Officer';
+  $('login-ward').value = doctorProfile.wardCode || '';
+  renderRecentWards();
+  g.classList.add('show');
+  setTimeout(()=>$('login-name').focus(), 100);
+}
+function hideLoginGate(){ const g=$('login-gate'); if(g) g.classList.remove('show'); }
+window.showLoginGate = showLoginGate;
+
+function updateAcctHead(){
+  if(!doctorProfile.name) return;
+  const n=$('acct-head-name'), r=$('acct-head-role'), w=$('acct-head-ward');
+  if(n) n.textContent = doctorProfile.name;
+  if(r) r.textContent = doctorProfile.role || '—';
+  if(w) w.textContent = '🏥 ' + (doctorProfile.wardCode || '—');
+}
+
 function loadDoctorProfile(){
   try { doctorProfile=JSON.parse(localStorage.getItem(DOCTOR_KEY))||{name:'',role:'House Officer',wardCode:''}; } catch { doctorProfile={name:'',role:'House Officer',wardCode:''}; }
-  if(!doctorProfile.name){
-    setTimeout(()=>$m('modal-doctor').classList.add('show'), 600);
+  if(!doctorProfile.name || !doctorProfile.wardCode){
+    showLoginGate();
   } else {
-    $('doc-name-badge').textContent=doctorProfile.name.substring(0,12);
+    $('doc-name-badge').textContent=doctorProfile.name.substring(0,14);
+    updateAcctHead();
     const fbCfg=getSavedFirebaseConfig();
     if(fbCfg) initFirebase(fbCfg);
     else { loadLocalPatients(); renderList(); setSyncStatus('offline'); }
   }
 }
+
+window.submitLogin = function(){
+  const name = $('login-name').value.trim();
+  const role = $('login-role').value;
+  const wardCode = $('login-ward').value.trim().toUpperCase();
+  if(!name){ showToast('⚠️ Please enter your name'); $('login-name').focus(); return; }
+  if(!wardCode){ showToast('⚠️ Please enter a ward code'); $('login-ward').focus(); return; }
+  doctorProfile = { name, role, wardCode };
+  localStorage.setItem(DOCTOR_KEY, JSON.stringify(doctorProfile));
+  pushRecentWard(wardCode);
+  $('doc-name-badge').textContent = name.substring(0,14);
+  updateAcctHead();
+  hideLoginGate();
+  unsubFns.forEach(fn=>{ try{fn();}catch{} }); unsubFns=[];
+  isOnline=false;
+  const fbCfg=getSavedFirebaseConfig();
+  if(fbCfg) initFirebase(fbCfg);
+  else { loadLocalPatients(); renderList(); setSyncStatus('offline'); }
+  showToast(`👋 Welcome, ${name} · ${wardCode}`);
+};
+
+window.logoutDoctor = function(){
+  if(!confirm('Sign out of this ward? Your local patient data stays on this device.')) return;
+  // Tear down realtime subscriptions
+  unsubFns.forEach(fn=>{ try{fn();}catch{} }); unsubFns=[];
+  isOnline=false;
+  try{ setSyncStatus('offline'); }catch{}
+  const prevName = doctorProfile.name;
+  doctorProfile = { name:'', role:'House Officer', wardCode:'' };
+  localStorage.removeItem(DOCTOR_KEY);
+  $('doc-name-badge').textContent = 'Sign in';
+  showLoginGate('');
+  showToast(`👋 Signed out${prevName?' — '+prevName:''}`);
+};
+
+window.switchWard = function(){
+  // Keep name/role, clear ward, tear down realtime, show login gate to pick another ward
+  unsubFns.forEach(fn=>{ try{fn();}catch{} }); unsubFns=[];
+  isOnline=false;
+  try{ setSyncStatus('offline'); }catch{}
+  const keptName = doctorProfile.name;
+  doctorProfile = { ...doctorProfile, wardCode:'' };
+  localStorage.setItem(DOCTOR_KEY, JSON.stringify(doctorProfile));
+  showLoginGate(keptName);
+};
+
+window.toggleAcctMenu = function(e){
+  if(e) e.stopPropagation();
+  const m = $('acct-menu'); if(!m) return;
+  if(!doctorProfile.name){ showLoginGate(); return; }
+  updateAcctHead();
+  m.classList.toggle('show');
+};
+window.closeAcctMenu = function(){ const m=$('acct-menu'); if(m) m.classList.remove('show'); };
+document.addEventListener('click', ()=>window.closeAcctMenu());
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') window.closeAcctMenu(); });
+// Submit login on Enter
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Enter' && $('login-gate') && $('login-gate').classList.contains('show')){
+    const t=e.target; if(t && (t.id==='login-name'||t.id==='login-ward'||t.id==='login-role')){ e.preventDefault(); window.submitLogin(); }
+  }
+});
 
 window.showDoctorModal = function(){
   $('doctor-name-input').value=doctorProfile.name||'';
@@ -1993,19 +2100,23 @@ window.showDoctorModal = function(){
 window.saveDoctorProfile = function(){
   const name=$('doctor-name-input').value.trim();
   const role=$('doctor-role-input').value;
-  const wardCode=$('ward-code-input').value.trim().toUpperCase()||'LUMHS-SURGERY';
+  const wardCode=$('ward-code-input').value.trim().toUpperCase()||doctorProfile.wardCode||'LUMHS-SURGERY';
   if(!name){ showToast('⚠️ Please enter your name'); return; }
+  const wardChanged = wardCode !== doctorProfile.wardCode;
   doctorProfile={name,role,wardCode};
   localStorage.setItem(DOCTOR_KEY,JSON.stringify(doctorProfile));
-  $('doc-name-badge').textContent=name.substring(0,12);
+  pushRecentWard(wardCode);
+  $('doc-name-badge').textContent=name.substring(0,14);
+  updateAcctHead();
   $m('modal-doctor').classList.remove('show');
-  // Unsubscribe previous listeners
-  unsubFns.forEach(fn=>{ try{fn();}catch{} }); unsubFns=[];
-  isOnline=false;
-  const fbCfg=getSavedFirebaseConfig();
-  if(fbCfg) initFirebase(fbCfg);
-  else { loadLocalPatients(); renderList(); setSyncStatus('offline'); showFirebaseSetup(); }
-  showToast(`✅ Set as ${name} · ${role}`);
+  if(wardChanged){
+    unsubFns.forEach(fn=>{ try{fn();}catch{} }); unsubFns=[];
+    isOnline=false;
+    const fbCfg=getSavedFirebaseConfig();
+    if(fbCfg) initFirebase(fbCfg);
+    else { loadLocalPatients(); renderList(); setSyncStatus('offline'); }
+  }
+  showToast(`✅ Saved · ${name}`);
 };
 
 // ─── NAVIGATION ──────────────────────────────────────────────
