@@ -1577,6 +1577,44 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
      MODALS
 ═══════════════════════════════════════════════════════════ -->
 
+<!-- Login Gate (full-screen, shown when no doctor profile) -->
+<div class="login-gate" id="login-gate">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-logo">🩺</div>
+      <div class="login-title">Ward Follow-Up</div>
+      <div class="login-sub">LUMHS Jamshoro · Surgery</div>
+      <div class="login-tag">Secure team sign-in</div>
+    </div>
+    <div class="login-field">
+      <label>Your name</label>
+      <input type="text" id="login-name" placeholder="e.g. Dr. Noorullah" autocomplete="name">
+    </div>
+    <div class="login-field">
+      <label>Role</label>
+      <select id="login-role">
+        <option>House Officer</option>
+        <option>PG Resident (Year 1)</option>
+        <option>PG Resident (Year 2)</option>
+        <option>PG Resident (Year 3)</option>
+        <option>Senior Registrar</option>
+        <option>Consultant</option>
+      </select>
+    </div>
+    <div class="login-field">
+      <label>Ward code</label>
+      <input type="text" id="login-ward" placeholder="e.g. LUMHS-SURGERY-A" autocomplete="off" style="text-transform:uppercase">
+      <div class="login-hint">Everyone using the same ward code shares the live patient list. Ask your team lead for it.</div>
+    </div>
+    <button class="login-cta" onclick="submitLogin()">🔓 Enter Ward</button>
+    <div class="login-recent" id="login-recent" style="display:none">
+      <div class="login-recent-title">Recent wards</div>
+      <div id="login-recent-chips"></div>
+    </div>
+    <div class="login-foot">© LUMHS Surgical Unit III · Ward Navigator</div>
+  </div>
+</div>
+
 <!-- Doctor Setup Modal -->
 <div class="modal-overlay" id="modal-doctor">
   <div class="modal">
