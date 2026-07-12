@@ -310,6 +310,46 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 .modal p{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
 .modal-btns{display:flex;gap:8px;margin-top:16px;}
 .modal-btns .btn{flex:1;justify-content:center;}
+
+/* ── LOGIN GATE ─────────────────────────────────────────── */
+.login-gate{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;background:radial-gradient(1200px 700px at 20% 10%,rgba(56,217,245,.14),transparent 60%),radial-gradient(900px 600px at 90% 90%,rgba(167,139,250,.14),transparent 55%),linear-gradient(160deg,#050a17 0%,#0a1226 50%,#0d1731 100%);overflow-y:auto;}
+.login-gate.show{display:flex;}
+.login-gate::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(56,217,245,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(56,217,245,.04) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%);}
+.login-card{position:relative;width:100%;max-width:430px;background:linear-gradient(180deg,rgba(23,34,64,.85),rgba(17,29,53,.9));border:1px solid rgba(100,160,255,.22);border-radius:22px;padding:28px 24px 22px;box-shadow:0 30px 80px -20px rgba(0,0,0,.7),0 0 0 1px rgba(56,217,245,.05) inset,0 0 60px -20px rgba(56,217,245,.35);backdrop-filter:blur(14px);}
+.login-brand{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:22px;}
+.login-logo{width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,var(--cyan),#4f6ef7 55%,var(--purple));display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 12px 30px -6px rgba(56,217,245,.6),inset 0 1px 0 rgba(255,255,255,.25);animation:topPulse 4s ease-in-out infinite;margin-bottom:14px;}
+.login-title{font-size:22px;font-weight:700;letter-spacing:-.4px;background:linear-gradient(90deg,#fff,#bcd6ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.login-sub{font-size:12px;color:var(--muted);margin-top:4px;font-family:var(--mono);letter-spacing:.02em;}
+.login-tag{margin-top:10px;font-size:10px;color:var(--cyan);background:var(--cyan-dim);border:1px solid var(--cyan);padding:3px 10px;border-radius:20px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;}
+.login-field{margin-bottom:12px;}
+.login-field label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;font-family:var(--mono);margin-bottom:6px;}
+.login-field input,.login-field select{width:100%;background:rgba(6,12,26,.7);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s;}
+.login-field input:focus,.login-field select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(56,217,245,.15);}
+.login-hint{font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.45;}
+.login-cta{width:100%;margin-top:16px;padding:13px 16px;border-radius:12px;border:none;cursor:pointer;font-family:var(--font);font-size:14px;font-weight:700;color:#04101f;background:linear-gradient(135deg,var(--cyan),#4f6ef7);box-shadow:0 12px 28px -8px rgba(56,217,245,.55),inset 0 1px 0 rgba(255,255,255,.35);letter-spacing:.02em;transition:transform .1s;}
+.login-cta:active{transform:scale(.98);}
+.login-recent{margin-top:16px;padding-top:14px;border-top:1px dashed var(--border2);}
+.login-recent-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);margin-bottom:8px;}
+.recent-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:20px;padding:5px 11px 5px 9px;font-size:11.5px;font-family:var(--mono);margin:0 6px 6px 0;cursor:pointer;transition:all .15s;}
+.recent-chip:hover{border-color:var(--cyan);background:var(--cyan-dim);}
+.recent-chip .rx{opacity:.5;font-size:12px;padding:0 2px;}
+.recent-chip .rx:hover{color:var(--red);opacity:1;}
+.login-foot{text-align:center;font-size:10px;color:var(--dim);margin-top:14px;font-family:var(--mono);}
+
+/* ── ACCOUNT MENU ──────────────────────────────────────── */
+.doctor-badge{position:relative;}
+.acct-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:230px;background:linear-gradient(180deg,var(--surface2),var(--surface));border:1px solid var(--border2);border-radius:12px;padding:6px;box-shadow:0 20px 50px -10px rgba(0,0,0,.7),0 0 0 1px rgba(56,217,245,.05) inset;z-index:200;display:none;}
+.acct-menu.show{display:block;animation:acctFade .15s ease-out;}
+@keyframes acctFade{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+.acct-head{padding:10px 12px 12px;border-bottom:1px solid var(--border);margin-bottom:6px;}
+.acct-head-name{font-size:13px;font-weight:700;color:var(--text);}
+.acct-head-role{font-size:10.5px;color:var(--muted);margin-top:2px;font-family:var(--mono);}
+.acct-head-ward{margin-top:8px;font-size:10px;color:var(--cyan);background:var(--cyan-dim);border:1px solid var(--cyan);padding:3px 8px;border-radius:12px;font-family:var(--mono);display:inline-block;letter-spacing:.03em;}
+.acct-item{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:none;color:var(--text);font-family:var(--font);font-size:13px;padding:9px 12px;border-radius:8px;cursor:pointer;text-align:left;transition:background .12s;}
+.acct-item:hover{background:var(--surface3);}
+.acct-item.danger{color:var(--red);}
+.acct-item.danger:hover{background:var(--red-dim);}
+.acct-item .ai{font-size:15px;width:18px;text-align:center;}
 .modal-setup-steps{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;font-size:11px;color:var(--muted);line-height:2;font-family:var(--mono);}
 .modal-setup-steps a{color:var(--cyan);text-decoration:none;}
 .setup-step{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;}
@@ -425,9 +465,19 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     <button class="refresh-btn" id="refresh-btn" onclick="refreshAllData()" title="Refresh data" aria-label="Refresh">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
     </button>
-    <div class="doctor-badge" onclick="showDoctorModal()">
+    <div class="doctor-badge" onclick="toggleAcctMenu(event)">
       <div class="doc-dot" id="sync-dot"></div>
-      <div class="doc-name" id="doc-name-badge">Set Name</div>
+      <div class="doc-name" id="doc-name-badge">Sign in</div>
+      <div class="acct-menu" id="acct-menu" onclick="event.stopPropagation()">
+        <div class="acct-head">
+          <div class="acct-head-name" id="acct-head-name">—</div>
+          <div class="acct-head-role" id="acct-head-role">—</div>
+          <div class="acct-head-ward" id="acct-head-ward">—</div>
+        </div>
+        <button class="acct-item" onclick="closeAcctMenu();showDoctorModal()"><span class="ai">✏️</span>Edit profile</button>
+        <button class="acct-item" onclick="closeAcctMenu();switchWard()"><span class="ai">🔀</span>Switch ward</button>
+        <button class="acct-item danger" onclick="closeAcctMenu();logoutDoctor()"><span class="ai">🚪</span>Sign out</button>
+      </div>
     </div>
     <div class="clock-badge" id="live-clock">--:--</div>
   </div>
@@ -1527,6 +1577,44 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
      MODALS
 ═══════════════════════════════════════════════════════════ -->
 
+<!-- Login Gate (full-screen, shown when no doctor profile) -->
+<div class="login-gate" id="login-gate">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-logo">🩺</div>
+      <div class="login-title">Ward Follow-Up</div>
+      <div class="login-sub">LUMHS Jamshoro · Surgery</div>
+      <div class="login-tag">Secure team sign-in</div>
+    </div>
+    <div class="login-field">
+      <label>Your name</label>
+      <input type="text" id="login-name" placeholder="e.g. Dr. Noorullah" autocomplete="name">
+    </div>
+    <div class="login-field">
+      <label>Role</label>
+      <select id="login-role">
+        <option>House Officer</option>
+        <option>PG Resident (Year 1)</option>
+        <option>PG Resident (Year 2)</option>
+        <option>PG Resident (Year 3)</option>
+        <option>Senior Registrar</option>
+        <option>Consultant</option>
+      </select>
+    </div>
+    <div class="login-field">
+      <label>Ward code</label>
+      <input type="text" id="login-ward" placeholder="e.g. LUMHS-SURGERY-A" autocomplete="off" style="text-transform:uppercase">
+      <div class="login-hint">Everyone using the same ward code shares the live patient list. Ask your team lead for it.</div>
+    </div>
+    <button class="login-cta" onclick="submitLogin()">🔓 Enter Ward</button>
+    <div class="login-recent" id="login-recent" style="display:none">
+      <div class="login-recent-title">Recent wards</div>
+      <div id="login-recent-chips"></div>
+    </div>
+    <div class="login-foot">© LUMHS Surgical Unit III · Ward Navigator</div>
+  </div>
+</div>
+
 <!-- Doctor Setup Modal -->
 <div class="modal-overlay" id="modal-doctor">
   <div class="modal">
@@ -1882,18 +1970,131 @@ window.clearActivityLocal = function(){
   $('activity-feed').innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Feed cleared locally</div>';
 };
 
-// ─── DOCTOR PROFILE ──────────────────────────────────────────
+// ─── DOCTOR PROFILE / LOGIN ──────────────────────────────────
+if (typeof window.unsubFns === 'undefined') window.unsubFns = [];
+if (typeof unsubFns === 'undefined') { var unsubFns = window.unsubFns; }
+function teardownRealtime(){
+  try { (window.unsubFns||[]).forEach(fn=>{ try{fn();}catch{} }); } catch{}
+  window.unsubFns = []; try{ unsubFns = window.unsubFns; }catch{}
+}
+const RECENT_WARDS_KEY = 'wardfu_recent_wards_v1';
+function getRecentWards(){ try{ return JSON.parse(localStorage.getItem(RECENT_WARDS_KEY))||[]; }catch{ return []; } }
+function pushRecentWard(code){
+  if(!code) return;
+  let list = getRecentWards().filter(c=>c!==code);
+  list.unshift(code);
+  list = list.slice(0,5);
+  localStorage.setItem(RECENT_WARDS_KEY, JSON.stringify(list));
+}
+function removeRecentWard(code){
+  const list = getRecentWards().filter(c=>c!==code);
+  localStorage.setItem(RECENT_WARDS_KEY, JSON.stringify(list));
+  renderRecentWards();
+}
+window.removeRecentWard = removeRecentWard;
+function renderRecentWards(){
+  const wrap = $('login-recent'); const chips = $('login-recent-chips');
+  if(!wrap||!chips) return;
+  const list = getRecentWards();
+  if(!list.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  chips.innerHTML = list.map(c=>`<span class="recent-chip" onclick="document.getElementById('login-ward').value='${c}'"><span>🏥 ${c}</span><span class="rx" onclick="event.stopPropagation();removeRecentWard('${c}')">×</span></span>`).join('');
+}
+
+function showLoginGate(prefillName){
+  const g = $('login-gate'); if(!g) return;
+  $('login-name').value = prefillName || doctorProfile.name || '';
+  $('login-role').value = doctorProfile.role || 'House Officer';
+  $('login-ward').value = doctorProfile.wardCode || '';
+  renderRecentWards();
+  g.classList.add('show');
+  setTimeout(()=>$('login-name').focus(), 100);
+}
+function hideLoginGate(){ const g=$('login-gate'); if(g) g.classList.remove('show'); }
+window.showLoginGate = showLoginGate;
+
+function updateAcctHead(){
+  if(!doctorProfile.name) return;
+  const n=$('acct-head-name'), r=$('acct-head-role'), w=$('acct-head-ward');
+  if(n) n.textContent = doctorProfile.name;
+  if(r) r.textContent = doctorProfile.role || '—';
+  if(w) w.textContent = '🏥 ' + (doctorProfile.wardCode || '—');
+}
+
 function loadDoctorProfile(){
   try { doctorProfile=JSON.parse(localStorage.getItem(DOCTOR_KEY))||{name:'',role:'House Officer',wardCode:''}; } catch { doctorProfile={name:'',role:'House Officer',wardCode:''}; }
-  if(!doctorProfile.name){
-    setTimeout(()=>$m('modal-doctor').classList.add('show'), 600);
+  if(!doctorProfile.name || !doctorProfile.wardCode){
+    showLoginGate();
   } else {
-    $('doc-name-badge').textContent=doctorProfile.name.substring(0,12);
+    $('doc-name-badge').textContent=doctorProfile.name.substring(0,14);
+    updateAcctHead();
     const fbCfg=getSavedFirebaseConfig();
     if(fbCfg) initFirebase(fbCfg);
     else { loadLocalPatients(); renderList(); setSyncStatus('offline'); }
   }
 }
+
+window.submitLogin = function(){
+  const name = $('login-name').value.trim();
+  const role = $('login-role').value;
+  const wardCode = $('login-ward').value.trim().toUpperCase();
+  if(!name){ showToast('⚠️ Please enter your name'); $('login-name').focus(); return; }
+  if(!wardCode){ showToast('⚠️ Please enter a ward code'); $('login-ward').focus(); return; }
+  doctorProfile = { name, role, wardCode };
+  localStorage.setItem(DOCTOR_KEY, JSON.stringify(doctorProfile));
+  pushRecentWard(wardCode);
+  $('doc-name-badge').textContent = name.substring(0,14);
+  updateAcctHead();
+  hideLoginGate();
+  teardownRealtime();
+  isOnline=false;
+  const fbCfg=getSavedFirebaseConfig();
+  if(fbCfg) initFirebase(fbCfg);
+  else { loadLocalPatients(); renderList(); setSyncStatus('offline'); }
+  showToast(`👋 Welcome, ${name} · ${wardCode}`);
+};
+
+window.logoutDoctor = function(){
+  if(!confirm('Sign out of this ward? Your local patient data stays on this device.')) return;
+  // Tear down realtime subscriptions
+  teardownRealtime();
+  isOnline=false;
+  try{ setSyncStatus('offline'); }catch{}
+  const prevName = doctorProfile.name;
+  doctorProfile = { name:'', role:'House Officer', wardCode:'' };
+  localStorage.removeItem(DOCTOR_KEY);
+  $('doc-name-badge').textContent = 'Sign in';
+  showLoginGate('');
+  showToast(`👋 Signed out${prevName?' — '+prevName:''}`);
+};
+
+window.switchWard = function(){
+  // Keep name/role, clear ward, tear down realtime, show login gate to pick another ward
+  teardownRealtime();
+  isOnline=false;
+  try{ setSyncStatus('offline'); }catch{}
+  const keptName = doctorProfile.name;
+  doctorProfile = { ...doctorProfile, wardCode:'' };
+  localStorage.setItem(DOCTOR_KEY, JSON.stringify(doctorProfile));
+  showLoginGate(keptName);
+};
+
+window.toggleAcctMenu = function(e){
+  if(e) e.stopPropagation();
+  const m = $('acct-menu'); if(!m) return;
+  if(!doctorProfile.name){ showLoginGate(); return; }
+  updateAcctHead();
+  m.classList.toggle('show');
+};
+window.closeAcctMenu = function(){ const m=$('acct-menu'); if(m) m.classList.remove('show'); };
+document.addEventListener('click', ()=>window.closeAcctMenu());
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') window.closeAcctMenu(); });
+// Submit login on Enter
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Enter' && $('login-gate') && $('login-gate').classList.contains('show')){
+    const t=e.target; if(t && (t.id==='login-name'||t.id==='login-ward'||t.id==='login-role')){ e.preventDefault(); window.submitLogin(); }
+  }
+});
 
 window.showDoctorModal = function(){
   $('doctor-name-input').value=doctorProfile.name||'';
@@ -1905,19 +2106,23 @@ window.showDoctorModal = function(){
 window.saveDoctorProfile = function(){
   const name=$('doctor-name-input').value.trim();
   const role=$('doctor-role-input').value;
-  const wardCode=$('ward-code-input').value.trim().toUpperCase()||'LUMHS-SURGERY';
+  const wardCode=$('ward-code-input').value.trim().toUpperCase()||doctorProfile.wardCode||'LUMHS-SURGERY';
   if(!name){ showToast('⚠️ Please enter your name'); return; }
+  const wardChanged = wardCode !== doctorProfile.wardCode;
   doctorProfile={name,role,wardCode};
   localStorage.setItem(DOCTOR_KEY,JSON.stringify(doctorProfile));
-  $('doc-name-badge').textContent=name.substring(0,12);
+  pushRecentWard(wardCode);
+  $('doc-name-badge').textContent=name.substring(0,14);
+  updateAcctHead();
   $m('modal-doctor').classList.remove('show');
-  // Unsubscribe previous listeners
-  unsubFns.forEach(fn=>{ try{fn();}catch{} }); unsubFns=[];
-  isOnline=false;
-  const fbCfg=getSavedFirebaseConfig();
-  if(fbCfg) initFirebase(fbCfg);
-  else { loadLocalPatients(); renderList(); setSyncStatus('offline'); showFirebaseSetup(); }
-  showToast(`✅ Set as ${name} · ${role}`);
+  if(wardChanged){
+    teardownRealtime();
+    isOnline=false;
+    const fbCfg=getSavedFirebaseConfig();
+    if(fbCfg) initFirebase(fbCfg);
+    else { loadLocalPatients(); renderList(); setSyncStatus('offline'); }
+  }
+  showToast(`✅ Saved · ${name}`);
 };
 
 // ─── NAVIGATION ──────────────────────────────────────────────
