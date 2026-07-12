@@ -1971,6 +1971,12 @@ window.clearActivityLocal = function(){
 };
 
 // ─── DOCTOR PROFILE / LOGIN ──────────────────────────────────
+if (typeof window.unsubFns === 'undefined') window.unsubFns = [];
+if (typeof unsubFns === 'undefined') { var unsubFns = window.unsubFns; }
+function teardownRealtime(){
+  try { (window.unsubFns||[]).forEach(fn=>{ try{fn();}catch{} }); } catch{}
+  window.unsubFns = []; try{ unsubFns = window.unsubFns; }catch{}
+}
 const RECENT_WARDS_KEY = 'wardfu_recent_wards_v1';
 function getRecentWards(){ try{ return JSON.parse(localStorage.getItem(RECENT_WARDS_KEY))||[]; }catch{ return []; } }
 function pushRecentWard(code){
