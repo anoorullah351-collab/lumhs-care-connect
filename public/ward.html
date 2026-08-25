@@ -564,7 +564,41 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
           <div class="field full"><label>Diagnosis / Working Dx</label><input type="text" id="pt-diag" placeholder="e.g. Perforated appendix, post-lap appy D1" oninput="updateBanner()"></div>
           <div class="field full"><label>Procedure Done</label><input type="text" id="pt-proc" placeholder="e.g. Laparoscopic appendectomy"></div>
           <div class="field"><label>Weight (kg)</label><input type="number" id="pt-weight" placeholder="70" oninput="calcDrugDoses()"></div>
-          <div class="field"><label>Allergies</label><input type="text" id="pt-allergy" placeholder="NKDA / list allergies"></div>
+          <div class="field"><label>Allergies</label><input type="text" id="pt-allergy" placeholder="NKDA / list allergies" oninput="renderAdvisories()"></div>
+          <div class="field"><label>Specialty / Unit</label>
+            <select id="pt-specialty" onchange="applySpecialty()">
+              <option value="">— Use my department —</option>
+              <option value="Surgery">Surgery</option>
+              <option value="Medicine">Medicine</option>
+              <option value="Both">Mixed / Both</option>
+            </select>
+          </div>
+          <div class="field"><label>Code Status</label>
+            <select id="pt-code" onchange="updateBanner()">
+              <option value="">— Not documented —</option>
+              <option>Full resuscitation</option>
+              <option>DNAR / DNACPR</option>
+              <option>Ward-level care only</option>
+              <option>For escalation to HDU/ICU</option>
+            </select>
+          </div>
+          <div class="field"><label>Isolation / Infection</label>
+            <select id="pt-isolation" onchange="updateBanner()">
+              <option value="">None</option>
+              <option>Airborne (TB / COVID)</option>
+              <option>Droplet</option>
+              <option>Contact (MRSA / C. difficile / ESBL)</option>
+              <option>Protective (neutropenic)</option>
+            </select>
+          </div>
+          <div class="field"><label>Fall / Pressure Risk</label>
+            <select id="pt-fallrisk" onchange="updateBanner()">
+              <option value="">Not assessed</option>
+              <option>Low risk</option>
+              <option>Moderate risk</option>
+              <option>High risk — bed rails &amp; 2-hourly turns</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -630,8 +664,60 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 
 
 
-      <!-- ── OPERATIVE NOTE ── -->
+      <!-- ── PROBLEM LIST (Epic-style) ── -->
       <div class="card">
+        <div class="card-title"><span class="dot dot-cyan"></span>📋 Problem List</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Structured active &amp; resolved problems — drives handover, progress notes and discharge summary.</div>
+        <div class="grid2" style="gap:8px;margin-bottom:10px">
+          <div class="field full"><label>Problem / Diagnosis</label><input type="text" id="prob-text" placeholder="e.g. Community-acquired pneumonia, right lower lobe"></div>
+          <div class="field"><label>Onset</label><input type="text" id="prob-onset" placeholder="e.g. 3 days / 2019"></div>
+          <div class="field"><label>Type</label>
+            <select id="prob-priority">
+              <option value="principal">Principal</option>
+              <option value="active" selected>Active</option>
+              <option value="chronic">Chronic / comorbid</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-outline" style="font-size:12px;padding:7px 12px" onclick="addProblem()">＋ Add Problem</button>
+        <div id="prob-list" style="margin-top:10px"></div>
+      </div>
+
+      <!-- ── BEST PRACTICE ADVISORIES ── -->
+      <div class="card" style="border-color:#4a2b2b">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div class="card-title" style="margin:0;flex:1"><span class="dot dot-red"></span>🔔 Best Practice Advisories</div>
+          <button type="button" class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="renderAdvisories()">🔄 Re-check</button>
+        </div>
+        <div id="bpa-box" style="font-size:12px;color:var(--muted)">Enter vitals and patient data — advisories appear automatically.</div>
+      </div>
+
+      <!-- ── ORDER SETS / SMARTSETS ── -->
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <div class="card-title" style="margin:0;flex:1"><span class="dot dot-orange"></span>⚡ Order Sets (<span id="specialty-tag">Surgery</span>)</div>
+          <button type="button" class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="showSmartPhraseHelp()">✨ SmartPhrases</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">One tap adds a bundle of suggested orders to Shared Orders below. Review, edit or delete each order — final responsibility rests with the treating clinician.</div>
+        <div id="orderset-list"></div>
+      </div>
+
+      <!-- ── SYSTEMS EXAMINATION (Medicine) ── -->
+      <div class="card" id="card-sysexam">
+        <div class="card-title"><span class="dot dot-purple"></span>🩻 Systemic Examination</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Tip: type <b>.cvs</b>, <b>.resp</b>, <b>.abdo</b>, <b>.cns</b>, <b>.norm</b> then press space to auto-expand a normal template.</div>
+        <div class="grid2" style="gap:10px">
+          <div class="field full"><label>General / GPE</label><textarea id="sx-general" placeholder="Conscious, oriented, pallor, jaundice, cyanosis, clubbing, oedema, lymphadenopathy, hydration" style="min-height:50px"></textarea></div>
+          <div class="field full"><label>Cardiovascular</label><textarea id="sx-cvs" placeholder="Pulse, JVP, apex, heart sounds, murmurs, peripheral oedema" style="min-height:50px"></textarea></div>
+          <div class="field full"><label>Respiratory</label><textarea id="sx-resp" placeholder="Trachea, expansion, percussion, breath sounds, added sounds" style="min-height:50px"></textarea></div>
+          <div class="field full"><label>Abdomen / GI</label><textarea id="sx-abdo" placeholder="Inspection, tenderness, organomegaly, ascites, bowel sounds, PR if indicated" style="min-height:50px"></textarea></div>
+          <div class="field full"><label>CNS</label><textarea id="sx-cns" placeholder="GCS, pupils, cranial nerves, tone, power, reflexes, plantars, meningism" style="min-height:50px"></textarea></div>
+          <div class="field full"><label>Other systems / Notes</label><textarea id="sx-other" placeholder="Musculoskeletal, skin, endocrine, obstetric..." style="min-height:45px"></textarea></div>
+        </div>
+      </div>
+
+      <!-- ── OPERATIVE NOTE ── -->
+      <div class="card" id="card-opnote">
         <div class="card-title"><span class="dot dot-red"></span>Operative Note</div>
         <div class="grid2" style="gap:10px">
           <div class="field"><label>Date of Surgery</label><input type="date" id="op-date"></div>
@@ -1078,6 +1164,31 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
                 <option value="hypokal">Hypokalaemia</option>
                 <option value="hyponatr">Hyponatraemia</option>
                 <option value="afib">New-onset Atrial Fibrillation</option>
+              </optgroup>
+              <optgroup label="Medicine — Cardio-respiratory">
+                <option value="acs">Acute Coronary Syndrome / Chest Pain</option>
+                <option value="hfapo">Acute Heart Failure / Pulmonary Oedema</option>
+                <option value="copd">COPD Exacerbation</option>
+                <option value="asthma">Acute Severe Asthma</option>
+                <option value="cappneu">Community-Acquired Pneumonia (CURB-65)</option>
+                <option value="pe">Pulmonary Embolism</option>
+                <option value="htncrisis">Hypertensive Emergency</option>
+              </optgroup>
+              <optgroup label="Medicine — Neuro / Metabolic">
+                <option value="stroke">Acute Ischaemic Stroke / TIA</option>
+                <option value="seizure">Status Epilepticus</option>
+                <option value="hepenc">Hepatic Encephalopathy</option>
+                <option value="hyperkal">Hyperkalaemia</option>
+                <option value="thyroid">Thyroid Storm</option>
+                <option value="adrenal">Adrenal Crisis</option>
+              </optgroup>
+              <optgroup label="Medicine — Infection / Other">
+                <option value="meningitis">Acute Bacterial Meningitis</option>
+                <option value="uti">Pyelonephritis / Complicated UTI</option>
+                <option value="tropical">Fever — Dengue / Malaria / Typhoid (Pakistan)</option>
+                <option value="tb">Pulmonary Tuberculosis</option>
+                <option value="anaphylaxis">Anaphylaxis</option>
+                <option value="ckd">CKD Decompensation</option>
               </optgroup>
             </select>
           </div>
@@ -1583,7 +1694,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     <div class="login-brand">
       <div class="login-logo">🩺</div>
       <div class="login-title">Ward Follow-Up</div>
-      <div class="login-sub">LUMHS Jamshoro · Surgery</div>
+      <div class="login-sub">LUMHS Jamshoro · Surgery &amp; Medicine</div>
       <div class="login-tag">Secure team sign-in</div>
     </div>
     <div class="login-field">
@@ -1600,6 +1711,15 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         <option>Senior Registrar</option>
         <option>Consultant</option>
       </select>
+    </div>
+    <div class="login-field">
+      <label>Department</label>
+      <select id="login-dept">
+        <option>Surgery</option>
+        <option>Medicine</option>
+        <option>Both</option>
+      </select>
+      <div class="login-hint">Sets the default order sets, exam template and guidance protocols. You can change it per patient.</div>
     </div>
     <div class="login-field">
       <label>Ward code</label>
@@ -2271,6 +2391,8 @@ window.newPatient = function(){
 
 // ─── FIELDS LIST ─────────────────────────────────────────────
 const FIELDS=['pt-name','pt-age','pt-cr','pt-bed','pt-admdate','pt-consult','pt-cc','pt-hpi','pt-diag','pt-proc','pt-weight','pt-allergy',
+  'pt-specialty','pt-code','pt-isolation','pt-fallrisk',
+  'sx-general','sx-cvs','sx-resp','sx-abdo','sx-cns','sx-other',
   'hx-pmh','hx-surgical','hx-comorbid','hx-smoking','hx-alcohol','hx-packyears','hx-drugs','hx-meds','hx-family','hx-functional',
   'op-date','op-time','op-procedure','op-diag','op-surgeon','op-assist','op-anaesth','op-anaesth-type','op-incision','op-position','op-findings','op-steps','op-bloodloss','op-fluids','op-drains','op-specimens','op-complications','op-postop',
   'v-bp','v-hr','v-rr','v-temp','v-spo2','v-gcs','v-bsg','v-uo','v-drain','v-pain',
@@ -3486,6 +3608,177 @@ const GUIDANCE_PROTOCOLS = {
     management:['Treat reversible causes: correct K⁺ (target >4.0), Mg²⁺ (target >0.8 — give 2 g MgSO4 IV even if normal); treat pain, sepsis, hypoxia, fluid overload.','Unstable → synchronised DC cardioversion (after anticoagulation consideration).','Stable + rate control (HR <110): IV Bisoprolol or Metoprolol 5 mg slow IV; or oral Bisoprolol 2.5–5 mg. Digoxin if heart failure / hypotensive (load 500 µg PO/IV then 250 µg in 6 h).','Rhythm control (within 48 h onset, no structural heart disease): IV Amiodarone 300 mg over 1 h then 900 mg over 23 h.','Anticoagulation: CHA₂DS₂-VASc + HAS-BLED. Most post-op AF is transient — discuss with cardiology before starting long-term anticoagulation.'],
     monitor:['Continuous cardiac monitoring; serial ECG.','Daily UEs, Mg²⁺.','Reassess AF persistence at 24, 48, 72 h.'],
     redflags:['Hypotension / chest pain / pulmonary oedema → emergency cardioversion','Stroke risk if AF persists >48 h without anticoagulation']
+  },
+  acs:{
+    title:'Acute Coronary Syndrome / Chest Pain',
+    summary:'Any adult with chest discomfort, dyspnoea, diaphoresis or epigastric pain (esp diabetic, elderly, female) needs an ECG within 10 minutes.',
+    escalate:['STEMI → activate cardiology / PCI pathway immediately; if PCI unavailable within 120 min consider thrombolysis after checking contraindications.','Inform senior for any dynamic ECG change, ongoing pain, arrhythmia or hypotension.'],
+    investigations:['12-lead ECG within 10 min, repeat at 15–30 min if ongoing pain; consider posterior/right-sided leads.','Troponin at presentation and 3 h.','CBC, UEs, glucose, lipids, coag, CXR, echo if available.'],
+    management:['Aspirin 300 mg chewed stat (unless allergy/active bleed).','Second antiplatelet (Clopidogrel 300–600 mg or Ticagrelor 180 mg) per senior/local protocol.','GTN sublingual if SBP >90 and no RV infarct; morphine 2.5–5 mg IV with antiemetic if pain persists.','Oxygen only if SpO₂ <90%.','Anticoagulation (Enoxaparin/Fondaparinux) per pathway in NSTEMI.','Start beta-blocker and high-intensity statin when stable.'],
+    monitor:['Continuous cardiac monitoring, serial ECG and troponin, BP, urine output.','Watch for arrhythmia, cardiogenic shock, mechanical complications.'],
+    redflags:['ST elevation / new LBBB','Hypotension, pulmonary oedema, syncope','Ongoing pain despite therapy']
+  },
+  hfapo:{
+    title:'Acute Heart Failure / Pulmonary Oedema',
+    summary:'Acute breathlessness with orthopnoea, crackles, raised JVP and hypoxia. Identify and treat the precipitant.',
+    escalate:['Senior / ICU review if SpO₂ remains low, exhaustion, hypotension or cardiogenic shock.','Cardiology input for valve disease, ACS-related failure or need for inotropes.'],
+    investigations:['ECG, troponin, BNP/NT-proBNP, CXR, ABG, UEs, LFTs, CBC, TFTs.','Bedside echo if available; daily weights and strict fluid balance.'],
+    management:['Sit upright, high-flow oxygen to target saturations.','IV Furosemide 40–80 mg (higher if on regular diuretic).','GTN infusion if hypertensive and SBP >110.','Consider CPAP/NIV for refractory hypoxia — senior decision.','Fluid restriction 1.5 L/day, salt restriction, urinary catheter for accurate output.','Once stable: ACEi/ARB, beta-blocker, MRA, SGLT2 inhibitor per guideline.'],
+    monitor:['Hourly urine output, daily weight, daily UEs and creatinine.','Repeat ABG if worsening; watch for hypokalaemia from diuresis.'],
+    redflags:['SBP <90 with cold peripheries (cardiogenic shock)','Rising lactate','Exhaustion / falling GCS → intubation risk']
+  },
+  copd:{
+    title:'COPD Exacerbation',
+    summary:'Increased dyspnoea, sputum volume or purulence in a known/likely COPD patient. Beware CO₂ retention with uncontrolled oxygen.',
+    escalate:['Inform senior if pH <7.35 with pCO₂ >6.5 kPa — consider NIV.','ICU referral if pH <7.25, exhaustion or reduced consciousness.'],
+    investigations:['ABG within 30–60 min (record inspired O₂), CXR, ECG, CBC, UEs, CRP, sputum culture if purulent.'],
+    management:['Controlled oxygen — target SpO₂ 88–92% via Venturi.','Nebulised Salbutamol 2.5–5 mg + Ipratropium 500 µg (driven by air if hypercapnic).','Prednisolone 40 mg PO OD × 5 days (or IV hydrocortisone 100 mg if unable to swallow).','Antibiotic if purulent sputum or consolidation, per local antibiogram (e.g. Amoxicillin-clavulanate or Doxycycline).','Consider IV aminophylline only under senior advice.','VTE prophylaxis; treat cardiac comorbidity.'],
+    monitor:['Repeat ABG 1 h after any oxygen change or NIV start.','Monitor GCS, RR, SpO₂ continuously.'],
+    redflags:['Rising pCO₂ with falling pH','Drowsiness / asterixis','Silent chest']
+  },
+  asthma:{
+    title:'Acute Severe Asthma',
+    summary:'Grade severity: severe = PEF 33–50%, RR ≥25, HR ≥110, unable to complete sentences. Life-threatening = PEF <33%, silent chest, cyanosis, exhaustion, normal/high pCO₂.',
+    escalate:['Life-threatening features → immediate senior + ICU involvement.','Any patient needing repeated back-to-back nebulisers must be reviewed by a senior.'],
+    investigations:['PEF before and after treatment, SpO₂, ABG if SpO₂ <92% or life-threatening features, CXR only if pneumothorax/consolidation suspected, UEs (K⁺ falls with salbutamol).'],
+    management:['High-flow oxygen to target SpO₂ 94–98%.','Nebulised Salbutamol 5 mg back-to-back + Ipratropium 500 µg q4–6h.','Prednisolone 40–50 mg PO OD (or Hydrocortisone 100 mg IV q6h) for at least 5 days.','Magnesium sulphate 2 g IV over 20 min in severe/life-threatening cases.','Consider IV salbutamol/aminophylline in ICU setting only.','Treat trigger; never sedate outside ICU.'],
+    monitor:['PEF pre/post bronchodilator, continuous SpO₂, serial ABG, K⁺.'],
+    redflags:['Normal or rising pCO₂','Silent chest / feeble effort','Exhaustion, bradycardia, hypotension']
+  },
+  cappneu:{
+    title:'Community-Acquired Pneumonia (CURB-65)',
+    summary:'CURB-65: Confusion, Urea >7, RR ≥30, BP <90/60, age ≥65. 0–1 outpatient, 2 inpatient, ≥3 severe / consider ICU.',
+    escalate:['CURB-65 ≥3, hypoxia despite oxygen, or shock → senior and ICU review.'],
+    investigations:['CXR, CBC, UEs, LFTs, CRP, blood cultures × 2, sputum gram stain & culture, SpO₂/ABG, HIV & sputum AFB where relevant.'],
+    management:['Antibiotic within 4 hours, guided by severity & local antibiogram: mild — Amoxicillin ± Macrolide; moderate/severe — IV Ceftriaxone 1–2 g OD + Macrolide/Doxycycline; consider anti-pseudomonal cover if bronchiectasis or recent hospitalisation.','Oxygen to target saturation, IV fluids, analgesia/antipyretic.','VTE prophylaxis; chest physiotherapy; early mobilisation.','Review at 48–72 h for oral switch and de-escalation.'],
+    monitor:['NEWS2 4–6 hourly, CRP trend, repeat CXR at 6 weeks if smoker/>50y.'],
+    redflags:['Empyema / parapneumonic effusion','Persistent fever after 72 h of antibiotics','Multi-lobar involvement with hypoxia']
+  },
+  pe:{
+    title:'Pulmonary Embolism',
+    summary:'Sudden dyspnoea, pleuritic pain, tachycardia, hypoxia or syncope — especially post-op, immobile, malignancy or pregnancy. Use Wells score + PERC.',
+    escalate:['Massive PE (hypotension, RV strain) → immediate senior; consider thrombolysis.','Refer for CTPA urgently; discuss with radiology when pregnant or in renal failure (V/Q scan).'],
+    investigations:['ECG (sinus tachycardia, S1Q3T3), ABG, CXR, troponin, BNP, D-dimer only if low/intermediate probability, CTPA if likely, doppler legs, echo if unstable.'],
+    management:['Oxygen and analgesia.','Start therapeutic anticoagulation immediately if suspicion high and no contraindication: Enoxaparin 1 mg/kg SC q12h or DOAC per protocol.','Massive PE with shock → thrombolysis (Alteplase) per senior decision.','IVC filter only if anticoagulation absolutely contraindicated.'],
+    monitor:['Continuous monitoring; repeat vitals, oxygen requirement, renal function; plan duration of anticoagulation (≥3 months).'],
+    redflags:['Hypotension / syncope','RV strain on echo or ECG','Rising lactate']
+  },
+  htncrisis:{
+    title:'Hypertensive Emergency',
+    summary:'Severe hypertension WITH acute end-organ damage (encephalopathy, stroke, ACS, pulmonary oedema, AKI, eclampsia, aortic dissection). Without organ damage it is urgency — lower BP slowly over days.',
+    escalate:['All true emergencies need senior/ICU review and often IV therapy with invasive monitoring.','Suspected aortic dissection or eclampsia → immediate surgical / obstetric involvement.'],
+    investigations:['ECG, troponin, UEs, urinalysis, fundoscopy, CXR, CT brain if neurological signs, CT aorta if dissection suspected.'],
+    management:['Reduce MAP by no more than 20–25% in the first hour (exceptions: dissection — target SBP <120 rapidly; eclampsia — MgSO₄ + labetalol).','IV Labetalol infusion, GTN, or Nicardipine as available.','Avoid rapid BP lowering in acute ischaemic stroke unless >220/120 or for thrombolysis.','Identify cause: non-adherence, renal disease, phaeochromocytoma, drugs, pre-eclampsia.'],
+    monitor:['BP every 5–15 min initially, urine output, neurological status, renal function.'],
+    redflags:['Chest/back tearing pain (dissection)','Papilloedema, seizures, confusion','Pulmonary oedema']
+  },
+  stroke:{
+    title:'Acute Ischaemic Stroke / TIA',
+    summary:'Sudden focal neurological deficit. Time is brain — establish exact onset time and get an urgent CT brain.',
+    escalate:['Activate stroke pathway; senior/neurology review immediately for thrombolysis or thrombectomy assessment.'],
+    investigations:['Urgent non-contrast CT brain, capillary glucose, ECG, CBC, UEs, coag/INR, troponin, lipids, HbA1c, carotid doppler, echo.','NIHSS score documented.'],
+    management:['Thrombolysis (Alteplase/Tenecteplase) within 4.5 h if eligible; thrombectomy for large-vessel occlusion up to 24 h in selected cases.','If not for thrombolysis: Aspirin 300 mg (after CT excludes bleed) for 14 days then long-term antiplatelet.','Nil by mouth until swallow screen; NG feeding if unsafe swallow.','Do not lower BP aggressively unless >220/120 or thrombolysis planned (<185/110).','Glycaemic control, normothermia, VTE prophylaxis (intermittent compression first 48 h), early physiotherapy/OT/SALT.'],
+    monitor:['Neuro observations 15-min → hourly, GCS, BP, glucose, swallow, pressure areas.'],
+    redflags:['Haemorrhage on CT','Rapid GCS drop / signs of raised ICP','Malignant MCA syndrome']
+  },
+  seizure:{
+    title:'Status Epilepticus',
+    summary:'Seizure >5 minutes or repeated seizures without recovery. Treat immediately along a timed protocol.',
+    escalate:['Call senior + anaesthesia/ICU early — refractory status needs intubation and continuous infusion.'],
+    investigations:['Capillary glucose immediately, UEs, calcium, magnesium, CBC, LFTs, toxicology, anticonvulsant levels, ABG, CT brain, LP if infection suspected (after CT).'],
+    management:['ABC, oxygen, IV access, check glucose; thiamine 100 mg IV if alcohol/malnutrition.','0–5 min: IV Lorazepam 4 mg (or Diazepam 10 mg IV / Midazolam 10 mg IM) — repeat once after 5–10 min.','10–20 min: second-line IV Levetiracetam 60 mg/kg (max 4.5 g) or Phenytoin 20 mg/kg (with cardiac monitoring) or Sodium valproate 40 mg/kg.','>30 min refractory: general anaesthesia (Propofol/Midazolam/Thiopentone) in ICU with EEG.','Treat precipitant: hypoglycaemia, hyponatraemia, eclampsia (MgSO₄), infection, drug withdrawal.'],
+    monitor:['Continuous cardiac and respiratory monitoring, glucose, BP (phenytoin causes hypotension), post-ictal GCS.'],
+    redflags:['Ongoing seizure >30 min','Hypoxia / aspiration','Focal deficit after seizure — image the brain']
+  },
+  hepenc:{
+    title:'Hepatic Encephalopathy',
+    summary:'Confusion, asterixis, sleep reversal in known or suspected chronic liver disease. Always look for a precipitant.',
+    escalate:['Grade III–IV (drowsy/comatose) → HDU/ICU, airway protection, senior/hepatology review.'],
+    investigations:['CBC, UEs, LFTs, coag/INR, ammonia, glucose, CRP, blood cultures, ascitic tap (exclude SBP), urinalysis, CXR, CT brain if focal signs or trauma.'],
+    management:['Treat the precipitant: infection/SBP, GI bleed, constipation, dehydration, electrolyte disturbance, sedatives, AKI.','Lactulose 30 mL PO/NG q1–2h until 2–3 soft stools/day, then maintenance; lactulose enema if unable to swallow.','Rifaximin 550 mg BD for recurrent episodes.','Avoid sedatives; correct hypokalaemia and hypovolaemia; adequate calories — do not protein-restrict.','Thiamine and multivitamins if alcohol-related.'],
+    monitor:['GCS / encephalopathy grade, bowel movements per day, UEs, glucose, ammonia trend (clinical response matters more).'],
+    redflags:['Grade III–IV coma','Coagulopathy with bleeding','AKI / hepatorenal syndrome']
+  },
+  hyperkal:{
+    title:'Hyperkalaemia',
+    summary:'K⁺ >5.5 mmol/L. K⁺ >6.5 or any ECG change is a medical emergency.',
+    escalate:['Senior + renal review for refractory hyperkalaemia or oliguric AKI — may need dialysis.'],
+    investigations:['Urgent ECG, repeat serum K⁺ (exclude haemolysed sample), UEs, VBG (rapid K⁺), glucose, calcium, CK, urine output.'],
+    management:['ECG changes or K⁺ ≥6.5 → 10 mL of 10% Calcium gluconate IV over 5–10 min (repeat until ECG improves) for cardiac protection.','Insulin-dextrose: 10 units Actrapid in 25 g glucose IV over 15–30 min.','Nebulised Salbutamol 10–20 mg.','Stop all K⁺-raising drugs: ACEi/ARB, spironolactone, NSAIDs, trimethoprim, K⁺ supplements.','Sodium bicarbonate if acidotic; potassium binder (calcium/sodium zirconium, patiromer) for ongoing control.','Dialysis if refractory, anuric or severely acidotic.'],
+    monitor:['Repeat K⁺ at 1, 2, 4 and 6 h; hourly glucose after insulin (hypoglycaemia risk); continuous ECG.'],
+    redflags:['Peaked T waves, wide QRS, sine wave','Bradycardia / arrest rhythm','Anuria']
+  },
+  thyroid:{
+    title:'Thyroid Storm',
+    summary:'Fever, tachyarrhythmia, agitation/delirium, vomiting/diarrhoea, heart failure in a thyrotoxic patient. Use Burch-Wartofsky score.',
+    escalate:['ICU/HDU admission and endocrinology involvement — mortality is high.'],
+    investigations:['TFTs (TSH, free T4/T3), CBC, UEs, LFTs, glucose, calcium, cortisol, ECG, CXR, blood cultures / septic screen for precipitant.'],
+    management:['Propylthiouracil 500–1000 mg loading then 250 mg q4h (preferred in storm) or Carbimazole 20 mg q6h.','Lugol iodine / potassium iodide at least 1 hour AFTER thionamide.','Propranolol 40–80 mg PO q4–6h (or IV Esmolol) for adrenergic control.','Hydrocortisone 100 mg IV q8h.','Cooling, paracetamol (avoid aspirin), IV fluids, treat precipitant (infection, surgery, DKA).'],
+    monitor:['Continuous cardiac monitoring, temperature, fluid balance, LFTs (thionamide hepatotoxicity), neurological status.'],
+    redflags:['Heart failure / AF with fast ventricular rate','Hyperthermia >40 °C','Coma']
+  },
+  adrenal:{
+    title:'Adrenal Crisis',
+    summary:'Hypotension unresponsive to fluids, hyponatraemia, hyperkalaemia, hypoglycaemia, vomiting — in a patient on steroids or with Addison disease. Treat before confirming.',
+    escalate:['Senior review; endocrinology follow-up; educate on sick-day rules before discharge.'],
+    investigations:['Take cortisol and ACTH samples but DO NOT delay treatment. UEs, glucose, CBC, septic screen, calcium.'],
+    management:['Hydrocortisone 100 mg IV/IM immediately, then 50 mg q6h (or 200 mg/24 h infusion).','Aggressive IV 0.9% NaCl resuscitation (1 L in first hour).','Treat hypoglycaemia with IV dextrose.','Identify and treat the precipitant (infection, missed steroid dose, surgery).','No fludrocortisone needed while high-dose hydrocortisone is given.'],
+    monitor:['BP, glucose hourly initially, UEs daily; taper steroids once stable.'],
+    redflags:['Refractory shock','Severe hyponatraemia — correct slowly to avoid osmotic demyelination','Coma']
+  },
+  meningitis:{
+    title:'Acute Bacterial Meningitis',
+    summary:'Fever, headache, neck stiffness, photophobia, altered consciousness ± non-blanching rash. Do not delay antibiotics for imaging or LP.',
+    escalate:['Senior immediately; ICU if GCS <12, shock or seizures; notify infection control / public health for meningococcal disease.'],
+    investigations:['Blood cultures then immediate antibiotics. LP (opening pressure, cell count, protein, glucose, gram stain, culture, PCR) — CT head first if focal signs, GCS <12, seizures, papilloedema or immunocompromise.','CBC, UEs, CRP, glucose (paired with CSF), coag, HIV test.'],
+    management:['IV Ceftriaxone 2 g q12h (add Vancomycin if resistant pneumococcus suspected).','Add Ampicillin 2 g q4h if >50 y, pregnant or immunocompromised (Listeria cover).','Dexamethasone 10 mg IV q6h × 4 days, ideally with or just before the first antibiotic dose.','Aciclovir if encephalitis features.','Fluids, analgesia, seizure control; chemoprophylaxis for close contacts of meningococcus.'],
+    monitor:['Neuro observations, GCS, seizures, sodium (SIADH), hearing assessment before discharge.'],
+    redflags:['Rapidly spreading purpuric rash','Raised ICP signs','Focal deficit / status epilepticus']
+  },
+  uti:{
+    title:'Pyelonephritis / Complicated UTI',
+    summary:'Fever, loin pain, rigors, vomiting with urinary symptoms. Complicated when male, pregnant, catheterised, obstructed, diabetic or immunosuppressed.',
+    escalate:['Urology/senior review urgently for obstructed infected system (pyonephrosis) — needs drainage.'],
+    investigations:['Urine dipstick + microscopy + culture BEFORE antibiotics, blood cultures, CBC, UEs, CRP, glucose, pregnancy test.','USG KUB (hydronephrosis, stone, abscess); CT KUB if obstruction or no improvement at 48–72 h.'],
+    management:['Empirical IV antibiotic per local antibiogram (e.g. Ceftriaxone 1–2 g OD or Piperacillin-tazobactam if healthcare-associated / prior ESBL).','IV fluids, analgesia, antiemetic, antipyretic.','Remove or change infected catheter.','De-escalate to culture-directed oral therapy; total 7–14 days.','Drainage (nephrostomy or stent) for obstruction.'],
+    monitor:['Temperature trend, renal function, urine output, repeat culture if no response at 72 h.'],
+    redflags:['Sepsis / hypotension','Obstructed infected kidney','Emphysematous pyelonephritis in diabetics']
+  },
+  tropical:{
+    title:'Undifferentiated Fever — Dengue / Malaria / Typhoid (Pakistan)',
+    summary:'Common local causes: dengue, malaria (P. vivax/falciparum), enteric fever, leptospirosis, TB, UTI, pneumonia. Take a travel, water and contact history.',
+    escalate:['Warning signs of severe dengue, cerebral malaria or septic shock → HDU/ICU and senior review.'],
+    investigations:['CBC with platelets and haematocrit, malarial parasite/ICT (repeat × 3), dengue NS1/IgM, blood culture (typhoid), LFTs, UEs, urinalysis, CXR, CRP, dengue serology as per day of illness.'],
+    management:['Dengue: no NSAIDs/aspirin. Paracetamol only. Careful crystalloid fluid therapy guided by haematocrit and urine output; watch the critical (defervescence) phase, days 3–7.','Falciparum malaria (severe): IV Artesunate 2.4 mg/kg at 0, 12, 24 h then daily; complete with ACT orally. Vivax: Chloroquine + Primaquine after G6PD check.','Enteric fever: Ceftriaxone 2 g IV OD (XDR typhoid in Pakistan → Meropenem ± Azithromycin per sensitivity).','Supportive: antipyretics, fluids, monitor platelets and haematocrit, transfuse only if bleeding.'],
+    monitor:['Twice-daily CBC/haematocrit in dengue, urine output, capillary refill, blood glucose in malaria.'],
+    redflags:['Plasma leakage: rising haematocrit with falling platelets, ascites, pleural effusion','Bleeding, hypotension, narrow pulse pressure','Impaired consciousness or convulsions']
+  },
+  tb:{
+    title:'Pulmonary Tuberculosis',
+    summary:'Chronic cough >2 weeks, night sweats, weight loss, haemoptysis, contact history. High prevalence in Pakistan — keep a low threshold.',
+    escalate:['Notify the TB programme; involve chest physician; airborne isolation for smear-positive patients.'],
+    investigations:['Sputum GeneXpert MTB/RIF (rifampicin resistance) × 2, AFB smear and culture, CXR, HIV test, blood sugar, LFTs and baseline weight, contact screening.'],
+    management:['Standard regimen: 2 months HRZE (isoniazid, rifampicin, pyrazinamide, ethambutol) then 4 months HR, weight-based dosing.','Pyridoxine 10–25 mg daily with isoniazid.','Baseline and monthly LFTs; counsel on hepatotoxicity and adherence (DOTS).','Refer MDR/RR-TB to the programmatic management unit.','Nutritional support and diabetes control.'],
+    monitor:['Monthly weight, sputum conversion at 2 months, LFTs, visual acuity on ethambutol.'],
+    redflags:['Massive haemoptysis','Drug-induced hepatitis (jaundice, ALT >5× normal)','Miliary or CNS TB']
+  },
+  anaphylaxis:{
+    title:'Anaphylaxis',
+    summary:'Sudden airway, breathing or circulation compromise with skin/mucosal changes after an allergen. Adrenaline is the first drug — not steroids or antihistamines.',
+    escalate:['Call for help / resuscitation team immediately; anaesthesia for airway compromise; ICU for refractory cases.'],
+    investigations:['Clinical diagnosis. Serum tryptase at 0, 1–2 h and 24 h if available. ECG, ABG if severe.'],
+    management:['Adrenaline 0.5 mg (0.5 mL of 1:1000) IM into anterolateral thigh — repeat every 5 min as needed.','Remove trigger; high-flow oxygen; lie flat with legs raised (sit up if breathing difficulty).','Rapid IV crystalloid bolus 500–1000 mL for hypotension.','Adjuncts after adrenaline: Chlorpheniramine 10 mg IV and Hydrocortisone 200 mg IV.','Nebulised salbutamol/adrenaline for bronchospasm or stridor.','Observe 6–12 h (biphasic reaction); discharge with adrenaline auto-injector and allergy referral.'],
+    monitor:['Continuous ECG, BP, SpO₂; repeat assessment after each adrenaline dose.'],
+    redflags:['Stridor / hoarseness — impending airway obstruction','Hypotension unresponsive to two adrenaline doses','Known previous severe reaction']
+  },
+  ckd:{
+    title:'CKD Decompensation',
+    summary:'Known chronic kidney disease with worsening function, fluid overload, acidosis or uraemic symptoms. Look for an acute-on-chronic insult.',
+    escalate:['Nephrology referral for uraemic symptoms, refractory overload, acidosis or hyperkalaemia — dialysis decisions.'],
+    investigations:['UEs, bicarbonate, calcium, phosphate, PTH, CBC, iron studies, urinalysis with protein:creatinine ratio, USG KUB, ABG/VBG, ECG.'],
+    management:['Identify and treat reversible causes: sepsis, dehydration, obstruction, nephrotoxins, contrast.','Stop or dose-adjust renally cleared and nephrotoxic drugs (metformin, NSAIDs, aminoglycosides, ACEi in acute illness).','Manage fluid overload with loop diuretics; salt and fluid restriction.','Correct acidosis (oral sodium bicarbonate), hyperkalaemia, anaemia (iron ± ESA), and mineral-bone disease (phosphate binders, vitamin D).','Plan dialysis access early in advanced CKD.'],
+    monitor:['Daily weights, fluid balance, UEs, potassium and bicarbonate; blood pressure targets per proteinuria.'],
+    redflags:['Uraemic pericarditis or encephalopathy','K⁺ >6.5 or severe acidosis','Refractory pulmonary oedema']
   }
 };
 
@@ -4539,6 +4832,301 @@ window.removeRxAfterInteraction = function(rxId, elId){
   pushToFirebase('rx_cancel','removed drug after interaction warning');
   const el = document.getElementById(elId); if(el) el.innerHTML='';
 };
+
+/* ═══════════════════════════════════════════════════════════
+   MULTI-SPECIALTY (Surgery + Medicine) & EPIC-STYLE FEATURES
+   ═══════════════════════════════════════════════════════════ */
+
+// ─── SPECIALTY / DEPARTMENT ───────────────────────────────────
+function currentSpecialty(){
+  const v = val('pt-specialty');
+  if(v) return v;
+  return (doctorProfile && doctorProfile.dept) || 'Surgery';
+}
+window.applySpecialty = function(){
+  const sp = currentSpecialty();
+  const surgOnly = ['card-opnote'];
+  const medOnly  = ['card-sysexam'];
+  const showSurg = (sp !== 'Medicine');
+  const showMed  = (sp !== 'Surgery') || true; // systems exam useful for both
+  surgOnly.forEach(id=>{ const el=$(id); if(el) el.style.display = showSurg ? '' : 'none'; });
+  medOnly.forEach(id=>{ const el=$(id); if(el) el.style.display = showMed ? '' : 'none'; });
+  const st = $('specialty-tag'); if(st) st.textContent = sp;
+  try{ renderOrderSets(); }catch{}
+};
+
+// ─── PROBLEM LIST (Epic-style) ────────────────────────────────
+window.addProblem = function(){
+  const text = val('prob-text'); if(!text){ showToast('⚠️ Enter a problem'); return; }
+  const pt = patients.find(p=>p.id===currentId); if(!pt) return;
+  if(!pt.problems) pt.problems=[];
+  pt.problems.unshift({
+    id:'prob_'+Date.now(), text,
+    onset: val('prob-onset')||'',
+    priority: val('prob-priority')||'active',
+    status:'active', addedBy:doctorProfile.name, addedAt:Date.now()
+  });
+  $('prob-text').value=''; $('prob-onset').value='';
+  renderProblems(pt); saveStore();
+  pushToFirebase('note',`added problem "${text}" for ${pt.name||'patient'}`);
+};
+window.toggleProblem = function(id){
+  const pt = patients.find(p=>p.id===currentId); if(!pt||!pt.problems) return;
+  const p = pt.problems.find(x=>x.id===id); if(!p) return;
+  p.status = p.status==='active' ? 'resolved' : 'active';
+  if(p.status==='resolved'){ p.resolvedAt=Date.now(); p.resolvedBy=doctorProfile.name; }
+  renderProblems(pt); saveStore();
+  pushToFirebase('note',`marked problem "${p.text}" ${p.status} for ${pt.name||'patient'}`);
+};
+window.deleteProblem = function(id){
+  const pt = patients.find(p=>p.id===currentId); if(!pt) return;
+  pt.problems=(pt.problems||[]).filter(p=>p.id!==id);
+  renderProblems(pt); saveStore();
+};
+function renderProblems(pt){
+  const el=$('prob-list'); if(!el) return;
+  const list=pt.problems||[];
+  if(!list.length){ el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0">No problems on the list yet. Add the active problems driving this admission.</div>'; return; }
+  const sorted=[...list].sort((a,b)=> (a.status===b.status?0:(a.status==='active'?-1:1)));
+  el.innerHTML=sorted.map(p=>{
+    const col = p.status==='resolved' ? 'var(--muted)' : (p.priority==='principal' ? 'var(--red)' : p.priority==='chronic' ? 'var(--amber)' : 'var(--cyan)');
+    const tag = p.status==='resolved' ? 'RESOLVED' : (p.priority||'active').toUpperCase();
+    return `<div style="display:flex;gap:9px;align-items:flex-start;background:var(--surface2);border:1px solid var(--border);border-left:3px solid ${col};border-radius:8px;padding:9px 11px;margin-bottom:7px">
+      <div style="flex:1">
+        <div style="font-size:12.5px;font-weight:600;color:${p.status==='resolved'?'var(--muted)':'var(--text)'};${p.status==='resolved'?'text-decoration:line-through':''}">${escapeHtml(p.text)}</div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:3px">${tag}${p.onset?' · onset '+escapeHtml(p.onset):''} · ${escapeHtml(p.addedBy||'—')}</div>
+      </div>
+      <button class="order-btn" onclick="toggleProblem('${p.id}')">${p.status==='active'?'✓ Resolve':'↩ Reopen'}</button>
+      <button class="order-btn del-btn" onclick="deleteProblem('${p.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ─── ORDER SETS / SMARTSETS (Epic-style) ─────────────────────
+const ORDER_SETS = {
+  sepsis:{ name:'🩸 Sepsis Six Bundle', dept:'Both', orders:[
+    ['Give high-flow oxygen — target SpO₂ 94–98%','urgent'],
+    ['Take blood cultures × 2 sets before antibiotics','urgent'],
+    ['Give IV broad-spectrum antibiotics within 1 hour','urgent'],
+    ['Take serum lactate + CBC, UEs, LFTs, coag, CRP','urgent'],
+    ['Start IV fluid resuscitation 30 mL/kg crystalloid','urgent'],
+    ['Insert urinary catheter — hourly urine output monitoring','urgent'],
+  ]},
+  acs:{ name:'❤️ ACS / Chest Pain', dept:'Medicine', orders:[
+    ['ECG within 10 minutes — repeat if ongoing pain','urgent'],
+    ['Troponin now and at 3 hours','urgent'],
+    ['Aspirin 300 mg PO stat (chewed) unless contraindicated','urgent'],
+    ['Clopidogrel / Ticagrelor loading dose per senior','urgent'],
+    ['GTN sublingual PRN + morphine + antiemetic PRN','routine'],
+    ['Continuous cardiac monitoring; CXR; CBC, UEs, glucose, lipids','routine'],
+    ['Inform cardiology / senior — consider PCI or thrombolysis if STEMI','urgent'],
+  ]},
+  stroke:{ name:'🧠 Acute Stroke', dept:'Medicine', orders:[
+    ['Urgent non-contrast CT brain — stroke call','urgent'],
+    ['Capillary glucose, ECG, CBC, UEs, coag, troponin','urgent'],
+    ['NIHSS assessment + document time of onset','urgent'],
+    ['Nil by mouth until swallow screen done','urgent'],
+    ['Thrombolysis / thrombectomy assessment with senior','urgent'],
+    ['4-hourly neuro observations, BP monitoring','routine'],
+  ]},
+  dka:{ name:'💧 DKA / HHS', dept:'Both', orders:[
+    ['IV 0.9% NaCl 1 L stat, then per fluid protocol','urgent'],
+    ['Fixed-rate IV insulin infusion 0.1 U/kg/hr','urgent'],
+    ['Hourly capillary glucose + 2-hourly ketones/VBG','urgent'],
+    ['Replace K⁺ per protocol once K <5.5 mmol/L','urgent'],
+    ['Continue long-acting insulin; hourly urine output','routine'],
+    ['Look for precipitant — infection screen, ECG, CXR','routine'],
+  ]},
+  copd:{ name:'🫁 COPD / Asthma Exacerbation', dept:'Medicine', orders:[
+    ['Controlled O₂ — target SpO₂ 88–92% (COPD)','urgent'],
+    ['Nebulised salbutamol 2.5–5 mg + ipratropium 500 µg','urgent'],
+    ['Prednisolone 40 mg PO OD × 5 days (or IV hydrocortisone)','urgent'],
+    ['ABG within 30–60 min; CXR; ECG; CBC, UEs, CRP','urgent'],
+    ['Antibiotic if purulent sputum / consolidation','routine'],
+    ['Consider NIV if pH <7.35 with pCO₂ >6.5 — inform senior','urgent'],
+  ]},
+  apo:{ name:'💨 Acute Pulmonary Oedema / Heart Failure', dept:'Medicine', orders:[
+    ['Sit upright, high-flow oxygen','urgent'],
+    ['IV Furosemide 40–80 mg stat','urgent'],
+    ['Strict fluid balance + urinary catheter','urgent'],
+    ['ECG, troponin, BNP, CXR, UEs, ABG','urgent'],
+    ['Consider GTN infusion if hypertensive — senior review','urgent'],
+    ['Daily weights, fluid restriction 1.5 L/day','routine'],
+  ]},
+  gibleedset:{ name:'🩸 Upper GI Bleed', dept:'Both', orders:[
+    ['Two large-bore IV cannulae; group & save + crossmatch 2 units','urgent'],
+    ['CBC, UEs, LFTs, coag, lactate; Blatchford score','urgent'],
+    ['IV PPI infusion / high-dose PPI','urgent'],
+    ['Terlipressin + prophylactic antibiotic if variceal','urgent'],
+    ['Nil by mouth; urgent endoscopy referral within 24 h','urgent'],
+    ['Hourly vitals + urine output; transfuse to Hb 70–80 g/L','routine'],
+  ]},
+  aki2:{ name:'🚱 AKI / Oliguria', dept:'Both', orders:[
+    ['Review and stop nephrotoxins (NSAIDs, ACEi/ARB, aminoglycosides)','urgent'],
+    ['Assess volume status; fluid challenge if hypovolaemic','urgent'],
+    ['Urinary catheter + hourly output; strict fluid balance','urgent'],
+    ['UEs, bicarbonate, CK, urine dip, USG KUB (obstruction)','urgent'],
+    ['ABG/VBG + ECG if K⁺ elevated','urgent'],
+    ['Nephrology / senior review if K⁺ >6, acidosis, or oliguria persists','urgent'],
+  ]},
+  preop:{ name:'🔪 Pre-operative Workup', dept:'Surgery', orders:[
+    ['NBM from midnight; consent signed and filed','urgent'],
+    ['CBC, UEs, coag, group & save, blood sugar; ECG if >40y','routine'],
+    ['Anaesthesia review + ASA grading','routine'],
+    ['VTE prophylaxis prescribed (or documented contraindication)','routine'],
+    ['Site marked; antibiotic prophylaxis prescribed for induction','routine'],
+    ['Hold anticoagulants / antiplatelets per protocol','urgent'],
+  ]},
+  postop:{ name:'🛏️ Post-operative Day 0 Orders', dept:'Surgery', orders:[
+    ['Vitals 2-hourly × 6 then 4-hourly','routine'],
+    ['IV fluids per weight; strict input/output charting','routine'],
+    ['Analgesia ladder: regular paracetamol + PRN opioid','routine'],
+    ['Antiemetic PRN; DVT prophylaxis when haemostasis secure','routine'],
+    ['Monitor drain output & wound; early mobilisation','routine'],
+    ['Check post-op CBC/UEs next morning','routine'],
+  ]},
+  cap:{ name:'🦠 Community-Acquired Pneumonia', dept:'Medicine', orders:[
+    ['CURB-65 score documented','urgent'],
+    ['CXR, CBC, UEs, CRP, blood cultures, sputum culture','urgent'],
+    ['Antibiotic per severity & local antibiogram within 4 h','urgent'],
+    ['Oxygen to target saturation; ABG if severe','urgent'],
+    ['Fluids, VTE prophylaxis, monitor NEWS2','routine'],
+  ]},
+};
+window.renderOrderSets = function(){
+  const el=$('orderset-list'); if(!el) return;
+  const sp = currentSpecialty();
+  const keys = Object.keys(ORDER_SETS).filter(k=>{
+    const d=ORDER_SETS[k].dept;
+    return d==='Both' || sp==='Both' || d===sp;
+  });
+  el.innerHTML = keys.map(k=>`<button type="button" class="btn btn-outline" style="font-size:11.5px;padding:7px 11px;margin:0 6px 6px 0" onclick="applyOrderSet('${k}')">${ORDER_SETS[k].name}</button>`).join('')
+    || '<div style="font-size:12px;color:var(--muted)">No order sets for this specialty.</div>';
+};
+window.applyOrderSet = function(key){
+  const set=ORDER_SETS[key]; if(!set) return;
+  const pt=patients.find(p=>p.id===currentId);
+  if(!pt){ showToast('⚠️ Open a patient first'); return; }
+  if(!confirm(`Add ${set.orders.length} suggested orders from "${set.name}"?\n\nThese are recommendations — review, edit or remove any order. Final responsibility is yours.`)) return;
+  if(!pt.tasks) pt.tasks=[];
+  set.orders.forEach(([text,priority],i)=>{
+    pt.tasks.unshift({ id:'task_'+Date.now()+'_'+i, text, done:false, priority,
+      addedBy:doctorProfile.name, addedRole:doctorProfile.role, addedAt:Date.now(), fromSet:set.name });
+  });
+  renderTasks(pt); saveStore(); renderList();
+  pushToFirebase('task_add',`applied order set "${set.name}" (${set.orders.length} orders) for ${pt.name||'patient'}`);
+  showToast(`✅ ${set.name} added — review before signing`);
+};
+
+// ─── BEST PRACTICE ADVISORIES (Epic BPA-style) ───────────────
+window.renderAdvisories = function(){
+  const box=$('bpa-box'); if(!box) return;
+  const pt=patients.find(p=>p.id===currentId);
+  const adv=[];
+  const num=id=>{ const n=parseFloat(val(id)); return isNaN(n)?null:n; };
+  const news2 = (()=>{ const t=$('news2-score'); const n=parseInt(t?t.textContent:''); return isNaN(n)?null:n; })();
+  const rr=num('v-rr'), spo2=num('v-spo2'), hr=num('v-hr'), temp=num('v-temp'), gcs=num('v-gcs'), bsg=num('v-bsg'), uo=num('v-uo');
+  const bp=val('v-bp'); const sbp=bp?parseFloat(bp.split('/')[0]):NaN;
+  // Sepsis advisory (qSOFA-like)
+  let q=0; if(rr!==null&&rr>=22)q++; if(!isNaN(sbp)&&sbp<=100)q++; if(gcs!==null&&gcs<15)q++;
+  if(q>=2 || (temp!==null&&temp>=38.3&&(hr!==null&&hr>=100)))
+    adv.push(['red','🚨 Possible sepsis','qSOFA ≥2 or fever with tachycardia. Consider the Sepsis Six bundle now and inform your senior.','Apply Sepsis Six','applyOrderSet(\'sepsis\')']);
+  if(news2!==null&&news2>=7)
+    adv.push(['red','🚨 NEWS2 ≥ 7','High-risk score — urgent clinical review, consider HDU/ICU escalation and continuous monitoring.','','']);
+  if(spo2!==null&&spo2<92)
+    adv.push(['red','🫁 Hypoxia','SpO₂ below 92% — check oxygen delivery, ABG, and exclude PE / pneumonia / pulmonary oedema.','','']);
+  if(bsg!==null&&bsg<70) adv.push(['red','🍬 Hypoglycaemia','Blood sugar <70 mg/dL — treat immediately (oral glucose or IV dextrose) and recheck in 15 min.','','']);
+  if(bsg!==null&&bsg>300) adv.push(['amber','🍬 Severe hyperglycaemia','Blood sugar >300 mg/dL — check ketones/VBG and exclude DKA/HHS.','Apply DKA set','applyOrderSet(\'dka\')']);
+  if(uo!==null&&uo<30) adv.push(['amber','🚱 Oliguria','Urine output <30 mL/hr — assess volume status, review nephrotoxins, consider AKI workup.','Apply AKI set','applyOrderSet(\'aki2\')']);
+  if(!val('pt-allergy')) adv.push(['amber','⚠️ Allergies not documented','Allergy status is blank. Document allergies or "NKDA" before prescribing.','','']);
+  // VTE prophylaxis
+  const rxText = ((pt&&pt.drugChart)||[]).map(d=>(d.name||'')+' '+(d.generic||'')).join(' ').toLowerCase() + ' ' + (val('meds')||'').toLowerCase();
+  if(!/enoxaparin|clexane|heparin|dalteparin|fondaparinux|warfarin|apixaban|rivaroxaban/.test(rxText))
+    adv.push(['amber','🧦 VTE prophylaxis not seen','No anticoagulant found on the chart. Prescribe prophylaxis or document a contraindication.','','']);
+  // Antibiotic day count
+  ((pt&&pt.antibiotics)||[]).forEach(a=>{
+    if(!a.startDate) return;
+    const days=Math.floor((Date.now()-new Date(a.startDate).getTime())/86400000)+1;
+    if(days>=7) adv.push(['amber','💊 Antibiotic review due',`${a.name||'Antibiotic'} on day ${days} — review for de-escalation, oral switch, or stop (stewardship).`,'','']);
+  });
+  if(!(pt&&pt.problems&&pt.problems.length))
+    adv.push(['cyan','📋 Problem list empty','Add the active problems for this admission — it drives handover and progress notes.','','']);
+  if(!adv.length){
+    box.innerHTML='<div style="font-size:12px;color:var(--green)">✅ No advisories triggered from currently entered data.</div>';
+    return;
+  }
+  const colOf={red:'var(--red)',amber:'var(--amber)',cyan:'var(--cyan)'};
+  box.innerHTML=adv.map(([lvl,title,body,btn,act])=>`
+    <div style="border:1px solid ${colOf[lvl]};border-left:4px solid ${colOf[lvl]};background:rgba(255,255,255,0.02);border-radius:8px;padding:9px 11px;margin-bottom:8px">
+      <div style="font-size:12.5px;font-weight:700;color:${colOf[lvl]}">${title}</div>
+      <div style="font-size:11.5px;color:var(--text);line-height:1.5;margin-top:3px">${body}</div>
+      ${btn?`<button type="button" class="btn btn-outline" style="font-size:11px;padding:5px 10px;margin-top:7px" onclick="${act}">${btn}</button>`:''}
+    </div>`).join('') +
+    `<div style="font-size:10.5px;color:var(--muted);margin-top:4px">Advisories are decision support only — the treating clinician decides.</div>`;
+};
+
+// ─── SMARTPHRASES (dot phrases) ──────────────────────────────
+const SMART_PHRASES = {
+  '.norm':'Alert and oriented, comfortable at rest. Chest clear with equal air entry, S1+S2 normal with no murmurs, abdomen soft and non-tender with normal bowel sounds, no focal neurological deficit.',
+  '.cvs':'Pulse regular, JVP not raised, apex beat not displaced, S1+S2 normal, no murmurs, no pedal oedema.',
+  '.resp':'Trachea central, chest expansion equal, resonant percussion note, vesicular breathing with no added sounds.',
+  '.abdo':'Abdomen soft, non-distended, non-tender, no organomegaly, bowel sounds present, hernial orifices intact.',
+  '.cns':'GCS 15/15, pupils equal and reactive, cranial nerves intact, power 5/5 in all limbs, reflexes normal, plantars downgoing.',
+  '.wound':'Wound clean and dry, no erythema, discharge or dehiscence, dressing changed with aseptic technique.',
+  '.plan':'Continue current management. Monitor vitals and input/output. Await pending investigations. Reassess in the evening round.',
+  '.dvt':'VTE risk assessed; pharmacological prophylaxis prescribed unless contraindicated; mechanical prophylaxis in place; early mobilisation encouraged.',
+  '.sepsis':'Sepsis Six bundle initiated: oxygen, cultures, IV antibiotics, lactate, IV fluids, urine output monitoring. Senior informed.',
+  '.disch':'Patient clinically stable, afebrile, tolerating oral intake, pain controlled on oral analgesia, wound healthy. Discharge medications explained, follow-up arranged, red-flag advice given.',
+  '.consent':'Procedure, benefits, risks and alternatives explained in the language the patient understands. Questions answered. Informed written consent obtained.',
+};
+function expandSmartPhrases(el){
+  if(!el) return;
+  let v = el.value; let changed=false;
+  Object.keys(SMART_PHRASES).forEach(k=>{
+    const re = new RegExp('\\'+k+'(?=\\s|$)','g');
+    if(re.test(v)){ v = v.replace(re, SMART_PHRASES[k]); changed=true; }
+  });
+  if(changed){ el.value=v; showToast('✨ SmartPhrase expanded'); }
+}
+function bindSmartPhrases(){
+  document.querySelectorAll('textarea').forEach(ta=>{
+    if(ta._spBound) return;
+    ta._spBound=true;
+    ta.addEventListener('keydown',(e)=>{
+      if(e.key===' ' || e.key==='Tab'){
+        const before = ta.value.slice(0, ta.selectionStart);
+        const m = before.match(/(\.[a-z]{2,10})$/);
+        if(m && SMART_PHRASES[m[1]]){
+          e.preventDefault();
+          const start = ta.selectionStart - m[1].length;
+          ta.value = ta.value.slice(0,start) + SMART_PHRASES[m[1]] + ta.value.slice(ta.selectionStart);
+          const pos = start + SMART_PHRASES[m[1]].length;
+          ta.setSelectionRange(pos,pos);
+          showToast('✨ SmartPhrase expanded');
+        }
+      }
+    });
+  });
+}
+window.showSmartPhraseHelp = function(){
+  const list = Object.keys(SMART_PHRASES).map(k=>`${k} → ${SMART_PHRASES[k].slice(0,60)}…`).join('\n');
+  alert('SmartPhrases — type the dot code in any notes box then press space:\n\n'+list);
+};
+
+// ─── HOOK INTO PATIENT LOAD ──────────────────────────────────
+(function(){
+  const origLoadOpen = window.openPatient;
+  window.openPatient = function(id){
+    origLoadOpen(id);
+    const pt=patients.find(p=>p.id===id);
+    try{ if(pt) renderProblems(pt); }catch{}
+    try{ applySpecialty(); }catch{}
+    try{ renderOrderSets(); }catch{}
+    try{ renderAdvisories(); }catch{}
+    try{ bindSmartPhrases(); }catch{}
+  };
+  setTimeout(()=>{ try{ renderOrderSets(); bindSmartPhrases(); }catch{} }, 400);
+})();
 
 </script>
 
