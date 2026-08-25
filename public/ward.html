@@ -564,7 +564,41 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
           <div class="field full"><label>Diagnosis / Working Dx</label><input type="text" id="pt-diag" placeholder="e.g. Perforated appendix, post-lap appy D1" oninput="updateBanner()"></div>
           <div class="field full"><label>Procedure Done</label><input type="text" id="pt-proc" placeholder="e.g. Laparoscopic appendectomy"></div>
           <div class="field"><label>Weight (kg)</label><input type="number" id="pt-weight" placeholder="70" oninput="calcDrugDoses()"></div>
-          <div class="field"><label>Allergies</label><input type="text" id="pt-allergy" placeholder="NKDA / list allergies"></div>
+          <div class="field"><label>Allergies</label><input type="text" id="pt-allergy" placeholder="NKDA / list allergies" oninput="renderAdvisories()"></div>
+          <div class="field"><label>Specialty / Unit</label>
+            <select id="pt-specialty" onchange="applySpecialty()">
+              <option value="">— Use my department —</option>
+              <option value="Surgery">Surgery</option>
+              <option value="Medicine">Medicine</option>
+              <option value="Both">Mixed / Both</option>
+            </select>
+          </div>
+          <div class="field"><label>Code Status</label>
+            <select id="pt-code" onchange="updateBanner()">
+              <option value="">— Not documented —</option>
+              <option>Full resuscitation</option>
+              <option>DNAR / DNACPR</option>
+              <option>Ward-level care only</option>
+              <option>For escalation to HDU/ICU</option>
+            </select>
+          </div>
+          <div class="field"><label>Isolation / Infection</label>
+            <select id="pt-isolation" onchange="updateBanner()">
+              <option value="">None</option>
+              <option>Airborne (TB / COVID)</option>
+              <option>Droplet</option>
+              <option>Contact (MRSA / C. difficile / ESBL)</option>
+              <option>Protective (neutropenic)</option>
+            </select>
+          </div>
+          <div class="field"><label>Fall / Pressure Risk</label>
+            <select id="pt-fallrisk" onchange="updateBanner()">
+              <option value="">Not assessed</option>
+              <option>Low risk</option>
+              <option>Moderate risk</option>
+              <option>High risk — bed rails &amp; 2-hourly turns</option>
+            </select>
+          </div>
         </div>
       </div>
 
