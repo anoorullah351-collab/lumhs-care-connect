@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ward_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          sender_id: string
+          sender_name: string | null
+          sender_role: string | null
+          ward_code: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          sender_name?: string | null
+          sender_role?: string | null
+          ward_code: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          sender_name?: string | null
+          sender_role?: string | null
+          ward_code?: string
+        }
+        Relationships: []
+      }
       ward_presence: {
         Row: {
           doctor_id: string
