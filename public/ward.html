@@ -7,12 +7,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ward FU">
-<meta name="description" content="Surgical Ward Follow-Up Tool — LUMHS Jamshoro">
+<meta name="description" content="Medicine Ward Follow-Up Tool — LUMHS Jamshoro">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
-<title>Ward Follow-Up — LUMHS Surgery</title>
+<title>Ward Follow-Up — LUMHS Medicine</title>
 <style>
 /* ── DESIGN TOKENS ───────────────────────────────────────── */
 :root{
@@ -425,7 +425,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     <div style="text-align:center;margin-bottom:18px">
       <div style="font-size:28px">🏥</div>
       <div style="font-size:18px;font-weight:700;margin-top:6px">Ward Follow-Up</div>
-      <div style="font-size:12px;color:#7b8aa8">LUMHS Jamshoro · Surgery</div>
+      <div style="font-size:12px;color:#7b8aa8">LUMHS Jamshoro · Medicine</div>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:14px">
       <button id="auth-tab-signin" type="button" style="flex:1;padding:8px;border:none;border-radius:8px;background:#1e3a5f;color:#fff;font-weight:600;cursor:pointer">Sign in</button>
@@ -457,7 +457,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     <div class="topbar-icon">🏥</div>
     <div>
       <div class="topbar-title" id="topbar-title">Ward Follow-Up</div>
-      <div class="topbar-sub">LUMHS Jamshoro · Surgery</div>
+      <div class="topbar-sub">LUMHS Jamshoro · Medicine</div>
     </div>
   </div>
   <div class="topbar-right">
@@ -556,7 +556,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
           <div class="field"><label>Patient Name</label><input type="text" id="pt-name" placeholder="Full name" oninput="updateBanner()"></div>
           <div class="field"><label>Age / Sex</label><input type="text" id="pt-age" placeholder="35y / M" oninput="updateBanner()"></div>
           <div class="field"><label>CR / MR No.</label><input type="text" id="pt-cr" placeholder="CR number" oninput="updateBanner()"></div>
-          <div class="field"><label>Ward / Bed</label><input type="text" id="pt-bed" placeholder="Male Surgical / Bed 7"></div>
+          <div class="field"><label>Ward / Bed</label><input type="text" id="pt-bed" placeholder="Male Medical / Bed 7"></div>
           <div class="field"><label>Admission Date</label><input type="date" id="pt-admdate"></div>
           <div class="field"><label>Consultant</label><input type="text" id="pt-consult" placeholder="Prof. Dr. ..."></div>
           <div class="field full"><label>Chief Complaint / Presenting</label><input type="text" id="pt-cc" placeholder="e.g. chest pain, shortness of breath, abdominal pain" oninput="scheduleClinicalAssist()"></div>
@@ -568,7 +568,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
           <div class="field"><label>Specialty / Unit</label>
             <select id="pt-specialty" onchange="applySpecialty()">
               <option value="">— Use my department —</option>
-              <option value="Surgery">Surgery</option>
+              
               <option value="Medicine">Medicine</option>
               <option value="Both">Mixed / Both</option>
             </select>
@@ -695,7 +695,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
       <!-- ── ORDER SETS / SMARTSETS ── -->
       <div class="card">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-          <div class="card-title" style="margin:0;flex:1"><span class="dot dot-orange"></span>⚡ Order Sets (<span id="specialty-tag">Surgery</span>)</div>
+          <div class="card-title" style="margin:0;flex:1"><span class="dot dot-orange"></span>⚡ Order Sets (<span id="specialty-tag">Medicine</span>)</div>
           <button type="button" class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="showSmartPhraseHelp()">✨ SmartPhrases</button>
         </div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:10px">One tap adds a bundle of suggested orders to Shared Orders below. Review, edit or delete each order — final responsibility rests with the treating clinician.</div>
@@ -1228,7 +1228,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         <div class="cd-header">
           <div class="cd-hospital">
             <div class="cd-h-en">Liaquat University of Medical &amp; Health Sciences — Jamshoro</div>
-            <div class="cd-h-en" style="font-size:13px;font-weight:600">Department of Surgery</div>
+            <div class="cd-h-en" style="font-size:13px;font-weight:600">Department of Medicine</div>
           </div>
           <div class="cd-title">
             <span>Surgical Consent Form</span>
@@ -1284,7 +1284,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         </table>
 
         <div class="cd-footer">
-          LUMHS Care Connect · Developed by Dr. Noorullah Ahmed, House Officer, Surgery Dept., LUMHS Jamshoro
+          LUMHS Care Connect · Developed by Dr. Noorullah Ahmed, House Officer, Medicine Dept., LUMHS Jamshoro
         </div>
       </div>
     </div>
@@ -1363,7 +1363,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
       <div id="blood-printable" class="consent-doc">
         <div class="cd-header">
           <div class="cd-hospital">
-            <div class="cd-h-en">SURGICAL UNIT III, WARD 2 — LIAQUAT UNIVERSITY HOSPITAL, JAMSHORO</div>
+            <div class="cd-h-en">DEPARTMENT OF MEDICINE — LIAQUAT UNIVERSITY HOSPITAL, JAMSHORO</div>
           </div>
           <div class="cd-title">
             <span>Blood Transfusion Consent &amp; Monitoring</span>
@@ -1452,7 +1452,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
         </table>
 
         <div class="cd-footer">
-          LUMHS Care Connect · Surgical Unit III, Ward 2 · Developed by Dr. Noorullah Ahmed
+          LUMHS Care Connect · Medicine Department · Developed by Dr. Noorullah Ahmed
         </div>
       </div>
     </div>
@@ -1527,6 +1527,21 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 <!-- ═══════════════════════════════════════════════════════
      SCREEN: ABOUT / USER GUIDE
 ═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-chat">
+  <div class="card" style="margin:12px">
+    <div class="card-title"><span class="dot dot-green"></span>Online now <span id="chat-online-count" style="color:var(--muted);font-size:11px"></span></div>
+    <div id="chat-online" style="display:flex;flex-wrap:wrap;gap:6px;font-size:12px"></div>
+  </div>
+  <div class="card" style="margin:12px;display:flex;flex-direction:column;height:calc(100vh - 260px);min-height:320px">
+    <div class="card-title"><span class="dot dot-blue"></span>Ward Team Chat <span id="chat-ward" style="color:var(--muted);font-size:11px"></span></div>
+    <div id="chat-msgs" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 2px"></div>
+    <form id="chat-form" style="display:flex;gap:6px;margin-top:8px" onsubmit="event.preventDefault();sendChat()">
+      <input id="chat-input" type="text" maxlength="2000" placeholder="Message your ward team…" autocomplete="off" style="flex:1">
+      <button type="submit" class="btn btn-primary" style="width:auto;padding:0 16px">Send</button>
+    </form>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px">Visible only to signed-in doctors on this ward code. Avoid full patient identifiers.</div>
+  </div>
+</div>
 <div class="screen" id="screen-about">
   <div class="scroll-area" style="padding-bottom:90px">
     <div class="list-header" style="margin-bottom:8px">
@@ -1536,15 +1551,15 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     <div class="card" style="border-color:#2a3f5a;background:linear-gradient(180deg,rgba(80,140,220,0.10),rgba(80,140,220,0.02))">
       <div class="card-title"><span class="dot dot-blue"></span>LUMHS Care Connect</div>
       <div style="font-size:13px;line-height:1.6;color:var(--fg)">
-        <p style="margin:0 0 8px 0"><strong>Ward Management System</strong> — Surgery Department, LUMHS Jamshoro</p>
-        <p style="color:var(--muted);font-size:12px;margin:0">A comprehensive ward management app designed specifically for surgical house officers, medical officers, and registrars at Liaquat University of Medical &amp; Health Sciences, Jamshoro. Built from real ward experience — digitizing and streamlining the daily clinical workflow of a busy surgical unit.</p>
+        <p style="margin:0 0 8px 0"><strong>Ward Management System</strong> — Medicine Department, LUMHS Jamshoro</p>
+        <p style="color:var(--muted);font-size:12px;margin:0">A comprehensive ward management app designed specifically for medical house officers, medical officers, and registrars at Liaquat University of Medical &amp; Health Sciences, Jamshoro. Built from real ward experience — digitizing and streamlining the daily clinical workflow of a busy medical unit.</p>
       </div>
     </div>
 
     <div class="card">
       <div class="card-title"><span class="dot dot-purple"></span>Why this app exists</div>
       <div style="font-size:12px;line-height:1.65;color:var(--fg)">
-        Managing 30–50 surgical patients on a ward round is overwhelming — paper charts get lost, drug charts are incomplete, and critical tasks fall through the cracks. <strong>LUMHS Care Connect</strong> puts everything in one place on your phone: patient list, vitals trends, tasks, antibiotics, VTE risk, operative notes, and instant clinical decision support — all syncing live across the team.
+        Managing 30–50 medical patients on a ward round is overwhelming — paper charts get lost, drug charts are incomplete, and critical tasks fall through the cracks. <strong>LUMHS Care Connect</strong> puts everything in one place on your phone: patient list, vitals trends, tasks, antibiotics, VTE risk, operative notes, and instant clinical decision support — all syncing live across the team.
       </div>
     </div>
 
@@ -1568,7 +1583,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     <div class="card">
       <div class="card-title"><span class="dot dot-amber"></span>How to use it — step by step</div>
       <div style="font-size:12px;line-height:1.7;color:var(--fg)">
-        <div style="margin-bottom:8px"><strong>1. Sign in &amp; join your ward</strong><br><span style="color:var(--muted)">Log in with email &amp; password, enter your name &amp; role, type the shared ward code (e.g. <em>LUMHS-SURGERY-A</em>). Everyone on the same code shares one live patient list.</span></div>
+        <div style="margin-bottom:8px"><strong>1. Sign in &amp; join your ward</strong><br><span style="color:var(--muted)">Log in with email &amp; password, enter your name &amp; role, type the shared ward code (e.g. <em>LUMHS-MEDICINE-A</em>). Everyone on the same code shares one live patient list.</span></div>
         <div style="margin-bottom:8px"><strong>2. Add a patient</strong><br><span style="color:var(--muted)">Tap <strong>+ Add Patient</strong> on the Ward screen. Enter name, age, bed, diagnosis, consultant.</span></div>
         <div style="margin-bottom:8px"><strong>3. Open a patient record</strong><br><span style="color:var(--muted)">Tap a card. Use the bottom tabs: <strong>Patient · Vitals · Notes · Labs · Reports · Guide</strong>.</span></div>
         <div style="margin-bottom:8px"><strong>4. Record vitals</strong><br><span style="color:var(--muted)">Vitals tab → enter BP, HR, RR, SpO₂, Temp → <em>Save Snapshot</em>. NEWS2 score auto-calculates with color alerts. History is kept.</span></div>
@@ -1590,7 +1605,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 
     <div class="card" style="text-align:center">
       <div style="font-size:13px;font-weight:600;color:var(--fg);margin-bottom:4px">Developed by Dr. Noorullah Ahmed</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:2px">House Officer, Surgery Department</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:2px">House Officer, Medicine Department</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Liaquat University Hospital, Jamshoro</div>
       <div style="font-size:11px;color:var(--accent);font-family:var(--mono)">noorullahahmed385@gmail.com</div>
       <div style="font-size:10px;color:var(--muted);margin-top:10px;font-style:italic">Built for the ward. By someone who works the ward.</div>
@@ -1677,6 +1692,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 <nav class="bottom-nav" id="global-nav" style="display:none">
   <button class="bnav-btn active" onclick="switchGlobalTab('list',this)" id="gnav-list"><span class="bnav-icon">🏥</span>Ward</button>
   <button class="bnav-btn" onclick="switchGlobalTab('activity',this)" id="gnav-activity"><span class="bnav-icon">⚡</span>Activity</button>
+  <button class="bnav-btn" onclick="switchGlobalTab('chat',this)" id="gnav-chat"><span class="bnav-icon">💬</span>Chat<span id="chat-badge" style="display:none;position:absolute;top:2px;right:8px;background:var(--red,#ef4444);color:#fff;border-radius:9px;font-size:9px;padding:0 5px"></span></button>
   <button class="bnav-btn" onclick="switchGlobalTab('imaging',this)" id="gnav-imaging"><span class="bnav-icon">🩻</span>Imaging</button>
   <button class="bnav-btn" onclick="switchGlobalTab('askai',this)" id="gnav-askai"><span class="bnav-icon">🤖</span>Ask AI</button>
   <button class="bnav-btn" onclick="switchGlobalTab('drugs',this)" id="gnav-drugs"><span class="bnav-icon">💊</span>Drugs</button>
@@ -1694,7 +1710,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     <div class="login-brand">
       <div class="login-logo">🩺</div>
       <div class="login-title">Ward Follow-Up</div>
-      <div class="login-sub">LUMHS Jamshoro · Surgery &amp; Medicine</div>
+      <div class="login-sub">LUMHS Jamshoro · Medicine</div>
       <div class="login-tag">Secure team sign-in</div>
     </div>
     <div class="login-field">
@@ -1715,15 +1731,13 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     <div class="login-field">
       <label>Department</label>
       <select id="login-dept">
-        <option>Surgery</option>
-        <option>Medicine</option>
-        <option>Both</option>
-      </select>
+                <option>Medicine</option>
+              </select>
       <div class="login-hint">Sets the default order sets, exam template and guidance protocols. You can change it per patient.</div>
     </div>
     <div class="login-field">
       <label>Ward code</label>
-      <input type="text" id="login-ward" placeholder="e.g. LUMHS-SURGERY-A" autocomplete="off" style="text-transform:uppercase">
+      <input type="text" id="login-ward" placeholder="e.g. LUMHS-MEDICINE-A" autocomplete="off" style="text-transform:uppercase">
       <div class="login-hint">Everyone using the same ward code shares the live patient list. Ask your team lead for it.</div>
     </div>
     <button class="login-cta" onclick="submitLogin()">🔓 Enter Ward</button>
@@ -1731,7 +1745,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
       <div class="login-recent-title">Recent wards</div>
       <div id="login-recent-chips"></div>
     </div>
-    <div class="login-foot">© LUMHS Surgical Unit III · Ward Navigator</div>
+    <div class="login-foot">© LUMHS Department of Medicine · Ward Navigator</div>
   </div>
 </div>
 
@@ -1757,7 +1771,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     </div>
     <div class="field" style="margin-bottom:4px">
       <label>Ward Code (shared with team)</label>
-      <input type="text" id="ward-code-input" placeholder="e.g. LUMHS-SURGERY-A" style="margin-top:4px">
+      <input type="text" id="ward-code-input" placeholder="e.g. LUMHS-MEDICINE-A" style="margin-top:4px">
     </div>
     <div style="font-size:10px;color:var(--muted);margin-bottom:14px;font-family:var(--mono)">All team members using the same ward code share one patient list in real-time.</div>
     <div class="modal-btns">
@@ -1821,7 +1835,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
       <button type="button" class="btn btn-outline" onclick="document.getElementById('vf-transcript').value=''" style="justify-content:center">Clear</button>
       <span id="vf-rec-status" style="font-size:11px;color:var(--muted);align-self:center"></span>
     </div>
-    <textarea id="vf-transcript" placeholder="e.g. 45 year old male, CR 12345, ward male surgical bed 7, diagnosis perforated appendix, post lap appendectomy day 1. BP 110/70, HR 88, temp 37.8, SpO2 98 on room air. PMH diabetic on metformin. Allergic to penicillin. Pain score 4. Plan: continue tazocin, encourage mobilization." style="width:100%;min-height:140px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+    <textarea id="vf-transcript" placeholder="e.g. 45 year old male, CR 12345, ward male medical bed 7, diagnosis perforated appendix, post lap appendectomy day 1. BP 110/70, HR 88, temp 37.8, SpO2 98 on room air. PMH diabetic on metformin. Allergic to penicillin. Pain score 4. Plan: continue tazocin, encourage mobilization." style="width:100%;min-height:140px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
     <div id="vf-warn" style="font-size:11px;color:var(--amber);margin-top:6px;display:none"></div>
     <div class="modal-btns" style="margin-top:12px">
       <button class="btn btn-outline" onclick="$m('modal-voicefill').classList.remove('show'); vfStopRec();" style="justify-content:center">Cancel</button>
@@ -1836,7 +1850,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 
 <script type="module">
 // ══════════════════════════════════════════════════════════════
-//  WARD FOLLOW-UP — LUMHS SURGERY
+//  WARD FOLLOW-UP — LUMHS MEDICINE
 //  Real-time team coordination via Lovable Cloud (Supabase)
 //  Falls back to localStorage if offline
 // ══════════════════════════════════════════════════════════════
@@ -2175,7 +2189,11 @@ window.submitLogin = function(){
 };
 
 window.logoutDoctor = function(){
-  if(!confirm('Sign out of this ward? Your local patient data stays on this device.')) return;
+  if(!confirm('Sign out? You will need your email & password to open the app again.')) return;
+  sessionStorage.removeItem('wfu_unlocked');
+  localStorage.removeItem(DOCTOR_KEY);
+  sb.auth.signOut().finally(()=>location.reload());
+  return;
   // Tear down realtime subscriptions
   teardownRealtime();
   isOnline=false;
@@ -2226,7 +2244,7 @@ window.showDoctorModal = function(){
 window.saveDoctorProfile = function(){
   const name=$('doctor-name-input').value.trim();
   const role=$('doctor-role-input').value;
-  const wardCode=$('ward-code-input').value.trim().toUpperCase()||doctorProfile.wardCode||'LUMHS-SURGERY';
+  const wardCode=$('ward-code-input').value.trim().toUpperCase()||doctorProfile.wardCode||'LUMHS-MEDICINE';
   if(!name){ showToast('⚠️ Please enter your name'); return; }
   const wardChanged = wardCode !== doctorProfile.wardCode;
   doctorProfile={name,role,wardCode};
@@ -2315,6 +2333,7 @@ window.switchGlobalTab = function(tab,btn){
   else if(tab==='imaging') showScreen('screen-imaging');
   else if(tab==='askai'){ showScreen('screen-askai'); setTimeout(()=>{ try{ $('askai-input').focus(); }catch{} },50); }
   else if(tab==='drugs'){ showScreen('screen-drugs'); renderDrugList(); }
+  else if(tab==='chat'){ showScreen('screen-chat'); window.openChat && window.openChat(); }
   else if(tab==='activity'){
     showScreen('screen-activity');
     if(!isOnline){ try{ const a=JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]'); renderActivity(a); }catch{} }
@@ -2974,7 +2993,7 @@ window.generateTranscript = function(){
     t+='\n';
   }
   t+='───────────────────────────────────────────\n';
-  t+=`Documented by : ${doctorProfile.name||'House Officer'} (${doctorProfile.role||'Surgery'})\n`;
+  t+=`Documented by : ${doctorProfile.name||'House Officer'} (${doctorProfile.role||'Medicine'})\n`;
   t+=`LUMHS Jamshoro\n`;
   t+=`Entry time    : ${dateStr}  ${timeStr}\n`;
   t+='═══════════════════════════════════════════';
@@ -3000,7 +3019,7 @@ window.generateDischarge = function(){
   let t='';
   t+='══════════════════════════════════════════════════\n';
   t+='           DISCHARGE SUMMARY\n';
-  t+='       LUMHS Jamshoro — Surgery Department\n';
+  t+='       LUMHS Jamshoro — Medicine Department\n';
   t+='══════════════════════════════════════════════════\n\n';
   t+=`Patient Name  : ${valLine('pt-name')||'—'}\n`;
   t+=`Age / Sex     : ${valLine('pt-age')||'—'}\n`;
@@ -3048,13 +3067,13 @@ window.generateEscalation = function(type){
   const time=`${p(now.getHours())}:${p(now.getMinutes())}`;
   let t='';
   if(type==='deteriorating'){
-    t=`🚨 URGENT — PATIENT DETERIORATING\n\nTime: ${time}\nPatient: ${name}${cr?' · CR: '+cr:''}${bed?' · '+bed:''}\nDiagnosis: ${diag||'—'}\nDay: ${day||'—'}\n\nCurrent Vitals:\n• BP: ${bp||'—'} mmHg\n• HR: ${hr||'—'} bpm\n• SpO₂: ${spo2||'—'}%\n• Temp: ${temp||'—'}°C\n\nPatient is deteriorating and requires urgent review. Please come to ward immediately.\n\n— ${doctorProfile.name||'HO'} (${doctorProfile.role||'Surgery'})`;
+    t=`🚨 URGENT — PATIENT DETERIORATING\n\nTime: ${time}\nPatient: ${name}${cr?' · CR: '+cr:''}${bed?' · '+bed:''}\nDiagnosis: ${diag||'—'}\nDay: ${day||'—'}\n\nCurrent Vitals:\n• BP: ${bp||'—'} mmHg\n• HR: ${hr||'—'} bpm\n• SpO₂: ${spo2||'—'}%\n• Temp: ${temp||'—'}°C\n\nPatient is deteriorating and requires urgent review. Please come to ward immediately.\n\n— ${doctorProfile.name||'HO'} (${doctorProfile.role||'Medicine'})`;
   }else if(type==='fever'){
-    t=`🌡️ FEVER SPIKE — Please Review\n\nTime: ${time}\nPatient: ${name}${cr?' · CR: '+cr:''}${bed?' · '+bed:''}\nDiagnosis: ${diag||'—'}\nDay: ${day||'—'}\n\nTemp: ${temp||'—'}°C | BP: ${bp||'—'} | HR: ${hr||'—'} | SpO₂: ${spo2||'—'}%\n\nPatient has developed fever spike. Blood cultures sent / pending. Awaiting instructions.\n\n— ${doctorProfile.name||'HO'} (${doctorProfile.role||'Surgery'})`;
+    t=`🌡️ FEVER SPIKE — Please Review\n\nTime: ${time}\nPatient: ${name}${cr?' · CR: '+cr:''}${bed?' · '+bed:''}\nDiagnosis: ${diag||'—'}\nDay: ${day||'—'}\n\nTemp: ${temp||'—'}°C | BP: ${bp||'—'} | HR: ${hr||'—'} | SpO₂: ${spo2||'—'}%\n\nPatient has developed fever spike. Blood cultures sent / pending. Awaiting instructions.\n\n— ${doctorProfile.name||'HO'} (${doctorProfile.role||'Medicine'})`;
   }else if(type==='bleeding'){
     t=`🩸 POST-OP BLEEDING CONCERN\n\nTime: ${time}\nPatient: ${name}${cr?' · CR: '+cr:''}${bed?' · '+bed:''}\nProcedure: ${valLine('pt-proc')||'—'}\nDay: ${day||'—'}\n\nBP: ${bp||'—'} | HR: ${hr||'—'} | Drain output: ${valLine('v-drain')||'—'} mL\n\nConcerned about post-operative bleeding. Drain output increasing / wound oozing. Please review urgently.\n\n— ${doctorProfile.name||'HO'}`;
   }else if(type==='consent'){
-    t=`📝 CONSENT REQUIRED\n\nPatient: ${name}${cr?' · CR: '+cr:''}\nDiagnosis: ${diag||'—'}\nPlanned Procedure: ${valLine('pt-proc')||'— please specify'}\n\nPatient/family available for consent. Please come to ward when convenient.\n\nTime: ${time}\n— ${doctorProfile.name||'HO'} (${doctorProfile.role||'Surgery'})`;
+    t=`📝 CONSENT REQUIRED\n\nPatient: ${name}${cr?' · CR: '+cr:''}\nDiagnosis: ${diag||'—'}\nPlanned Procedure: ${valLine('pt-proc')||'— please specify'}\n\nPatient/family available for consent. Please come to ward when convenient.\n\nTime: ${time}\n— ${doctorProfile.name||'HO'} (${doctorProfile.role||'Medicine'})`;
   }
   const el=$('escalation-out');el.textContent=t;el.style.display='block';
   $('esc-copy-row').style.display='flex';
@@ -3078,7 +3097,7 @@ window.generateHandover = function(){
   const dt=`${p(now.getDate())}/${p(now.getMonth()+1)}/${now.getFullYear()} ${p(now.getHours())}:${p(now.getMinutes())}`;
   let t='';
   t+='═══════════════════════════════════════════════\n';
-  t+=`  WARD HANDOVER — LUMHS JAMSHORO SURGERY\n`;
+  t+=`  WARD HANDOVER — LUMHS JAMSHORO MEDICINE\n`;
   t+=`  Generated: ${dt}\n`;
   t+=`  By: ${doctorProfile.name||'—'} (${doctorProfile.role||'—'})\n`;
   if(doctorProfile.wardCode) t+=`  Ward: ${doctorProfile.wardCode}\n`;
@@ -3121,7 +3140,7 @@ window.enhanceHandoverWithAI = async function(){
   btn.textContent = '⏳ Thinking...'; btn.disabled = true;
   if(!isNetOnline()){ showToast('⚠ Offline — AI unavailable'); btn.textContent = original; btn.disabled = false; return; }
   try {
-    const sys = "You are a senior surgical ward registrar preparing a structured handover for the incoming team. Keep all patient data accurate. Add a 'CLINICAL PRIORITIES' section at the top listing patients who need review first (sickest, pending discharges, urgent tasks). Add a 'SAFETY FLAGS' section noting any high NEWS2, overdue antibiotics, or pending critical results. Preserve every patient's name, bed, diagnosis, NEWS2, and pending tasks. Use concise bullet points. Do not invent data.";
+    const sys = "You are a senior medical ward registrar preparing a structured handover for the incoming team. Keep all patient data accurate. Add a 'CLINICAL PRIORITIES' section at the top listing patients who need review first (sickest, pending discharges, urgent tasks). Add a 'SAFETY FLAGS' section noting any high NEWS2, overdue antibiotics, or pending critical results. Preserve every patient's name, bed, diagnosis, NEWS2, and pending tasks. Use concise bullet points. Do not invent data.";
     const r = await fetch(AI_BASE + '/api/ai/chat', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ system: sys, messages: [{role:'user', content: 'Enhance this ward handover:\n\n' + content}] })
@@ -3173,13 +3192,16 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
     const { data, error } = await fn;
     if(error) throw error;
     if(!data.session){ err.textContent = 'Check your email to confirm, then sign in.'; setAuthMode('signin'); return; }
+    sessionStorage.setItem('wfu_unlocked','1');
     showAuthOverlay(false);
     loadDoctorProfile();
+    setTimeout(()=>window.openChat&&chatStart(),1500);
   } catch(ex){
     err.textContent = ex.message || 'Authentication failed';
   } finally { btn.disabled = false; }
 });
 window.signOutDoctor = async function(){
+  sessionStorage.removeItem('wfu_unlocked');
   try { await sb.auth.signOut(); } catch{}
   location.reload();
 };
@@ -3187,9 +3209,60 @@ window.signOutDoctor = async function(){
 // Boot: only run app once authenticated
 (async () => {
   const { data } = await sb.auth.getSession();
-  if(!data.session){ showAuthOverlay(true); setAuthMode('signin'); return; }
+  // Strict: every new app open requires email+password sign-in again
+  if(data.session && !sessionStorage.getItem('wfu_unlocked')){ try{ await sb.auth.signOut(); }catch{} }
+  const fresh = (await sb.auth.getSession()).data;
+  if(!fresh.session){ showAuthOverlay(true); setAuthMode('signin'); return; }
   loadDoctorProfile();
 })();
+
+// ─── WARD TEAM CHAT ──────────────────────────────────────────
+let chatCh=null, chatWard=null, chatUnread=0, chatUid=null;
+function chatEsc(t){ const d=document.createElement('div'); d.textContent=t??''; return d.innerHTML; }
+function chatRender(m){
+  const box=$('chat-msgs'); if(!box||document.getElementById('cm-'+m.id)) return;
+  const mine=m.sender_id===chatUid;
+  const t=new Date(m.created_at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const el=document.createElement('div'); el.id='cm-'+m.id;
+  el.style.cssText=`align-self:${mine?'flex-end':'flex-start'};max-width:80%;background:${mine?'var(--accent,#2563eb)':'var(--card2,rgba(255,255,255,.06))'};color:${mine?'#fff':'inherit'};padding:8px 11px;border-radius:14px;font-size:13px`;
+  el.innerHTML=`${mine?'':`<div style="font-size:10px;font-weight:700;opacity:.8">${chatEsc(m.sender_name)} · ${chatEsc(m.sender_role)}</div>`}<div style="white-space:pre-wrap;word-break:break-word">${chatEsc(m.body)}</div><div style="font-size:9px;opacity:.6;text-align:right">${t}</div>`;
+  box.appendChild(el); box.scrollTop=box.scrollHeight;
+}
+async function chatOnline(){
+  const w=currentWard||doctorProfile.wardCode; if(!w) return;
+  const since=new Date(Date.now()-5*60000).toISOString();
+  const {data}=await sb.from('ward_presence').select('name,role,last_seen,online').eq('ward_code',w).eq('online',true).gte('last_seen',since);
+  const list=data||[]; const o=$('chat-online'); if(!o) return;
+  $('chat-online-count').textContent='('+list.length+')';
+  o.innerHTML=list.length?list.map(p=>`<span style="padding:4px 9px;border-radius:12px;background:rgba(34,197,94,.15);color:#22c55e">● ${chatEsc(p.name)} <span style="opacity:.7">${chatEsc(p.role||'')}</span></span>`).join(''):'<span style="color:var(--muted)">No one else online</span>';
+}
+async function chatStart(){
+  const w=currentWard||doctorProfile.wardCode; if(!w) return;
+  const {data:s}=await sb.auth.getSession(); chatUid=s?.session?.user?.id; if(!chatUid) return;
+  if(chatWard===w && chatCh) return;
+  if(chatCh){ try{ sb.removeChannel(chatCh);}catch{} chatCh=null; }
+  chatWard=w; $('chat-msgs').innerHTML=''; $('chat-ward').textContent='· '+w;
+  const {data}=await sb.from('ward_messages').select('*').eq('ward_code',w).order('created_at',{ascending:false}).limit(100);
+  (data||[]).reverse().forEach(chatRender);
+  chatCh=sb.channel('chat:'+w).on('postgres_changes',{event:'INSERT',schema:'public',table:'ward_messages',filter:`ward_code=eq.${w}`},p=>{
+    chatRender(p.new);
+    const onChat=$('screen-chat')?.classList.contains('active');
+    if(!onChat && p.new.sender_id!==chatUid){ chatUnread++; const b=$('chat-badge'); b.textContent=chatUnread; b.style.display='inline'; showToast('💬 '+(p.new.sender_name||'Doctor')+': '+String(p.new.body).slice(0,40)); }
+  }).subscribe();
+  (window.unsubFns=window.unsubFns||[]).push(()=>{ try{ sb.removeChannel(chatCh);}catch{} chatCh=null; chatWard=null; });
+}
+window.openChat=async function(){ chatUnread=0; const b=$('chat-badge'); if(b) b.style.display='none'; await chatStart(); chatOnline(); const box=$('chat-msgs'); if(box) box.scrollTop=box.scrollHeight; };
+window.sendChat=async function(){
+  const i=$('chat-input'); const body=i.value.trim(); if(!body) return;
+  if(!navigator.onLine){ showToast('📴 No internet — chat needs a connection'); return; }
+  const w=currentWard||doctorProfile.wardCode; if(!w){ showToast('Join a ward first'); return; }
+  i.value='';
+  const {error}=await sb.from('ward_messages').insert({ward_code:w,body,sender_name:doctorProfile.name,sender_role:doctorProfile.role});
+  if(error){ showToast('⚠️ '+error.message); i.value=body; }
+};
+setInterval(()=>{ if(doctorProfile.wardCode){ chatStart(); if($('screen-chat')?.classList.contains('active')) chatOnline(); } },30000);
+setTimeout(()=>{ if(doctorProfile.wardCode) chatStart(); },4000);
+
 
 // Load local activity for offline view
 try{ const a=JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]'); if(a.length) renderActivity(a); }catch{}
@@ -4073,7 +4146,7 @@ window.vfSubmit = async function(){
   const orig = btn.textContent; btn.disabled=true; btn.textContent='✨ Analyzing…';
   try{
     const fieldList = Object.entries(VF_FIELD_INFO).map(([id,desc])=>`- ${id}: ${desc}`).join('\n');
-    const system = `You are a clinical data extraction assistant for a surgical ward app. The physician will give you a free-form spoken summary about a patient. Extract any values they mention and map them to the listed form field IDs. Rules:
+    const system = `You are a clinical data extraction assistant for a medicine ward app. The physician will give you a free-form spoken summary about a patient. Extract any values they mention and map them to the listed form field IDs. Rules:
 - Return ONLY a single JSON object. No prose, no markdown fences.
 - Keys MUST be field IDs from the list. Omit fields that are not mentioned — do NOT guess or invent.
 - Values must be plain strings matching the format hint for that field.
@@ -4841,7 +4914,7 @@ window.removeRxAfterInteraction = function(rxId, elId){
 function currentSpecialty(){
   const v = val('pt-specialty');
   if(v) return v;
-  return (doctorProfile && doctorProfile.dept) || 'Surgery';
+  return 'Medicine';
 }
 window.applySpecialty = function(){
   const sp = currentSpecialty();

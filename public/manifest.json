@@ -1,7 +1,7 @@
 {
-  "name": "Ward Follow-Up — LUMHS Surgery",
+  "name": "Ward Follow-Up — LUMHS Medicine",
   "short_name": "Ward FU",
-  "description": "Surgical Ward Follow-Up Tool for LUMHS Jamshoro — real-time team coordination",
+  "description": "Medical Ward Follow-Up Tool for LUMHS Jamshoro — real-time team coordination",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#060c1a",
