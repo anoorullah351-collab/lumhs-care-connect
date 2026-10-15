@@ -2189,7 +2189,11 @@ window.submitLogin = function(){
 };
 
 window.logoutDoctor = function(){
-  if(!confirm('Sign out of this ward? Your local patient data stays on this device.')) return;
+  if(!confirm('Sign out? You will need your email & password to open the app again.')) return;
+  sessionStorage.removeItem('wfu_unlocked');
+  localStorage.removeItem(DOCTOR_KEY);
+  sb.auth.signOut().finally(()=>location.reload());
+  return;
   // Tear down realtime subscriptions
   teardownRealtime();
   isOnline=false;
