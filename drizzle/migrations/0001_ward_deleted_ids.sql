@@ -1,0 +1,1 @@
+ALTER TABLE public.wards ADD COLUMN IF NOT EXISTS deleted_ids jsonb NOT NULL DEFAULT '[]'::jsonb;

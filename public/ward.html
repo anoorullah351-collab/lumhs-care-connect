@@ -1920,13 +1920,10 @@ async function connectToWard(){
       .from('wards').select('patients').eq('code', currentWard).maybeSingle();
     if(selErr) throw selErr;
 
-    if(row && Array.isArray(row.patients) && row.patients.length){
-      patients = row.patients;
-      saveStore();
-    } else {
-      loadLocalPatients();
-      await sb.from('wards').upsert({ code: currentWard, patients, updated_at: new Date().toISOString() });
-    }
+    loadLocalPatients();
+    patients = mergePatients(patients, row && row.patients, row && row.deleted_ids);
+    saveStore();
+    await cloudSave(currentWard);
 
     const { data: sess } = await sb.auth.getSession();
     const doctorId = sess?.session?.user?.id || (sanitizeId(doctorProfile.name) || 'anon_'+Math.random().toString(36).slice(2,8));
@@ -1944,7 +1941,7 @@ async function connectToWard(){
           const next = payload.new && payload.new.patients;
           if(!Array.isArray(next)) return;
           if(suppressNextRemote){ suppressNextRemote = false; return; }
-          patients = next;
+          patients = mergePatients(patients, next, payload.new.deleted_ids);
           saveStore();
           renderList();
           if(currentId) loadPatientIntoForm(currentId);
@@ -2012,17 +2009,15 @@ async function initFirebase(){ await connectToWard(); }
 
 // ─── PUSH TO CLOUD ───────────────────────────────────────────
 async function pushToFirebase(action, detail){
+  if(action!=='patient_delete') touchCurrent();
   saveStore();
   saveActivityLocal(action, detail);
   if(!currentWard || !isOnline) return;
   clearTimeout(pushTimer);
   pushTimer = setTimeout(async () => {
     try {
-      suppressNextRemote = true;
-      await sb.from('wards').upsert({
-        code: currentWard, patients, updated_at: new Date().toISOString()
-      });
-    } catch(e){ suppressNextRemote = false; console.warn('Push failed:', e); }
+      await cloudSave(currentWard);
+    } catch(e){ console.warn('Push failed:', e); markPendingSync && markPendingSync(); }
   }, 250);
   try {
     await sb.from('ward_activity').insert({
@@ -2072,6 +2067,40 @@ function loadLocalPatients(){
   try { const r=localStorage.getItem(STORE_KEY); patients=r?JSON.parse(r):[]; } catch { patients=[]; }
 }
 function saveStore(){ localStorage.setItem(STORE_KEY,JSON.stringify(patients)); }
+
+// ─── SHARED RECORD MERGE (per-patient, newest edit wins) ─────
+const TOMB_KEY='ward_deleted_ids_v1';
+function getTombs(){ try{ return JSON.parse(localStorage.getItem(TOMB_KEY)||'[]'); }catch{ return []; } }
+function addTomb(id){ const t=getTombs(); if(!t.includes(id)){ t.push(id); localStorage.setItem(TOMB_KEY,JSON.stringify(t.slice(-500))); } }
+function mergePatients(local, remote, remoteTombs){
+  const tombs=new Set([...getTombs(), ...(remoteTombs||[])]);
+  localStorage.setItem(TOMB_KEY, JSON.stringify([...tombs].slice(-500)));
+  const map=new Map();
+  for(const p of (remote||[])) if(p&&p.id) map.set(p.id,p);
+  for(const p of (local||[])){ if(!p||!p.id) continue;
+    const r=map.get(p.id);
+    if(!r || (p.updatedAt||0) > (r.updatedAt||0)) map.set(p.id,p);
+  }
+  return [...map.values()].filter(p=>!tombs.has(p.id));
+}
+let _cloudBusy=Promise.resolve();
+function cloudSave(code){
+  code = code || currentWard || (doctorProfile&&doctorProfile.wardCode);
+  if(!code) return Promise.resolve();
+  _cloudBusy = _cloudBusy.then(async()=>{
+    const { data: row } = await sb.from('wards').select('patients,deleted_ids').eq('code', code).maybeSingle();
+    const merged = mergePatients(patients, row&&row.patients, row&&row.deleted_ids);
+    patients = merged; saveStore();
+    suppressNextRemote = true;
+    const { error } = await sb.from('wards').upsert({ code, patients: merged, deleted_ids: getTombs(), updated_at: new Date().toISOString() });
+    if(error){ suppressNextRemote=false; throw error; }
+  }).catch(e=>{ console.warn('cloudSave failed',e); throw e; });
+  return _cloudBusy;
+}
+function touchCurrent(){
+  const pt = currentId && patients.find(p=>p.id===currentId);
+  if(pt){ pt.updatedAt=Date.now(); pt.updatedBy=(doctorProfile&&doctorProfile.name)||'—'; }
+}
 
 function sanitizeId(str){ return str.replace(/[^a-zA-Z0-9_-]/g,'_').substring(0,50); }
 
@@ -2567,6 +2596,7 @@ window.deletePatient = function(id){
   const pt=patients.find(p=>p.id===id);
   const name=pt?(pt.name||'this patient'):'this patient';
   if(!confirm(`Delete ${name}?\nThis cannot be undone.`)) return;
+  addTomb(id);
   patients=patients.filter(p=>p.id!==id);
   if(currentId===id){ currentId=null; showScreen('screen-list'); }
   pushToFirebase('patient_delete',`deleted patient ${name}`);
@@ -3467,6 +3497,54 @@ window.deleteDrug = function(id){
   pushToFirebase('drug_del',`removed a drug entry for ${pt.name||'patient'}`);
 };
 
+// ─── MEDICATION ADMINISTRATION RECORD (MAR) ─────────────────
+const FREQ_DOSES={OD:1,BD:2,TDS:3,QID:4,Q6H:4,Q8H:3,HS:1,STAT:1};
+function todayStr(){ return new Date().toISOString().split('T')[0]; }
+window.recordDose = function(id,status){
+  const pt=patients.find(p=>p.id===currentId); if(!pt) return;
+  const d=(pt.drugChart||[]).find(x=>x.id===id); if(!d) return;
+  let note='';
+  if(status!=='given'){ note=prompt(`Reason dose ${status} (required):`)||''; if(!note.trim()){ alert('A reason is required.'); return; } }
+  d.admin=d.admin||[];
+  d.admin.unshift({ts:Date.now(),status,by:(doctorProfile&&doctorProfile.name)||'—',note:note.trim()});
+  renderDrugChart(pt);
+  pushToFirebase('mar_'+status,`${d.name} ${d.dose||''} ${status} for ${pt.name||'patient'}${note?' — '+note:''}`);
+};
+window.undoDose = function(id){
+  const pt=patients.find(p=>p.id===currentId); if(!pt) return;
+  const d=(pt.drugChart||[]).find(x=>x.id===id); if(!d||!d.admin||!d.admin.length) return;
+  const last=d.admin[0];
+  if(Date.now()-last.ts>15*60*1000){ alert('Only entries from the last 15 minutes can be undone.'); return; }
+  if(!confirm('Undo last entry?')) return;
+  d.admin.shift(); renderDrugChart(pt);
+  pushToFirebase('mar_undo',`undid last ${d.name} entry for ${pt.name||'patient'}`);
+};
+function marBlock(d){
+  if(d.stopped) return '';
+  const t=todayStr();
+  const today=(d.admin||[]).filter(a=>new Date(a.ts).toISOString().split('T')[0]===t);
+  const given=today.filter(a=>a.status==='given').length;
+  const exp=FREQ_DOSES[d.freq];
+  let dueNote='';
+  if(exp){
+    const hrs=new Date().getHours()+new Date().getMinutes()/60;
+    const dueByNow=Math.floor(exp*hrs/24)+ (exp===1?0:0);
+    const accounted=today.length;
+    if(dueByNow>accounted) dueNote=`<span style="color:#ff5577;font-weight:700"> · ⚠ ${dueByNow-accounted} dose(s) may be overdue</span>`;
+  }
+  const col={given:'#8be38b',held:'#ffd066',refused:'#ff8fa3'};
+  const log=today.slice(0,6).map(a=>`<span style="font-family:var(--mono);font-size:10px;border:1px solid ${col[a.status]};color:${col[a.status]};padding:1px 6px;border-radius:8px;margin:2px 3px 0 0;display:inline-block" title="${escapeHtml?escapeHtml(a.note||''):''}">${new Date(a.ts).toTimeString().slice(0,5)} ${a.status} · ${a.by}</span>`).join('');
+  return `<div style="margin-top:7px;padding:7px;border-radius:7px;background:rgba(90,200,250,0.06)">
+    <div style="font-size:11px;color:var(--muted)">💉 Today: <b style="color:var(--text)">${given}${exp?'/'+exp:''}</b> given${dueNote}</div>
+    ${log?`<div style="margin-top:3px">${log}</div>`:''}
+    <div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap">
+      <button class="btn btn-outline" style="font-size:11px;padding:5px 9px;border-color:#8be38b;color:#8be38b" onclick="recordDose('${d.id}','given')">✅ Given</button>
+      <button class="btn btn-outline" style="font-size:11px;padding:5px 9px;border-color:#ffd066;color:#ffd066" onclick="recordDose('${d.id}','held')">✋ Held</button>
+      <button class="btn btn-outline" style="font-size:11px;padding:5px 9px;border-color:#ff8fa3;color:#ff8fa3" onclick="recordDose('${d.id}','refused')">🚫 Refused</button>
+      ${today.length?`<button class="btn btn-outline" style="font-size:11px;padding:5px 9px" onclick="undoDose('${d.id}')">↶ Undo</button>`:''}
+    </div></div>`;
+}
+
 function renderDrugChart(pt){
   const el=$('drug-list'); if(!el) return;
   const list=pt.drugChart||[];
@@ -3485,6 +3563,7 @@ function renderDrugChart(pt){
       </div>
       ${d.notes?`<div style="font-size:11px;color:var(--muted);margin-bottom:4px">${d.notes}</div>`:''}
       <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">${d.stopped?`Stopped ${d.stopDate||''}`:`Started ${d.start||'—'} · Day ${days}`} · by ${d.addedBy||'—'}</div>
+      ${marBlock(d)}
       <div style="display:flex;gap:6px;margin-top:7px">
         <button class="btn btn-outline" style="font-size:11px;padding:5px 9px" onclick="toggleDrugStop('${d.id}')">${d.stopped?'↩️ Resume':'⏸ Stop'}</button>
         <button class="btn btn-outline" style="font-size:11px;padding:5px 9px" onclick="deleteDrug('${d.id}')">🗑 Delete</button>
@@ -4545,7 +4624,7 @@ async function flushOfflineSync(){
   if(!doctorProfile || !doctorProfile.wardCode) return;
   if(!localStorage.getItem(PENDING_KEY)) return;
   try{
-    await sb.from('wards').upsert({ code: doctorProfile.wardCode, patients, updated_at: new Date().toISOString() });
+    await cloudSave(doctorProfile.wardCode);
     localStorage.removeItem(PENDING_KEY);
     if(typeof showToast==='function') showToast('☁️ Offline changes synced');
   }catch(e){ console.warn('flush sync fail',e); }
