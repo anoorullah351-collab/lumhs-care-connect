@@ -1528,11 +1528,15 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
      SCREEN: ABOUT / USER GUIDE
 ═══════════════════════════════════════════════════════════ -->
 <div class="screen" id="screen-chat">
-  <div class="card" style="margin:12px">
+  <div style="display:flex;align-items:center;gap:10px;margin:12px 12px 0">
+    <button class="back-btn" onclick="switchGlobalTab('list',document.getElementById('gnav-list'))">← Ward</button>
+    <div style="font-size:14px;font-weight:700">Team Chat</div>
+  </div>
+  <div class="card" style="margin:10px 12px 0;padding-bottom:10px">
     <div class="card-title"><span class="dot dot-green"></span>Online now <span id="chat-online-count" style="color:var(--muted);font-size:11px"></span></div>
     <div id="chat-online" style="display:flex;flex-wrap:wrap;gap:6px;font-size:12px"></div>
   </div>
-  <div class="card" style="margin:12px;display:flex;flex-direction:column;height:calc(100vh - 260px);min-height:320px">
+  <div class="card" style="margin:10px 12px 72px;flex:1;min-height:0;display:flex;flex-direction:column">
     <div class="card-title"><span class="dot dot-blue"></span>Ward Team Chat <span id="chat-ward" style="color:var(--muted);font-size:11px"></span></div>
     <div id="chat-msgs" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 2px"></div>
     <form id="chat-form" style="display:flex;gap:6px;margin-top:8px" onsubmit="event.preventDefault();sendChat()">
@@ -2264,14 +2268,14 @@ window.saveDoctorProfile = function(){
 };
 
 // ─── NAVIGATION ──────────────────────────────────────────────
-const GLOBAL_SCREENS = ['list','activity','imaging','askai','drugs','about'];
+const GLOBAL_SCREENS = ['list','activity','chat','imaging','askai','drugs','about'];
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const isDetail=id==='screen-detail';
   const key = id.replace('screen-','');
   const isGlobal = GLOBAL_SCREENS.includes(key);
-  const titles = {list:'Ward Follow-Up',activity:'Activity Feed',imaging:'AI Imaging',askai:'Ask AI',drugs:'Drug Reference',about:'About & Guide'};
+  const titles = {list:'Ward Follow-Up',activity:'Activity Feed',chat:'Team Chat',imaging:'AI Imaging',askai:'Ask AI',drugs:'Drug Reference',about:'About & Guide'};
   $('back-btn').style.display=isDetail?'flex':'none';
   $('topbar-title').textContent=isDetail?'Patient Record':(titles[key]||'Ward Follow-Up');
   $('detail-nav').style.display=isDetail?'flex':'none';
