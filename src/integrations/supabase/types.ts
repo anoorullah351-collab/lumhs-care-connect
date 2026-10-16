@@ -107,16 +107,19 @@ export type Database = {
       wards: {
         Row: {
           code: string
+          deleted_ids: Json
           patients: Json
           updated_at: string
         }
         Insert: {
           code: string
+          deleted_ids?: Json
           patients?: Json
           updated_at?: string
         }
         Update: {
           code?: string
+          deleted_ids?: Json
           patients?: Json
           updated_at?: string
         }
