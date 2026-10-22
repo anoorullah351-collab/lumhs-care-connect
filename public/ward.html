@@ -1513,7 +1513,12 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
       <button class="back-btn" onclick="hideHandover()">← Back</button>
     </div>
     <div class="card">
-      <div class="card-title"><span class="dot dot-amber"></span>All Active Patients</div>
+      <div class="card-title"><span class="dot dot-amber"></span>I-PASS Handoff</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px"><b>I</b>llness severity · <b>P</b>atient summary · <b>A</b>ction list · <b>S</b>ituation awareness &amp; contingency · <b>S</b>ynthesis by receiver. Fill per patient, then the receiving doctor confirms.</div>
+      <div id="ipass-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot dot-amber"></span>I-PASS Handoff Sheet</div>
       <div class="handover-card" id="handover-content">Generating...</div>
       <div class="btn-row" style="margin-top:10px">
         <button class="btn btn-accent" onclick="generateHandover()">🔄 Refresh</button>
@@ -3123,43 +3128,84 @@ window.copyEscalation = function(){
 };
 
 // ─── HANDOVER ─────────────────────────────────────────────────
-window.showHandover = function(){ showScreen('screen-handover'); generateHandover(); };
+window.showHandover = function(){ showScreen('screen-handover'); renderIpass(); generateHandover(); };
 window.hideHandover = function(){ showScreen('screen-list'); };
+
+const IPASS_SEV={stable:'🟢 Stable',watch:'🟡 Watcher',sick:'🔴 Unstable'};
+function ipassDefaultSev(pt){ return pt.status==='sick'?'sick':pt.status==='watch'?'watch':((pt.news2||0)>=7?'sick':(pt.news2||0)>=5?'watch':'stable'); }
+function ipassAutoSummary(pt){
+  const d=pt.data||{}; const bits=[];
+  if(d['pt-age']||d['pt-sex']) bits.push(`${d['pt-age']||''}${d['pt-sex']?' '+d['pt-sex']:''}`.trim());
+  if(pt.diag) bits.push(`admitted with ${pt.diag}`);
+  if(d['m-day']) bits.push(d['m-day']);
+  if(pt.news2!==undefined) bits.push(`NEWS2 ${pt.news2}`);
+  if(d['m-assess']) bits.push(d['m-assess'].substring(0,140));
+  return bits.join(', ');
+}
+function ipassAutoActions(pt){ return (pt.tasks||[]).filter(t=>!t.done).map(t=>`☐ ${t.text}${t.priority==='urgent'?' (URGENT)':''}`).join('\n'); }
+window.renderIpass = function(){
+  const box=$('ipass-list'); if(!box) return;
+  if(!patients.length){ box.innerHTML='<div style="color:var(--muted);font-size:12px">No patients.</div>'; return; }
+  const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  box.innerHTML=patients.map(pt=>{
+    const ip=pt.ipass||{}; const sev=ip.sev||ipassDefaultSev(pt);
+    const ack=ip.ackBy?`<div style="font-size:11px;color:var(--green)">✅ Synthesis confirmed by ${esc(ip.ackBy)} · ${new Date(ip.ackAt).toLocaleString()}</div>`:'<div style="font-size:11px;color:var(--amber)">⏳ Awaiting receiver synthesis</div>';
+    const ta=(f,ph,v)=>`<textarea data-ip="${pt.id}" data-f="${f}" placeholder="${ph}" style="width:100%;min-height:52px;margin:3px 0" oninput="ipassEdit(this)">${esc(v)}</textarea>`;
+    return `<details style="border:1px solid var(--border2);border-radius:10px;padding:8px;margin-bottom:8px"><summary style="cursor:pointer;font-weight:600">${IPASS_SEV[sev]} · ${esc(pt.name||'Unnamed')} ${pt.diag?'— '+esc(pt.diag):''}</summary>
+      <label style="font-size:11px">I — Illness severity</label>
+      <select data-ip="${pt.id}" data-f="sev" onchange="ipassEdit(this)" style="width:100%">${Object.entries(IPASS_SEV).map(([k,v])=>`<option value="${k}" ${k===sev?'selected':''}>${v}</option>`).join('')}</select>
+      <label style="font-size:11px">P — Patient summary</label>${ta('summary','Age/sex, diagnosis, hospital course, current status',ip.summary??ipassAutoSummary(pt))}
+      <label style="font-size:11px">A — Action list (to-do, timeline, owner)</label>${ta('actions','☐ Check K+ at 22:00',ip.actions??ipassAutoActions(pt))}
+      <label style="font-size:11px">S — Situation awareness &amp; contingency (if/then)</label>${ta('contingency','If SBP <90 → 500 mL bolus, inform senior',ip.contingency)}
+      <label style="font-size:11px">S — Synthesis by receiver</label>${ta('synthesis','Receiver restates key points / asks questions',ip.synthesis)}
+      ${ack}
+      <div class="btn-row" style="margin-top:6px"><button class="btn btn-green" style="font-size:12px" onclick="ipassAck('${pt.id}')">✅ I received this handoff</button></div>
+    </details>`;
+  }).join('');
+};
+let _ipassT;
+window.ipassEdit = function(el){
+  const pt=patients.find(p=>String(p.id)===el.dataset.ip); if(!pt) return;
+  pt.ipass=pt.ipass||{}; pt.ipass[el.dataset.f]=el.value;
+  if(el.dataset.f!=='synthesis'){ pt.ipass.ackBy=null; pt.ipass.ackAt=null; }
+  pt.updatedAt=Date.now(); saveStore();
+  clearTimeout(_ipassT); _ipassT=setTimeout(()=>{ markPendingSync(); cloudSave().catch(()=>{}); generateHandover(); }, 800);
+};
+window.ipassAck = function(id){
+  const pt=patients.find(p=>String(p.id)===String(id)); if(!pt) return;
+  pt.ipass=pt.ipass||{};
+  if(!(pt.ipass.synthesis||'').trim()){ showToast('Write your synthesis (read-back) first'); return; }
+  pt.ipass.ackBy=`${doctorProfile.name||'—'} (${doctorProfile.role||'—'})`; pt.ipass.ackAt=Date.now();
+  pt.updatedAt=Date.now(); saveStore(); markPendingSync(); cloudSave().catch(()=>{});
+  try{ pushToFirebase('ipass_ack', `${pt.name||'Patient'} handoff received`); }catch{}
+  showToast('✅ Handoff acknowledged'); renderIpass(); generateHandover();
+};
 
 window.generateHandover = function(){
   const now=new Date(); const p=x=>String(x).padStart(2,'0');
   const dt=`${p(now.getDate())}/${p(now.getMonth()+1)}/${now.getFullYear()} ${p(now.getHours())}:${p(now.getMinutes())}`;
   let t='';
   t+='═══════════════════════════════════════════════\n';
-  t+=`  WARD HANDOVER — LUMHS JAMSHORO MEDICINE\n`;
+  t+=`  I-PASS HANDOFF — LUMHS JAMSHORO MEDICINE\n`;
   t+=`  Generated: ${dt}\n`;
   t+=`  By: ${doctorProfile.name||'—'} (${doctorProfile.role||'—'})\n`;
   if(doctorProfile.wardCode) t+=`  Ward: ${doctorProfile.wardCode}\n`;
   t+='═══════════════════════════════════════════════\n\n';
   if(!patients.length){t+='No patients on ward list.\n';$('handover-content').textContent=t;return;}
-  const statusOrder={sick:0,watch:1,stable:2,discharge:3,'':4};
-  const sorted=[...patients].sort((a,b)=>(statusOrder[a.status||'']||4)-(statusOrder[b.status||'']||4));
+  const sevOrder={sick:0,watch:1,stable:2};
+  const sorted=[...patients].sort((a,b)=>sevOrder[(a.ipass&&a.ipass.sev)||ipassDefaultSev(a)]-sevOrder[(b.ipass&&b.ipass.sev)||ipassDefaultSev(b)]);
   sorted.forEach((pt,i)=>{
-    const data=pt.data||{};
-    const statusEmoji={sick:'🔴',watch:'🟡',stable:'🟢',discharge:'✅'}[pt.status]||'⚪';
-    t+=`${i+1}. ${statusEmoji} ${pt.name||'Unnamed'}\n`;
-    if(pt.cr)t+=`   CR: ${pt.cr}`;
-    if(data['pt-bed'])t+=` · ${data['pt-bed']}`;
-    if(data['m-day'])t+=` · ${data['m-day']}`;
-    t+='\n';
-    if(pt.diag)t+=`   Dx: ${pt.diag}\n`;
-    if(pt.news2!==undefined)t+=`   NEWS2: ${pt.news2}${pt.news2>=7?' ⚠️':''}\n`;
-    const pending=(pt.tasks||[]).filter(task=>!task.done);
-    const urgent=pending.filter(t=>t.priority==='urgent');
-    if(urgent.length){t+=`   🚨 URGENT (${urgent.length}):\n`;urgent.forEach(task=>t+=`   · ${task.text} [by ${task.addedBy||'—'}]\n`);}
-    const routinePending=pending.filter(t=>t.priority!=='urgent');
-    if(routinePending.length){t+=`   PENDING (${routinePending.length}):\n`;routinePending.forEach(task=>t+=`   · ${task.text}\n`);}
-    if(data['m-assess'])t+=`   Assessment: ${data['m-assess'].substring(0,80)}${data['m-assess'].length>80?'…':''}\n`;
-    if(data['m-plan'])t+=`   Plan: ${data['m-plan'].substring(0,80)}${data['m-plan'].length>80?'…':''}\n`;
-    t+='\n';
+    const d=pt.data||{}; const ip=pt.ipass||{}; const sev=ip.sev||ipassDefaultSev(pt);
+    t+=`${i+1}. ${pt.name||'Unnamed'}${d['pt-bed']?' · Bed '+d['pt-bed']:''}${pt.cr?' · CR '+pt.cr:''}\n`;
+    t+=`   I  Illness severity: ${IPASS_SEV[sev]}\n`;
+    t+=`   P  Summary: ${(ip.summary??ipassAutoSummary(pt))||'—'}\n`;
+    const acts=(ip.actions??ipassAutoActions(pt))||'—';
+    t+=`   A  Actions:\n${acts.split('\n').map(l=>'      '+l).join('\n')}\n`;
+    t+=`   S  Contingency: ${ip.contingency||'—'}\n`;
+    t+=`   S  Synthesis: ${ip.synthesis||'—'}${ip.ackBy?`  [✔ ${ip.ackBy}, ${new Date(ip.ackAt).toLocaleString()}]`:'  [awaiting receiver]'}\n\n`;
   });
   t+='───────────────────────────────────────────────\n';
-  t+=`Total: ${patients.length} patient${patients.length!==1?'s':''} · Sick: ${patients.filter(p=>p.status==='sick').length} · Watch: ${patients.filter(p=>p.status==='watch').length} · Discharge ready: ${patients.filter(p=>p.status==='discharge').length}\n`;
+  t+=`Total: ${patients.length} · Unstable: ${patients.filter(p=>((p.ipass&&p.ipass.sev)||ipassDefaultSev(p))==='sick').length} · Watchers: ${patients.filter(p=>((p.ipass&&p.ipass.sev)||ipassDefaultSev(p))==='watch').length} · Acknowledged: ${patients.filter(p=>p.ipass&&p.ipass.ackBy).length}/${patients.length}\n`;
   $('handover-content').textContent=t;
 };
 
@@ -3174,7 +3220,7 @@ window.enhanceHandoverWithAI = async function(){
   btn.textContent = '⏳ Thinking...'; btn.disabled = true;
   if(!isNetOnline()){ showToast('⚠ Offline — AI unavailable'); btn.textContent = original; btn.disabled = false; return; }
   try {
-    const sys = "You are a senior medical ward registrar preparing a structured handover for the incoming team. Keep all patient data accurate. Add a 'CLINICAL PRIORITIES' section at the top listing patients who need review first (sickest, pending discharges, urgent tasks). Add a 'SAFETY FLAGS' section noting any high NEWS2, overdue antibiotics, or pending critical results. Preserve every patient's name, bed, diagnosis, NEWS2, and pending tasks. Use concise bullet points. Do not invent data.";
+    const sys = "You are a senior medical ward registrar preparing a structured handover for the incoming team. Keep all patient data accurate. Keep the I-PASS structure (Illness severity, Patient summary, Action list, Situation awareness & contingency, Synthesis) for every patient. Add a 'CLINICAL PRIORITIES' section at the top listing patients who need review first (sickest, pending discharges, urgent tasks). Add a 'SAFETY FLAGS' section noting any high NEWS2, overdue antibiotics, or pending critical results. Preserve every patient's name, bed, diagnosis, NEWS2, and pending tasks. Use concise bullet points. Do not invent data.";
     const r = await fetch(AI_BASE + '/api/ai/chat', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ system: sys, messages: [{role:'user', content: 'Enhance this ward handover:\n\n' + content}] })
