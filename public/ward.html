@@ -3220,7 +3220,7 @@ window.enhanceHandoverWithAI = async function(){
   btn.textContent = '⏳ Thinking...'; btn.disabled = true;
   if(!isNetOnline()){ showToast('⚠ Offline — AI unavailable'); btn.textContent = original; btn.disabled = false; return; }
   try {
-    const sys = "You are a senior medical ward registrar preparing a structured handover for the incoming team. Keep all patient data accurate. Add a 'CLINICAL PRIORITIES' section at the top listing patients who need review first (sickest, pending discharges, urgent tasks). Add a 'SAFETY FLAGS' section noting any high NEWS2, overdue antibiotics, or pending critical results. Preserve every patient's name, bed, diagnosis, NEWS2, and pending tasks. Use concise bullet points. Do not invent data.";
+    const sys = "You are a senior medical ward registrar preparing a structured handover for the incoming team. Keep all patient data accurate. Keep the I-PASS structure (Illness severity, Patient summary, Action list, Situation awareness & contingency, Synthesis) for every patient. Add a 'CLINICAL PRIORITIES' section at the top listing patients who need review first (sickest, pending discharges, urgent tasks). Add a 'SAFETY FLAGS' section noting any high NEWS2, overdue antibiotics, or pending critical results. Preserve every patient's name, bed, diagnosis, NEWS2, and pending tasks. Use concise bullet points. Do not invent data.";
     const r = await fetch(AI_BASE + '/api/ai/chat', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ system: sys, messages: [{role:'user', content: 'Enhance this ward handover:\n\n' + content}] })
