@@ -1921,6 +1921,11 @@ async function connectToWard(){
   setSyncStatus('syncing', `Syncing ${currentWard}...`);
 
   try {
+    const { error: joinErr } = await sb.rpc('join_ward', { _code: currentWard });
+    if(joinErr){
+      if(/Administrator/i.test(joinErr.message||'')) showToast('🔒 Administrator accounts cannot open patient records');
+      throw joinErr;
+    }
     const { data: row, error: selErr } = await sb
       .from('wards').select('patients').eq('code', currentWard).maybeSingle();
     if(selErr) throw selErr;
