@@ -15,6 +15,13 @@
       "when": 1792138449770,
       "tag": "0001_ward_deleted_ids",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792833369370,
+      "tag": "0002_ward_membership_rls",
+      "breakpoints": true
     }
   ]
 }
