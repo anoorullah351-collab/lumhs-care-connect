@@ -436,6 +436,10 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
       <input id="auth-email" type="email" required autocomplete="email" style="width:100%;padding:10px;border-radius:8px;border:1px solid #1c2a45;background:#060c1a;color:#fff;margin-bottom:12px;font-size:14px"/>
       <label style="display:block;font-size:12px;color:#7b8aa8;margin-bottom:4px">Password</label>
       <input id="auth-password" type="password" required autocomplete="current-password" minlength="6" style="width:100%;padding:10px;border-radius:8px;border:1px solid #1c2a45;background:#060c1a;color:#fff;margin-bottom:14px;font-size:14px"/>
+      <div id="auth-ward-wrap" style="display:none">
+        <label style="display:block;font-size:12px;color:#7b8aa8;margin-bottom:4px">Ward code (from your team lead)</label>
+        <input id="auth-ward" type="text" autocomplete="off" placeholder="e.g. LUMHS-MEDICINE-A" style="width:100%;padding:10px;border-radius:8px;border:1px solid #1c2a45;background:#060c1a;color:#fff;margin-bottom:14px;font-size:14px;text-transform:uppercase"/>
+      </div>
       <button id="auth-submit" type="submit" style="width:100%;padding:11px;border:none;border-radius:8px;background:#38d9f5;color:#021018;font-weight:700;cursor:pointer;font-size:14px">Sign in</button>
       <div id="auth-error" style="color:#ff6b6b;font-size:12px;margin-top:10px;min-height:16px;text-align:center"></div>
     </form>
@@ -1750,6 +1754,8 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
       <div class="login-hint">Everyone using the same ward code shares the live patient list. Ask your team lead for it.</div>
     </div>
     <button class="login-cta" onclick="submitLogin()">🔓 Enter Ward</button>
+    <button type="button" onclick="createWardDirectory()" style="width:100%;margin-top:10px;padding:10px;border-radius:10px;border:1px dashed #38d9f5;background:transparent;color:#38d9f5;font-weight:600;cursor:pointer">➕ Create a new ward directory</button>
+    <div class="login-hint" style="text-align:center">For another ward starting its own patient list with its own unique code.</div>
     <div class="login-recent" id="login-recent" style="display:none">
       <div class="login-recent-title">Recent wards</div>
       <div id="login-recent-chips"></div>
@@ -2211,12 +2217,36 @@ function loadDoctorProfile(){
   }
 }
 
-window.submitLogin = function(){
+async function verifyWardAccess(wardCode){
+  if(!navigator.onLine){
+    const recent = JSON.parse(localStorage.getItem('wardfu_recent_wards_v1')||'[]');
+    if(recent.includes(wardCode)) return true;
+    showToast('📡 Offline — only wards you opened before on this phone can be used'); return false;
+  }
+  const { error } = await sb.rpc('join_ward', { _code: wardCode });
+  if(error){ showToast('🔒 '+(error.message||'Ward code not accepted')); return false; }
+  return true;
+}
+window.createWardDirectory = async function(){
+  const name = $('login-name').value.trim();
+  if(!name){ showToast('⚠️ Enter your name first'); $('login-name').focus(); return; }
+  if(!navigator.onLine){ showToast('📡 You need internet to create a ward'); return; }
+  const wname = prompt('Name of the new ward (e.g. Medical Unit II, Ward 7):'); if(wname===null) return;
+  let code = prompt('Choose a unique ward code (4-40 letters, numbers or dashes). Share it only with your team:', ''); if(code===null) return;
+  code = code.trim().toUpperCase();
+  const { error } = await sb.rpc('create_ward', { _code: code, _name: wname });
+  if(error){ showToast('⚠️ '+error.message); return; }
+  $('login-ward').value = code;
+  showToast('✅ Ward directory '+code+' created');
+  window.submitLogin();
+};
+window.submitLogin = async function(){
   const name = $('login-name').value.trim();
   const role = $('login-role').value;
   const wardCode = $('login-ward').value.trim().toUpperCase();
   if(!name){ showToast('⚠️ Please enter your name'); $('login-name').focus(); return; }
   if(!wardCode){ showToast('⚠️ Please enter a ward code'); $('login-ward').focus(); return; }
+  if(!(await verifyWardAccess(wardCode))){ $('login-ward').focus(); return; }
   doctorProfile = { name, role, wardCode };
   localStorage.setItem(DOCTOR_KEY, JSON.stringify(doctorProfile));
   pushRecentWard(wardCode);
@@ -3262,6 +3292,7 @@ function setAuthMode(mode){
   sub.textContent = isSI ? 'Sign in' : 'Create account';
   pw.autocomplete = isSI ? 'current-password' : 'new-password';
   document.getElementById('auth-error').textContent = '';
+  document.getElementById('auth-ward-wrap').style.display = isSI ? 'none' : 'block';
 }
 document.getElementById('auth-tab-signin').addEventListener('click', () => setAuthMode('signin'));
 document.getElementById('auth-tab-signup').addEventListener('click', () => setAuthMode('signup'));
@@ -3273,6 +3304,14 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
   const btn = document.getElementById('auth-submit');
   err.textContent = ''; btn.disabled = true;
   try {
+    if(authMode === 'signup'){
+      const wc = document.getElementById('auth-ward').value.trim().toUpperCase();
+      if(!wc) throw new Error('Enter the ward code your team gave you.');
+      const { data: ok, error: wErr } = await sb.rpc('ward_code_exists', { _code: wc });
+      if(wErr) throw new Error('Could not check ward code. Are you online?');
+      if(!ok) throw new Error('Wrong ward code. Sign up is only allowed with a valid ward code.');
+      try{ const p=JSON.parse(localStorage.getItem(DOCTOR_KEY)||'{}'); p.wardCode=wc; localStorage.setItem(DOCTOR_KEY, JSON.stringify(p)); }catch{}
+    }
     const fn = authMode === 'signin' ? sb.auth.signInWithPassword({email,password}) : sb.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin}});
     const { data, error } = await fn;
     if(error) throw error;

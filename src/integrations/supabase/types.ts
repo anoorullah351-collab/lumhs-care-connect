@@ -65,6 +65,27 @@ export type Database = {
         }
         Relationships: []
       }
+      ward_directories: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          name: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          name?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
       ward_members: {
         Row: {
           joined_at: string
@@ -167,6 +188,7 @@ export type Database = {
     }
     Functions: {
       can_access_ward: { Args: { _code: string }; Returns: boolean }
+      create_ward: { Args: { _code: string; _name: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -175,6 +197,7 @@ export type Database = {
         Returns: boolean
       }
       join_ward: { Args: { _code: string }; Returns: boolean }
+      ward_code_exists: { Args: { _code: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "clinician"
