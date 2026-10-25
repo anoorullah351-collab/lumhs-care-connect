@@ -1751,6 +1751,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
     <div class="login-field">
       <label>Ward code</label>
       <input type="text" id="login-ward" placeholder="e.g. LUMHS-MEDICINE-A" autocomplete="off" style="text-transform:uppercase">
+      <div id="login-ward-err" style="color:#ff6b6b;font-size:12px;margin-top:6px;min-height:0"></div>
       <div class="login-hint">Everyone using the same ward code shares the live patient list. Ask your team lead for it.</div>
     </div>
     <button class="login-cta" onclick="submitLogin()">🔓 Enter Ward</button>
@@ -2188,7 +2189,7 @@ function showLoginGate(prefillName){
   const g = $('login-gate'); if(!g) return;
   $('login-name').value = prefillName || doctorProfile.name || '';
   $('login-role').value = doctorProfile.role || 'House Officer';
-  $('login-ward').value = doctorProfile.wardCode || '';
+  $('login-ward').value = '';
   renderRecentWards();
   g.classList.add('show');
   setTimeout(()=>$('login-name').focus(), 100);
@@ -2206,8 +2207,9 @@ function updateAcctHead(){
 
 function loadDoctorProfile(){
   try { doctorProfile=JSON.parse(localStorage.getItem(DOCTOR_KEY))||{name:'',role:'House Officer',wardCode:''}; } catch { doctorProfile={name:'',role:'House Officer',wardCode:''}; }
-  if(!doctorProfile.name || !doctorProfile.wardCode){
-    showLoginGate();
+  // Ward code must be typed on every sign-in — never auto-enter
+  if(true){
+    showLoginGate(doctorProfile.name||'');
   } else {
     $('doc-name-badge').textContent=doctorProfile.name.substring(0,14);
     updateAcctHead();
@@ -2221,10 +2223,11 @@ async function verifyWardAccess(wardCode){
   if(!navigator.onLine){
     const recent = JSON.parse(localStorage.getItem('wardfu_recent_wards_v1')||'[]');
     if(recent.includes(wardCode)) return true;
-    showToast('📡 Offline — only wards you opened before on this phone can be used'); return false;
+    showToast('📡 Offline — only wards you opened before on this phone can be used'); const oe=$('login-ward-err'); if(oe) oe.textContent='📡 Offline — only wards opened before on this phone'; return false;
   }
   const { error } = await sb.rpc('join_ward', { _code: wardCode });
-  if(error){ showToast('🔒 '+(error.message||'Ward code not accepted')); return false; }
+  if(error){ const m=error.message||'Ward code not accepted'; showToast('🔒 '+m); const e=$('login-ward-err'); if(e) e.textContent='🔒 '+m; return false; }
+  const e=$('login-ward-err'); if(e) e.textContent='';
   return true;
 }
 window.createWardDirectory = async function(){
