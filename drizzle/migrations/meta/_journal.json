@@ -22,6 +22,13 @@
       "when": 1792833369370,
       "tag": "0002_ward_membership_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792907087798,
+      "tag": "0003_ward_directories",
+      "breakpoints": true
     }
   ]
 }
