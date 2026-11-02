@@ -1,0 +1,3 @@
+# Architecture rules
+- The embedded ward app uses an account-and-ward-scoped storage module for clinical caches; never read or automatically migrate unscoped legacy caches because their ward ownership is unknown.
+- Ward asynchronous reads and subscriptions must validate their active context before updating the UI; queued writes must capture the originating cache and data rather than read another ward's mutable state.
