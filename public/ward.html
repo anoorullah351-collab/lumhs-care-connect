@@ -1872,15 +1872,16 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
 // ══════════════════════════════════════════════════════════════
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createWardStorage } from './ward-storage.js';
 
 const SUPABASE_URL  = 'https://xhbdplryguddjbgmlrom.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmRwbHJ5Z3VkZGpiZ21scm9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjA4NjEsImV4cCI6MjA5NTczNjg2MX0.9AxIafun8QAQgUIqKsUfoNxdmdmSTLusE6eWYdaesDI';
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON, { realtime: { params: { eventsPerSecond: 10 } } });
 
 // ─── CONSTANTS ───────────────────────────────────────────────
-const STORE_KEY    = 'ward_patients_v4';
+const STORE_KEY    = 'patients';
 const DOCTOR_KEY   = 'ward_doctor_v2';
-const ACTIVITY_KEY = 'ward_activity_local_v1';
+const ACTIVITY_KEY = 'activity';
 
 // ─── STATE ───────────────────────────────────────────────────
 let patients = [];
@@ -1892,6 +1893,43 @@ let isOnline    = false;
 let channels    = [];
 let pushTimer   = null;
 let suppressNextRemote = false;
+let wardCache = null;
+let wardEpoch = 0;
+const wardIsActive = (code, epoch) => currentWard === code && wardEpoch === epoch && !!wardCache;
+function clearWardView(){
+  wardEpoch++;
+  clearTimeout(pushTimer); clearTimeout(_ipassT);
+  teardownRealtime();
+  for(const ch of channels){ sb.removeChannel(ch).catch(()=>{}); }
+  channels=[]; currentWard=null; wardCache=null; isOnline=false;
+  patients=[]; currentId=null; suppressNextRemote=false;
+  document.querySelectorAll('#screen-detail input, #screen-detail textarea').forEach(el=>{el.value='';});
+  document.querySelectorAll('.modal-overlay').forEach(el=>el.classList.remove('show'));
+  for(const id of ['handover-content','ipass-editor','chat-msgs','chat-online','img-result','ai-assist-redflags','ai-assist-questions','ai-assist-ddx']){
+    const el=$(id); if(el) el.replaceChildren();
+  }
+  for(const id of ['banner-name','banner-meta','banner-day','chat-ward']){ const el=$(id); if(el) el.textContent=''; }
+  for(const id of ['img-context','img-prompt','img-file','askai-input','chat-input']){ const el=$(id); if(el) el.value=''; }
+  $('img-preview')?.removeAttribute('src');
+  if($('img-preview-wrap')) $('img-preview-wrap').style.display='none';
+  _imgData=null; askaiHistory=[]; renderAskAI();
+  if($('chat-badge')) $('chat-badge').style.display='none';
+  renderActivity([]); renderOnlineUsers([]); showScreen('screen-list'); renderList();
+}
+async function activateWard(code){
+  clearWardView();
+  const epoch=wardEpoch;
+  const { data }=await sb.auth.getSession();
+  if(epoch!==wardEpoch) return false;
+  const userId=data?.session?.user?.id;
+  if(!userId) return false;
+  currentWard=code;
+  wardCache=createWardStorage(localStorage,userId,code);
+  loadLocalPatients(); renderList();
+  renderActivity(wardCache.read(ACTIVITY_KEY,[]));
+  askaiHistory=wardCache.read('askai',[]); renderAskAI();
+  return true;
+}
 
 // ─── DOM HELPERS ─────────────────────────────────────────────
 const $  = id => document.getElementById(id);
@@ -1919,106 +1957,58 @@ function getSavedFirebaseConfig(){ return doctorProfile.wardCode ? {} : null; }
 
 // ─── CONNECT TO WARD ─────────────────────────────────────────
 async function connectToWard(){
-  if(!doctorProfile.wardCode){ loadLocalPatients(); renderList(); setSyncStatus('offline'); return; }
-  for(const ch of channels){ try{ await sb.removeChannel(ch); }catch{} }
-  channels = [];
-  isOnline = false;
-
-  currentWard = doctorProfile.wardCode;
-  setSyncStatus('syncing', `Syncing ${currentWard}...`);
-
+  const code=currentWard, epoch=wardEpoch;
+  if(!code || !wardCache) return;
+  const active=()=>wardIsActive(code,epoch);
+  setSyncStatus('syncing', `Syncing ${code}...`);
   try {
-    const { error: joinErr } = await sb.rpc('join_ward', { _code: currentWard });
-    if(joinErr){
-      if(/Administrator/i.test(joinErr.message||'')) showToast('🔒 Administrator accounts cannot open patient records');
-      throw joinErr;
-    }
-    const { data: row, error: selErr } = await sb
-      .from('wards').select('patients').eq('code', currentWard).maybeSingle();
-    if(selErr) throw selErr;
-
-    loadLocalPatients();
-    patients = mergePatients(patients, row && row.patients, row && row.deleted_ids);
-    saveStore();
-    await cloudSave(currentWard);
-
-    const { data: sess } = await sb.auth.getSession();
-    const doctorId = sess?.session?.user?.id || (sanitizeId(doctorProfile.name) || 'anon_'+Math.random().toString(36).slice(2,8));
-    window._doctorId = doctorId;
-    await sb.from('ward_presence').upsert({
-      ward_code: currentWard, doctor_id: doctorId,
-      name: doctorProfile.name, role: doctorProfile.role,
-      online: true, last_seen: new Date().toISOString(),
-    });
-
-    const wardCh = sb.channel(`ward:${currentWard}`)
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'wards', filter: `code=eq.${currentWard}` },
-        payload => {
-          const next = payload.new && payload.new.patients;
-          if(!Array.isArray(next)) return;
-          if(suppressNextRemote){ suppressNextRemote = false; return; }
-          patients = mergePatients(patients, next, payload.new.deleted_ids);
-          saveStore();
-          renderList();
-          if(currentId) loadPatientIntoForm(currentId);
-        })
-      .subscribe(status => {
-        if(status === 'SUBSCRIBED'){
-          isOnline = true;
-          setSyncStatus('online', `Live · ${currentWard}`);
-        }
-      });
+    const { error: joinErr }=await sb.rpc('join_ward',{_code:code});
+    if(!active()) return;
+    if(joinErr) throw joinErr;
+    const {data:row,error}=await sb.from('wards').select('patients,deleted_ids').eq('code',code).maybeSingle();
+    if(!active()) return;
+    if(error) throw error;
+    patients=mergePatients(patients,row?.patients,row?.deleted_ids); saveStore(); renderList();
+    await cloudSave(code);
+    if(!active()) return;
+    const {data:sess}=await sb.auth.getSession();
+    if(!active()) return;
+    const doctorId=sess?.session?.user?.id; if(!doctorId) return;
+    window._doctorId=doctorId;
+    await sb.from('ward_presence').upsert({ward_code:code,doctor_id:doctorId,name:doctorProfile.name,role:doctorProfile.role,online:true,last_seen:new Date().toISOString()});
+    if(!active()) return;
+    const wardCh=sb.channel(`ward:${code}`).on('postgres_changes',
+      {event:'*',schema:'public',table:'wards',filter:`code=eq.${code}`}, payload=>{
+        if(!active() || !Array.isArray(payload.new?.patients)) return;
+        patients=mergePatients(patients,payload.new.patients,payload.new.deleted_ids);
+        saveStore(); renderList(); if(currentId) loadPatientIntoForm(currentId);
+      }).subscribe(status=>{if(active() && status==='SUBSCRIBED'){isOnline=true;setSyncStatus('online',`Live · ${code}`);}});
     channels.push(wardCh);
-
-    const actCh = sb.channel(`ward_act:${currentWard}`)
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'ward_activity', filter: `ward_code=eq.${currentWard}` },
-        () => refreshActivity())
-      .subscribe();
-    channels.push(actCh);
-    refreshActivity();
-
-    const presCh = sb.channel(`ward_pres:${currentWard}`)
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'ward_presence', filter: `ward_code=eq.${currentWard}` },
-        () => refreshPresence())
-      .subscribe();
-    channels.push(presCh);
-    refreshPresence();
-
-    renderList();
-    const banner = $('firebase-banner'); if(banner) banner.style.display = 'none';
-
-    window.addEventListener('beforeunload', () => {
-      try {
-        const url = `${SUPABASE_URL}/rest/v1/ward_presence?ward_code=eq.${currentWard}&doctor_id=eq.${doctorId}`;
-        const body = new Blob([JSON.stringify({ online:false, last_seen:new Date().toISOString() })],
-          { type:'application/json' });
-        navigator.sendBeacon && navigator.sendBeacon(url, body);
-      } catch{}
-    });
-
-  } catch(e){
-    console.warn('Ward connect error:', e);
-    loadLocalPatients();
-    setSyncStatus('offline','Offline mode');
-    renderList();
+    channels.push(sb.channel(`ward_act:${code}`).on('postgres_changes',
+      {event:'INSERT',schema:'public',table:'ward_activity',filter:`ward_code=eq.${code}`},()=>{if(active()) refreshActivity();}).subscribe());
+    channels.push(sb.channel(`ward_pres:${code}`).on('postgres_changes',
+      {event:'*',schema:'public',table:'ward_presence',filter:`ward_code=eq.${code}`},()=>{if(active()) refreshPresence();}).subscribe());
+    refreshActivity(); refreshPresence(); renderList();
+    $('firebase-banner').style.display='none';
+  }catch(e){
+    if(!active()) return;
+    console.warn('Ward connect error:',e);
+    loadLocalPatients(); setSyncStatus('offline','Offline mode'); renderList();
   }
 }
 
 async function refreshActivity(){
-  if(!currentWard) return;
+  const code=currentWard, epoch=wardEpoch; if(!code || !wardCache) return;
   const { data } = await sb.from('ward_activity')
-    .select('*').eq('ward_code', currentWard)
+    .select('*').eq('ward_code', code)
     .order('ts_local', { ascending:false }).limit(60);
-  if(data) renderActivity(data);
+  if(data && wardIsActive(code,epoch)) renderActivity(data);
 }
 async function refreshPresence(){
-  if(!currentWard) return;
+  const code=currentWard, epoch=wardEpoch; if(!code || !wardCache) return;
   const { data } = await sb.from('ward_presence')
-    .select('*').eq('ward_code', currentWard).eq('online', true);
-  if(data) renderOnlineUsers(data);
+    .select('*').eq('ward_code', code).eq('online', true);
+  if(data && wardIsActive(code,epoch)) renderOnlineUsers(data);
 }
 
 // Back-compat with previous init path
@@ -2026,6 +2016,8 @@ async function initFirebase(){ await connectToWard(); }
 
 // ─── PUSH TO CLOUD ───────────────────────────────────────────
 async function pushToFirebase(action, detail){
+  if(!wardCache || !currentWard) return;
+  const code=currentWard, epoch=wardEpoch;
   if(action!=='patient_delete') touchCurrent();
   saveStore();
   saveActivityLocal(action, detail);
@@ -2033,12 +2025,13 @@ async function pushToFirebase(action, detail){
   clearTimeout(pushTimer);
   pushTimer = setTimeout(async () => {
     try {
-      await cloudSave(currentWard);
-    } catch(e){ console.warn('Push failed:', e); markPendingSync && markPendingSync(); }
+      if(!wardIsActive(code,epoch)) return;
+      await cloudSave(code);
+    } catch(e){ console.warn('Push failed:', e); if(wardIsActive(code,epoch)) markPendingSync(); }
   }, 250);
   try {
     await sb.from('ward_activity').insert({
-      ward_code: currentWard,
+      ward_code: code,
       doctor: doctorProfile.name, role: doctorProfile.role,
       action, detail, ts_local: Date.now()
     });
@@ -2047,10 +2040,10 @@ async function pushToFirebase(action, detail){
 
 function saveActivityLocal(action, detail){
   try {
-    const items = JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]');
+    const items = (wardCache?.read(ACTIVITY_KEY,[])||[]);
     items.unshift({ doctor:doctorProfile.name, role:doctorProfile.role, action, detail, ts_local:Date.now() });
     if(items.length>80) items.length=80;
-    localStorage.setItem(ACTIVITY_KEY, JSON.stringify(items));
+    wardCache?.write(ACTIVITY_KEY, items);
     if(!isOnline) renderActivity(items);
   } catch{}
 }
@@ -2081,17 +2074,17 @@ function setSyncStatus(state, msg){
 
 // ─── LOCAL STORE ─────────────────────────────────────────────
 function loadLocalPatients(){
-  try { const r=localStorage.getItem(STORE_KEY); patients=r?JSON.parse(r):[]; } catch { patients=[]; }
+  const saved=wardCache?.read(STORE_KEY,[])||[]; patients=Array.isArray(saved)?saved:[];
 }
-function saveStore(){ localStorage.setItem(STORE_KEY,JSON.stringify(patients)); }
+function saveStore(){ wardCache?.write(STORE_KEY,patients); }
 
 // ─── SHARED RECORD MERGE (per-patient, newest edit wins) ─────
-const TOMB_KEY='ward_deleted_ids_v1';
-function getTombs(){ try{ return JSON.parse(localStorage.getItem(TOMB_KEY)||'[]'); }catch{ return []; } }
-function addTomb(id){ const t=getTombs(); if(!t.includes(id)){ t.push(id); localStorage.setItem(TOMB_KEY,JSON.stringify(t.slice(-500))); } }
-function mergePatients(local, remote, remoteTombs){
-  const tombs=new Set([...getTombs(), ...(remoteTombs||[])]);
-  localStorage.setItem(TOMB_KEY, JSON.stringify([...tombs].slice(-500)));
+const TOMB_KEY='tombs';
+function getTombs(cache=wardCache){ return cache?.read(TOMB_KEY,[])||[]; }
+function addTomb(id){ const t=getTombs(); if(!t.includes(id)){ t.push(id); wardCache?.write(TOMB_KEY,t.slice(-500)); } }
+function mergePatients(local, remote, remoteTombs, cache=wardCache){
+  const tombs=new Set([...getTombs(cache), ...(remoteTombs||[])]);
+  cache?.write(TOMB_KEY,[...tombs].slice(-500));
   const map=new Map();
   for(const p of (remote||[])) if(p&&p.id) map.set(p.id,p);
   for(const p of (local||[])){ if(!p||!p.id) continue;
@@ -2101,19 +2094,24 @@ function mergePatients(local, remote, remoteTombs){
   return [...map.values()].filter(p=>!tombs.has(p.id));
 }
 let _cloudBusy=Promise.resolve();
-function cloudSave(code){
-  code = code || currentWard || (doctorProfile&&doctorProfile.wardCode);
-  if(!code) return Promise.resolve();
-  _cloudBusy = _cloudBusy.then(async()=>{
-    const { data: row } = await sb.from('wards').select('patients,deleted_ids').eq('code', code).maybeSingle();
-    const merged = mergePatients(patients, row&&row.patients, row&&row.deleted_ids);
-    patients = merged; saveStore();
-    suppressNextRemote = true;
-    const { error } = await sb.from('wards').upsert({ code, patients: merged, deleted_ids: getTombs(), updated_at: new Date().toISOString() });
-    if(error){ suppressNextRemote=false; throw error; }
-  }).catch(e=>{ console.warn('cloudSave failed',e); throw e; });
-  return _cloudBusy;
+function cloudSave(code=currentWard){
+  if(!code || code!==currentWard || !wardCache) return Promise.resolve();
+  const cache=wardCache, epoch=wardEpoch;
+  const snapshot=JSON.parse(JSON.stringify(patients));
+  const task=_cloudBusy.catch(()=>{}).then(async()=>{
+    const {data:row,error:readError}=await sb.from('wards').select('patients,deleted_ids').eq('code',code).maybeSingle();
+    if(readError) throw readError;
+    const merged=mergePatients(snapshot,row?.patients,row?.deleted_ids,cache);
+    const {error}=await sb.from('wards').upsert({code,patients:merged,deleted_ids:getTombs(cache),updated_at:new Date().toISOString()});
+    if(error) throw error;
+    if(wardIsActive(code,epoch)){
+      patients=mergePatients(patients,merged,getTombs(cache),cache); saveStore(); renderList();
+    }
+  });
+  _cloudBusy=task.catch(e=>{cache.write('pending',true);console.warn('cloudSave failed',e);});
+  return task;
 }
+
 function touchCurrent(){
   const pt = currentId && patients.find(p=>p.id===currentId);
   if(pt){ pt.updatedAt=Date.now(); pt.updatedBy=(doctorProfile&&doctorProfile.name)||'—'; }
@@ -2250,6 +2248,7 @@ window.submitLogin = async function(){
   if(!name){ showToast('⚠️ Please enter your name'); $('login-name').focus(); return; }
   if(!wardCode){ showToast('⚠️ Please enter a ward code'); $('login-ward').focus(); return; }
   if(!(await verifyWardAccess(wardCode))){ $('login-ward').focus(); return; }
+  if(!(await activateWard(wardCode))) return;
   doctorProfile = { name, role, wardCode };
   localStorage.setItem(DOCTOR_KEY, JSON.stringify(doctorProfile));
   pushRecentWard(wardCode);
@@ -2266,6 +2265,7 @@ window.submitLogin = async function(){
 
 window.logoutDoctor = function(){
   if(!confirm('Sign out? You will need your email & password to open the app again.')) return;
+  clearWardView();
   sessionStorage.removeItem('wfu_unlocked');
   localStorage.removeItem(DOCTOR_KEY);
   sb.auth.signOut().finally(()=>location.reload());
@@ -2283,8 +2283,8 @@ window.logoutDoctor = function(){
 };
 
 window.switchWard = function(){
-  // Keep name/role, clear ward, tear down realtime, show login gate to pick another ward
-  teardownRealtime();
+  // Remove previous ward data before asking for the next code.
+  clearWardView();
   isOnline=false;
   try{ setSyncStatus('offline'); }catch{}
   const keptName = doctorProfile.name;
@@ -2317,12 +2317,13 @@ window.showDoctorModal = function(){
   $m('modal-doctor').classList.add('show');
 };
 
-window.saveDoctorProfile = function(){
+window.saveDoctorProfile = async function(){
   const name=$('doctor-name-input').value.trim();
   const role=$('doctor-role-input').value;
   const wardCode=$('ward-code-input').value.trim().toUpperCase()||doctorProfile.wardCode||'LUMHS-MEDICINE';
   if(!name){ showToast('⚠️ Please enter your name'); return; }
   const wardChanged = wardCode !== doctorProfile.wardCode;
+  if(wardChanged && (!(await verifyWardAccess(wardCode)) || !(await activateWard(wardCode)))) return;
   doctorProfile={name,role,wardCode};
   localStorage.setItem(DOCTOR_KEY,JSON.stringify(doctorProfile));
   pushRecentWard(wardCode);
@@ -2362,15 +2363,17 @@ window.goToList = function(){ showScreen('screen-list'); renderList(); };
 
 // ─── REFRESH ALL DATA ────────────────────────────────────────
 window.refreshAllData = async function(){
+  const code=currentWard, epoch=wardEpoch; if(!code || !wardCache) return;
   const btn = document.getElementById('refresh-btn');
   if(btn){ if(btn.classList.contains('spinning')) return; btn.classList.add('spinning'); }
   try{
     if(doctorProfile.wardCode && typeof sb!=='undefined' && sb){
       const { data: row, error } = await sb.from('wards')
-        .select('patients').eq('code', doctorProfile.wardCode).maybeSingle();
+        .select('patients,deleted_ids').eq('code', code).maybeSingle();
+      if(!wardIsActive(code,epoch)) return;
       if(error) throw error;
       if(row && Array.isArray(row.patients)){
-        patients = row.patients;
+        patients = mergePatients(patients,row.patients,row.deleted_ids);
         saveStore();
       }
       renderList();
@@ -2385,6 +2388,7 @@ window.refreshAllData = async function(){
       showToast('🔄 Refreshed (offline)');
     }
   } catch(e){
+    if(!wardIsActive(code,epoch)) return;
     console.warn('refresh err',e);
     showToast('⚠️ Refresh failed — using cached data');
     try{ loadLocalPatients(); renderList(); }catch{}
@@ -2412,7 +2416,7 @@ window.switchGlobalTab = function(tab,btn){
   else if(tab==='chat'){ showScreen('screen-chat'); window.openChat && window.openChat(); }
   else if(tab==='activity'){
     showScreen('screen-activity');
-    if(!isOnline){ try{ const a=JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]'); renderActivity(a); }catch{} }
+    if(!isOnline){ try{ const a=(wardCache?.read(ACTIVITY_KEY,[])||[]); renderActivity(a); }catch{} }
   }
 };
 
@@ -2476,6 +2480,7 @@ window.renderList = function(){
 
 // ─── NEW PATIENT ──────────────────────────────────────────────
 window.newPatient = function(){
+  if(!wardCache || !currentWard){ showLoginGate(); return; }
   const id='pt_'+Date.now();
   const today=new Date().toISOString().split('T')[0];
   patients.push({id,name:'',age:'',cr:'',diag:'',status:'',news2:undefined,tasks:[],complications:[],trends:[],noteHistory:[],vitalsHistory:[],antibiotics:[],drugChart:[],updatedAt:Date.now(),data:{'pt-admdate':today,'m-date':today}});
@@ -2499,6 +2504,7 @@ const FIELDS=['pt-name','pt-age','pt-cr','pt-bed','pt-admdate','pt-consult','pt-
 
 // ─── OPEN PATIENT ─────────────────────────────────────────────
 window.openPatient = function(id){
+  if(!wardCache || !patients.some(p=>p.id===id)) return;
   currentId=id;
   loadPatientIntoForm(id);
   switchShift('morning');
@@ -3328,6 +3334,7 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
   } finally { btn.disabled = false; }
 });
 window.signOutDoctor = async function(){
+  clearWardView();
   sessionStorage.removeItem('wfu_unlocked');
   try { await sb.auth.signOut(); } catch{}
   location.reload();
@@ -3356,22 +3363,25 @@ function chatRender(m){
   box.appendChild(el); box.scrollTop=box.scrollHeight;
 }
 async function chatOnline(){
-  const w=currentWard||doctorProfile.wardCode; if(!w) return;
+  const w=currentWard, epoch=wardEpoch; if(!w || !wardCache) return;
   const since=new Date(Date.now()-5*60000).toISOString();
   const {data}=await sb.from('ward_presence').select('name,role,last_seen,online').eq('ward_code',w).eq('online',true).gte('last_seen',since);
+  if(!wardIsActive(w,epoch)) return;
   const list=data||[]; const o=$('chat-online'); if(!o) return;
   $('chat-online-count').textContent='('+list.length+')';
   o.innerHTML=list.length?list.map(p=>`<span style="padding:4px 9px;border-radius:12px;background:rgba(34,197,94,.15);color:#22c55e">● ${chatEsc(p.name)} <span style="opacity:.7">${chatEsc(p.role||'')}</span></span>`).join(''):'<span style="color:var(--muted)">No one else online</span>';
 }
 async function chatStart(){
-  const w=currentWard||doctorProfile.wardCode; if(!w) return;
-  const {data:s}=await sb.auth.getSession(); chatUid=s?.session?.user?.id; if(!chatUid) return;
+  const w=currentWard, epoch=wardEpoch; if(!w || !wardCache) return;
+  const {data:s}=await sb.auth.getSession(); if(!wardIsActive(w,epoch)) return; chatUid=s?.session?.user?.id; if(!chatUid) return;
   if(chatWard===w && chatCh) return;
   if(chatCh){ try{ sb.removeChannel(chatCh);}catch{} chatCh=null; }
   chatWard=w; $('chat-msgs').innerHTML=''; $('chat-ward').textContent='· '+w;
   const {data}=await sb.from('ward_messages').select('*').eq('ward_code',w).order('created_at',{ascending:false}).limit(100);
+  if(!wardIsActive(w,epoch)) return;
   (data||[]).reverse().forEach(chatRender);
   chatCh=sb.channel('chat:'+w).on('postgres_changes',{event:'INSERT',schema:'public',table:'ward_messages',filter:`ward_code=eq.${w}`},p=>{
+    if(!wardIsActive(w,epoch)) return;
     chatRender(p.new);
     const onChat=$('screen-chat')?.classList.contains('active');
     if(!onChat && p.new.sender_id!==chatUid){ chatUnread++; const b=$('chat-badge'); b.textContent=chatUnread; b.style.display='inline'; showToast('💬 '+(p.new.sender_name||'Doctor')+': '+String(p.new.body).slice(0,40)); }
@@ -3382,7 +3392,7 @@ window.openChat=async function(){ chatUnread=0; const b=$('chat-badge'); if(b) b
 window.sendChat=async function(){
   const i=$('chat-input'); const body=i.value.trim(); if(!body) return;
   if(!navigator.onLine){ showToast('📴 No internet — chat needs a connection'); return; }
-  const w=currentWard||doctorProfile.wardCode; if(!w){ showToast('Join a ward first'); return; }
+  const w=currentWard; if(!w || !wardCache){ showToast('Join a ward first'); return; }
   i.value='';
   const {error}=await sb.from('ward_messages').insert({ward_code:w,body,sender_name:doctorProfile.name,sender_role:doctorProfile.role});
   if(error){ showToast('⚠️ '+error.message); i.value=body; }
@@ -3392,7 +3402,7 @@ setTimeout(()=>{ if(doctorProfile.wardCode) chatStart(); },4000);
 
 
 // Load local activity for offline view
-try{ const a=JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]'); if(a.length) renderActivity(a); }catch{}
+try{ const a=(wardCache?.read(ACTIVITY_KEY,[])||[]); if(a.length) renderActivity(a); }catch{}
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 
@@ -4164,9 +4174,9 @@ window.analyzeImage = async function(){
 };
 
 // ── ASK AI (chat) ────────────────────────────────────────────
-const ASKAI_KEY='lumhs_askai_history_v1';
+const ASKAI_KEY='askai';
 let askaiHistory = [];
-try{ askaiHistory = JSON.parse(localStorage.getItem(ASKAI_KEY)||'[]'); }catch{ askaiHistory=[]; }
+// Clinical AI history loads only after verified ward activation.
 function renderAskAI(){
   const box = document.getElementById('askai-messages'); if(!box) return;
   if(!askaiHistory.length){
@@ -4181,6 +4191,7 @@ function renderAskAI(){
 }
 function escapeHtml(s){ return String(s||'').replace(/[&<>]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 window.askAISend = async function(){
+  const code=currentWard, epoch=wardEpoch; if(!code || !wardCache) return;
   const inp = document.getElementById('askai-input');
   const q = (inp.value||'').trim(); if(!q) return;
   if(!isNetOnline()){ updateAiNetWarnings(); alert('No internet — AI assistant requires an internet connection.'); return; }
@@ -4194,16 +4205,17 @@ window.askAISend = async function(){
       body: JSON.stringify({ messages: askaiHistory.filter(m=>m.content!=='⏳ thinking…') })
     });
     const j = await r.json().catch(()=>({}));
+    if(!wardIsActive(code,epoch)) return;
     askaiHistory.pop();
     if(!r.ok) askaiHistory.push({role:'assistant', content:'⚠️ AI error: ' + (j.error||r.status)});
     else      askaiHistory.push({role:'assistant', content: j.reply || '(empty response)'});
   }catch(e){
+    if(!wardIsActive(code,epoch)) return;
     askaiHistory.pop();
     askaiHistory.push({role:'assistant', content:'⚠️ Network error: ' + e.message});
   }finally{
     btn.disabled=false; btn.textContent=o;
-    try{ localStorage.setItem(ASKAI_KEY, JSON.stringify(askaiHistory.slice(-40))); }catch{}
-    renderAskAI();
+    if(wardIsActive(code,epoch)){ wardCache.write(ASKAI_KEY,askaiHistory.slice(-40)); renderAskAI(); }
   }
 };
 
@@ -4709,16 +4721,17 @@ window.addDrug = function(){
 };
 
 // ── OFFLINE SYNC QUEUE ───────────────────────────────────────
-const PENDING_KEY='lumhs_pending_sync_v1';
-function markPendingSync(){ try{ localStorage.setItem(PENDING_KEY,'1'); }catch{} }
+const PENDING_KEY='pending';
+function markPendingSync(){ try{ wardCache?.write(PENDING_KEY,true); }catch{} }
 async function flushOfflineSync(){
   if(!isNetOnline()) return;
   if(typeof sb==='undefined' || !sb) return;
-  if(!doctorProfile || !doctorProfile.wardCode) return;
-  if(!localStorage.getItem(PENDING_KEY)) return;
+  const code=currentWard, epoch=wardEpoch, cache=wardCache;
+  if(!code || !cache?.read(PENDING_KEY,false)) return;
   try{
-    await cloudSave(doctorProfile.wardCode);
-    localStorage.removeItem(PENDING_KEY);
+    await cloudSave(code);
+    if(!wardIsActive(code,epoch)) return;
+    cache.remove(PENDING_KEY);
     if(typeof showToast==='function') showToast('☁️ Offline changes synced');
   }catch(e){ console.warn('flush sync fail',e); }
 }
@@ -4729,7 +4742,7 @@ window.pushToFirebase = async function(action, detail){
   return _origPush && _origPush.apply(this, arguments);
 };
 // Poll: when isOnline flips true, flush
-setInterval(()=>{ if(isOnline && isNetOnline() && localStorage.getItem(PENDING_KEY)) flushOfflineSync(); }, 5000);
+setInterval(()=>{ if(isOnline && isNetOnline() && wardCache?.read(PENDING_KEY,false)) flushOfflineSync(); }, 5000);
 
 // ── SWIPE BETWEEN TABS ───────────────────────────────────────
 function swipeNav(direction){
