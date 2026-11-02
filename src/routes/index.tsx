@@ -7,6 +7,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Medical Ward Follow-Up Tool for LUMHS Jamshoro." },
       { property: "og:title", content: "Ward Follow-Up — LUMHS Medicine" },
       { property: "og:description", content: "Medical Ward Follow-Up Tool for LUMHS Jamshoro." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Index,
